@@ -447,9 +447,9 @@ export default function RestaurantPublic() {
               <h2 className="text-xl font-bold mb-3">{g.cat?.name ?? "Outros"}</h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {g.products.map((p) => (
-                  <Card key={p.id} className="cursor-pointer hover:shadow-elegant transition-shadow" onClick={() => { setSelected(p); setQty(1); setNotes(""); }}>
+                  <Card key={p.id} className="cursor-pointer hover:shadow-elegant transition-shadow overflow-hidden" onClick={() => { setSelected(p); setQty(1); setNotes(""); }}>
                     <CardContent className="p-3 flex gap-3">
-                      <div className="w-24 h-24 rounded-lg bg-muted overflow-hidden grid place-items-center shrink-0">
+                      <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-lg bg-muted overflow-hidden grid place-items-center shrink-0">
                         {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" decoding="async" className="w-full h-full object-cover" /> : <ImageIcon className="w-7 h-7 text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -573,7 +573,7 @@ export default function RestaurantPublic() {
             <>
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                 <DialogHeader><DialogTitle>{selected.name}</DialogTitle></DialogHeader>
-                {selected.image_url && <img src={selected.image_url} alt={selected.name} className="w-full h-48 object-cover rounded-lg" />}
+                {selected.image_url && <img src={selected.image_url} alt={selected.name} loading="eager" decoding="async" className="w-full aspect-[4/3] object-cover rounded-lg" />}
                 {selected.description && <p className="text-sm text-muted-foreground">{selected.description}</p>}
 
 
@@ -604,7 +604,7 @@ export default function RestaurantPublic() {
                             return (
                               <div key={it.id} className={`flex items-center gap-3 p-2.5 rounded-lg border ${checked ? "border-primary bg-accent/30" : ""}`}>
                                 {it.image_url && (
-                                  <img src={it.image_url} alt={it.name} loading="lazy" className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border flex-shrink-0" />
+                                  <img src={it.image_url} alt={it.name} loading="lazy" decoding="async" className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border flex-shrink-0" />
                                 )}
                                 <span className="flex-1 text-sm">{it.name}</span>
                                 {it.extra_price > 0 && (
@@ -630,7 +630,7 @@ export default function RestaurantPublic() {
                               className={`w-full flex items-center gap-3 p-2.5 rounded-lg border text-left transition-colors hover:bg-muted ${checked ? "border-primary bg-accent/30" : ""}`}
                             >
                               {it.image_url && (
-                                <img src={it.image_url} alt={it.name} loading="lazy" className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border flex-shrink-0" />
+                                <img src={it.image_url} alt={it.name} loading="lazy" decoding="async" className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg object-cover border flex-shrink-0" />
                               )}
                               <span className="flex-1 text-sm">{it.name}</span>
                               {it.extra_price > 0 && (
