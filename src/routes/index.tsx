@@ -1,21 +1,7 @@
-import { createFileRoute, ClientOnly } from "@tanstack/react-router";
-import App from "../App";
+import { createFileRoute } from "@tanstack/react-router";
+import Index from "@/pages/Index";
 
 export const Route = createFileRoute("/")({
   ssr: false,
-  component: SpaIndex,
+  component: Index,
 });
-
-function SpaIndex() {
-  return (
-    <ClientOnly
-      fallback={
-        <div className="min-h-screen grid place-items-center text-muted-foreground">
-          Carregando...
-        </div>
-      }
-    >
-      <App />
-    </ClientOnly>
-  );
-}
