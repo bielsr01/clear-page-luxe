@@ -3,7 +3,7 @@ import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/
 const fetch = createStartHandler(defaultStreamHandler);
 
 export default {
-  fetch(request: Request, env: unknown, ctx: unknown) {
-    return fetch(request, env, ctx);
+  fetch(request: Request) {
+    return fetch(request);
   },
 };
