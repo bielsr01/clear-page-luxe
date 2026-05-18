@@ -1,10 +1,4 @@
 import * as React from "react";
-import {
-  Navigate as TanStackNavigate,
-  useLocation,
-  useNavigate as useTanStackNavigate,
-  useParams as useTanStackParams,
-} from "@tanstack/react-router";
 
 type To = string | { pathname?: string; search?: string; hash?: string };
 
@@ -18,70 +12,93 @@ function toHref(to: To): string {
   return `${to.pathname ?? "/"}${to.search ?? ""}${to.hash ?? ""}`;
 }
 
-function splitHref(href: string) {
-  const [pathAndSearch, hash = ""] = href.split("#");
-  const [pathname, search = ""] = pathAndSearch.split("?");
+function getCurrentLocation() {
+  if (typeof window === "undefined") {
+    return { pathname: "/", search: "", hash: "", state: undefined };
+  }
   return {
-    pathname: pathname || "/",
-    search: search ? `?${search}` : "",
-    hash: hash ? `#${hash}` : "",
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+    state: window.history.state,
   };
 }
 
-export function useNavigate() {
-  const navigate = useTanStackNavigate();
-
-  return React.useCallback(
-    (to: To | number, options?: NavigateOptions) => {
-      if (typeof to === "number") {
-        window.history.go(to);
-        return;
-      }
-
-      const href = toHref(to);
-      const { pathname, search, hash } = splitHref(href);
-      return navigate({
-        to: pathname as never,
-        search: (search ? Object.fromEntries(new URLSearchParams(search)) : undefined) as never,
-        hash: hash ? hash.slice(1) : undefined,
-        replace: options?.replace,
-      } as never);
-    },
-    [navigate],
-  );
+function emitLocationChange() {
+  window.dispatchEvent(new Event("mesapro:navigation"));
 }
 
-export function useParams<T extends Record<string, string | undefined> = Record<string, string | undefined>>() {
-  return useTanStackParams({ strict: false }) as T;
+function navigateTo(to: To, options?: NavigateOptions) {
+  if (typeof window === "undefined") return;
+  const href = toHref(to);
+  if (options?.replace) window.history.replaceState(options.state ?? null, "", href);
+  else window.history.pushState(options?.state ?? null, "", href);
+  emitLocationChange();
+}
+
+export function useNavigate() {
+  return React.useCallback((to: To | number, options?: NavigateOptions) => {
+    if (typeof window === "undefined") return;
+    if (typeof to === "number") {
+      window.history.go(to);
+      return;
+    }
+    navigateTo(to, options);
+  }, []);
+}
+
+export function useLocation() {
+  const [location, setLocation] = React.useState(getCurrentLocation);
+
+  React.useEffect(() => {
+    const update = () => setLocation(getCurrentLocation());
+    window.addEventListener("popstate", update);
+    window.addEventListener("mesapro:navigation", update);
+    return () => {
+      window.removeEventListener("popstate", update);
+      window.removeEventListener("mesapro:navigation", update);
+    };
+  }, []);
+
+  return location;
 }
 
 export function useSearchParams(): [URLSearchParams] {
   const location = useLocation();
-  return React.useMemo(() => [new URLSearchParams(location.searchStr)] as [URLSearchParams], [location.searchStr]);
+  return React.useMemo(() => [new URLSearchParams(location.search)] as [URLSearchParams], [location.search]);
 }
 
-export function useLocationCompat() {
+function matchParams(pathname: string): Record<string, string> {
+  const pairs: Array<[RegExp, string[]]> = [
+    [/^\/r\/([^/]+)$/, ["slug"]],
+    [/^\/pedido\/([^/]+)$/, ["token"]],
+    [/^\/ticket\/([^/]+)$/, ["orderId"]],
+    [/^\/ticket-cozinha\/([^/]+)$/, ["orderId"]],
+    [/^\/ticket-cliente\/([^/]+)$/, ["orderId"]],
+  ];
+
+  for (const [regex, names] of pairs) {
+    const match = pathname.match(regex);
+    if (!match) continue;
+    return Object.fromEntries(names.map((name, index) => [name, decodeURIComponent(match[index + 1] ?? "")])) as Record<string, string>;
+  }
+
+  return {};
+}
+
+export function useParams<T extends Record<string, string | undefined> = Record<string, string | undefined>>() {
   const location = useLocation();
-  return {
-    pathname: location.pathname,
-    search: location.searchStr,
-    hash: location.hash,
-    state: location.state,
-  };
+  return React.useMemo(() => matchParams(location.pathname) as T, [location.pathname]);
 }
 
-export { useLocationCompat as useLocation };
-
-type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href" | "className"> & {
+type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
   to: To;
   replace?: boolean;
   state?: unknown;
-  className?: string;
 };
 
-export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(({ to, children, onClick, target, replace, ...props }, ref) => {
+export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(({ to, children, onClick, target, replace, state, ...props }, ref) => {
   const href = toHref(to);
-  const navigate = useNavigate();
 
   return (
     <a
@@ -102,7 +119,7 @@ export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(({ to, childr
           return;
         }
         event.preventDefault();
-        navigate(href, { replace });
+        navigateTo(href, { replace, state });
       }}
       {...props}
     >
@@ -120,10 +137,9 @@ export type NavLinkProps = Omit<LinkProps, "className"> & {
 export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
   ({ to, className, end, children, ...props }, ref) => {
     const location = useLocation();
-    const href = toHref(to);
-    const targetPath = splitHref(href).pathname;
-    const isActive = end ? location.pathname === targetPath : location.pathname === targetPath || location.pathname.startsWith(`${targetPath}/`);
-    const computedClassName = typeof className === "function" ? (className as (props: { isActive: boolean; isPending: boolean }) => string | undefined)({ isActive, isPending: false }) : className;
+    const href = toHref(to).split(/[?#]/)[0] || "/";
+    const isActive = end ? location.pathname === href : location.pathname === href || location.pathname.startsWith(`${href}/`);
+    const computedClassName = typeof className === "function" ? className({ isActive, isPending: false }) : className;
 
     return (
       <Link ref={ref} to={to} className={computedClassName} aria-current={isActive ? "page" : undefined} {...props}>
@@ -135,9 +151,9 @@ export const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
 NavLink.displayName = "NavLink";
 
 export function Navigate({ to, replace }: { to: To; replace?: boolean }) {
-  const href = toHref(to);
-  const { pathname, search, hash } = splitHref(href);
-  const searchObj = search ? Object.fromEntries(new URLSearchParams(search)) : undefined;
+  React.useEffect(() => {
+    navigateTo(to, { replace });
+  }, [to, replace]);
 
-  return <TanStackNavigate to={pathname as never} search={searchObj as never} hash={hash ? hash.slice(1) : undefined} replace={replace} />;
+  return null;
 }
