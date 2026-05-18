@@ -325,9 +325,9 @@ export default function RestaurantPublic() {
 
   return (
     <div className="min-h-screen pb-24">
-      {/* Banner com foto de capa + logo central deslocada para baixo */}
+      {/* Banner com foto de capa + logo à esquerda */}
       <header className="relative">
-        <div className="relative w-full aspect-[16/7] sm:aspect-auto sm:h-48 md:h-56 lg:h-64 overflow-hidden bg-gradient-warm">
+        <div className="relative w-full aspect-[16/7] sm:aspect-auto sm:h-48 md:h-56 lg:h-64 overflow-hidden bg-gradient-warm rounded-b-3xl">
           {restaurant.cover_url && (
             <img
               src={restaurant.cover_url}
@@ -335,34 +335,12 @@ export default function RestaurantPublic() {
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
           )}
-          {/* Badge aberto/fechado sobre a capa */}
-          <div className="absolute top-3 left-3 z-10">
-            {isOpenNow(restaurant.opening_hours, restaurant.manual_override)
-              ? <Badge className="bg-success text-success-foreground shadow">Aberto agora</Badge>
-              : <Badge variant="secondary" className="shadow">Fechado no momento</Badge>}
-          </div>
-        </div>
-
-        {/* Logo central, deslocada para baixo (sobreposta ao banner) */}
-        <div className="container relative">
-          <div className="flex justify-center -mt-10 sm:-mt-14">
-            {restaurant.logo_url ? (
-              <img
-                src={restaurant.logo_url}
-                alt={restaurant.name}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-background shadow-lg bg-background"
-              />
-            ) : (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-primary text-primary-foreground grid place-items-center text-3xl font-bold border-4 border-background shadow-lg">
-                {restaurant.name[0]}
-              </div>
-            )}
-          </div>
         </div>
       </header>
 
-      {/* Nome + endereço + tempo */}
+      {/* Logo (esquerda) + nome + cidade + info */}
       {(() => {
+        const cityLine = [restaurant.address_city, restaurant.address_state].filter(Boolean).join(" - ");
         const addressLine = [
           restaurant.address_street,
           restaurant.address_number,
@@ -377,30 +355,43 @@ export default function RestaurantPublic() {
         const timeLabel = hasTime
           ? (tmin != null && tmax != null ? `${tmin}–${tmax} min` : `${tmin ?? tmax} min`)
           : null;
+        const open = isOpenNow(restaurant.opening_hours, restaurant.manual_override);
         return (
-          <div className="container pt-3 pb-4 text-center space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold leading-tight">{restaurant.name}</h1>
-            {addressLine && (
-              <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 shrink-0" />
-                <span className="truncate">{addressLine}</span>
+          <div className="container pb-4">
+            <div className="flex items-start gap-3 -mt-10 sm:-mt-12">
+              <div className="relative shrink-0">
+                {restaurant.logo_url ? (
+                  <img
+                    src={restaurant.logo_url}
+                    alt={restaurant.name}
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-background shadow-lg bg-background"
+                  />
+                ) : (
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-primary text-primary-foreground grid place-items-center text-3xl font-bold border-4 border-background shadow-lg">
+                    {restaurant.name[0]}
+                  </div>
+                )}
+                <span className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-bold shadow ${open ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}`}>
+                  {open ? "ABERTO" : "FECHADO"}
+                </span>
               </div>
-            )}
-            {timeLabel && (
-              <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4 shrink-0" />
-                <span>Entrega <strong className="font-bold text-foreground">{timeLabel}</strong></span>
+              <div className="flex-1 min-w-0 pt-10 sm:pt-12">
+                <h1 className="text-xl sm:text-2xl font-bold leading-tight truncate">{restaurant.name}</h1>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {cityLine && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+                      <MapPin className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{cityLine}</span>
+                    </div>
+                  )}
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <button className="text-sm font-semibold text-primary hover:underline">Saiba mais</button>
+                    </SheetTrigger>
+                    <InfoSheetContent restaurant={restaurant} addressLine={addressLine} timeLabel={timeLabel} />
+                  </Sheet>
+                </div>
               </div>
-            )}
-            <div className="pt-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto sm:min-w-[280px] gap-2">
-                    <Info className="w-4 h-4" /> Informação
-                  </Button>
-                </SheetTrigger>
-                <InfoSheetContent restaurant={restaurant} addressLine={addressLine} timeLabel={timeLabel} />
-              </Sheet>
             </div>
           </div>
         );
