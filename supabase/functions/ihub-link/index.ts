@@ -97,6 +97,20 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Authorization: caller must be master_admin or manager of restaurantId.
+  const { data: adminRow } = await supabase
+    .from("user_roles").select("role").eq("user_id", userId).eq("role", "master_admin").maybeSingle();
+  if (!adminRow) {
+    const { data: isMgr } = await supabase.rpc("is_restaurant_manager", {
+      _user_id: userId, _restaurant_id: restaurantId,
+    });
+    if (!isMgr) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const { data: integration } = await supabase
     .from("ihub_integrations")
     .select("*")
