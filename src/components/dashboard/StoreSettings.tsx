@@ -155,7 +155,9 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
     let logo_url: string | null | undefined;
     if (logoFile && logoFile.size > 0) {
       try {
-        logo_url = await uploadToR2(logoFile, `menu-images/${restaurant.id}`, `logo-${Date.now()}-${logoFile.name.replace(/\s+/g, "_")}`);
+        const { resizeImage } = await import("@/lib/imageResize");
+        const resized = await resizeImage(logoFile, 512, "image/webp", 0.92);
+        logo_url = await uploadToR2(resized, `menu-images/${restaurant.id}`, `logo-${Date.now()}-${resized.name.replace(/\s+/g, "_")}`);
       } catch (e: any) { setBusy(false); return toast.error(e.message || "Falha no upload da logo"); }
     }
     if (!logo_url && !full.logo_url) {
