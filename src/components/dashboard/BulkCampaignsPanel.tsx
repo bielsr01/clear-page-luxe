@@ -365,20 +365,33 @@ function CampaignDialog({
     queryKey: ["bulk-pick-customers", idsKey, debouncedSearch],
     enabled: open && restaurantIds.length > 0,
     queryFn: async () => {
-      let q = sb.from("customers")
-        .select("id, restaurant_id, name, phone, orders_count, last_order_at")
-        .in("restaurant_id", restaurantIds);
       const term = debouncedSearch;
-      if (term.length >= 2) {
-        const safe = term.replace(/[%,()]/g, " ").trim();
-        const digits = term.replace(/\D/g, "");
-        const phonePattern = digits.length >= 2 ? "%" + digits.split("").join("%") + "%" : null;
-        const orParts = [`name.ilike.%${safe}%`];
-        if (phonePattern) orParts.push(`phone.ilike.${phonePattern}`);
-        q = q.or(orParts.join(","));
+      const buildQuery = () => {
+        let q = sb.from("customers")
+          .select("id, restaurant_id, name, phone, orders_count, last_order_at")
+          .in("restaurant_id", restaurantIds);
+        if (term.length >= 2) {
+          const safe = term.replace(/[%,()]/g, " ").trim();
+          const digits = term.replace(/\D/g, "");
+          const phonePattern = digits.length >= 2 ? "%" + digits.split("").join("%") + "%" : null;
+          const orParts = [`name.ilike.%${safe}%`];
+          if (phonePattern) orParts.push(`phone.ilike.${phonePattern}`);
+          q = q.or(orParts.join(","));
+        }
+        return q.order("created_at", { ascending: false });
+      };
+      const CHUNK = 1000;
+      const all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await buildQuery().range(from, from + CHUNK - 1);
+        if (error) throw error;
+        const rows = data ?? [];
+        all.push(...rows);
+        if (rows.length < CHUNK) break;
+        from += CHUNK;
       }
-      const { data } = await q.order("created_at", { ascending: false }).limit(2000);
-      return data ?? [];
+      return all;
     },
   });
 
