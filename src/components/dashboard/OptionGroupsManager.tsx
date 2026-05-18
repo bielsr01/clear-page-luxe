@@ -314,11 +314,12 @@ function GroupDialog({
     setRows((r) => r.map((x, i) => (i === idx ? { ...x, toDelete: true } : x)));
 
   const uploadItemImage = async (idx: number, file: File) => {
-    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem muito grande (máx 5MB)");
+    if (file.size > 15 * 1024 * 1024) return toast.error("Imagem muito grande (máx 15MB)");
     setUploadingIdx(idx);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const url = await uploadToR2(file, `menu-images/${restaurantId}/option-items`, `${crypto.randomUUID()}.${ext}`);
+      const { resizeImage } = await import("@/lib/imageResize");
+      const optimized = await resizeImage(file, 800, "image/webp", 0.9);
+      const url = await uploadToR2(optimized, `menu-images/${restaurantId}/option-items`, `${crypto.randomUUID()}.webp`);
       updateRow(idx, { image_url: url });
     } catch (e: any) {
       toast.error(e.message);
