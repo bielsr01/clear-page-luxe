@@ -1,1 +1,16 @@
-project_id = "yltsrnmzlsxfdgnrsbio"
+project_id = "kcjrrnxsqdcgjqplgiku"
+
+[functions.geocode]
+verify_jwt = false
+
+[functions.maps-key]
+verify_jwt = false
+
+[functions.bulk-campaign-worker]
+verify_jwt = false
+
+[functions.ihub-webhook]
+verify_jwt = false
+
+[functions.quero-poll]
+verify_jwt = false
