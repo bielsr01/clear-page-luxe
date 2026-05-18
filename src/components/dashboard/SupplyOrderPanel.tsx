@@ -176,12 +176,13 @@ export function SupplyOrderPanel({ restaurantId }: { restaurantId: string }) {
     const newCart: Record<string, number> = {};
     const newDist: Record<string, Record<string, number>> = {};
     (o.supply_order_items ?? []).forEach((it) => {
-      if (!it.product_id) return;
-      newCart[it.product_id] = it.quantity;
+      const pid = it.product_id;
+      if (!pid) return;
+      newCart[pid] = it.quantity;
       if (it.supply_order_item_options && it.supply_order_item_options.length > 0) {
-        newDist[it.product_id] = {};
+        newDist[pid] = {};
         it.supply_order_item_options.forEach((op) => {
-          newDist[it.product_id][op.option_name] = op.quantity;
+          newDist[pid][op.option_name] = op.quantity;
         });
       }
     });
