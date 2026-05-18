@@ -181,7 +181,10 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
       let image_url = editingProd?.image_url ?? null;
       if (file && file.size > 0) {
         try {
-          image_url = await uploadToR2(file, `menu-images/${restaurantId}`, `${Date.now()}-${file.name.replace(/\s+/g, "_")}`);
+          const { resizeImage } = await import("@/lib/imageResize");
+          const optimized = await resizeImage(file, 1280, "image/webp", 0.9);
+          const safeName = optimized.name.replace(/\s+/g, "_");
+          image_url = await uploadToR2(optimized, `menu-images/${restaurantId}`, `${Date.now()}-${safeName}`);
         } catch (e: any) { return toast.error(e.message || "Falha no upload"); }
       }
 
