@@ -313,7 +313,7 @@ export function BulkCampaignsPanel({
           open={!!editing}
           onOpenChange={(o) => !o && setEditing(null)}
           scope={scope}
-          restaurantIds={scope === "admin" && editing.is_admin ? filterIds : [editing.restaurant_id]}
+          restaurantIds={scope === "admin" && editing.is_admin ? (filterIds.length > 0 ? filterIds : allRest.map((r) => r.id)) : [editing.restaurant_id]}
           allRest={allRest}
           campaign={editing}
           onSaved={() => qc.invalidateQueries({ queryKey: ["bulk-campaigns"] })}
