@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && mkdir -p dist && cp public/_redirects dist/_redirects",
-    "build:dev": "vite build --mode development && mkdir -p dist && cp public/_redirects dist/_redirects",
+    "build": "vite build && mkdir -p dist && cp public/_redirects dist/_redirects && cp public/vercel.json dist/vercel.json",
+    "build:dev": "vite build --mode development && mkdir -p dist && cp public/_redirects dist/_redirects && cp public/vercel.json dist/vercel.json",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
