@@ -322,7 +322,7 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((c) => {
+                  {paginated.map((c) => {
                     const t = getClientType(c.orders_count);
                     const s = getClientStatus(c.last_order_at);
                     return (
@@ -347,7 +347,7 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
             </div>
 
             <div className="md:hidden space-y-2">
-              {filtered.map((c) => {
+              {paginated.map((c) => {
                 const t = getClientType(c.orders_count);
                 const s = getClientStatus(c.last_order_at);
                 return (
@@ -373,6 +373,21 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
                   </div>
                 );
               })}
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+              <div className="text-xs text-muted-foreground">
+                Mostrando {rangeStart}–{rangeEnd} de {filtered.length} cliente(s)
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                  <ChevronLeft className="w-4 h-4" /> Anterior
+                </Button>
+                <span className="text-sm tabular-nums">Página {page} de {totalPages}</span>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                  Próxima <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </>
         )}
