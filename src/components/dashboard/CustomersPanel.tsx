@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Search, Users, Filter, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, Users, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatPhone, unmaskPhone } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -109,6 +109,8 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [typeFilters, setTypeFilters] = useState<Set<ClientType>>(new Set());
   const [statusFilters, setStatusFilters] = useState<Set<ClientStatus>>(new Set());
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 30;
 
   const { data, isLoading } = useQuery({
     queryKey: ["customers", restaurantId],
@@ -117,13 +119,14 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
         .from("customers" as any)
         .select("*")
         .eq("restaurant_id", restaurantId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, 9999);
       if (error) throw error;
       return (data ?? []) as unknown as Customer[];
     },
   });
 
-  const filtered = (data ?? []).filter((c) => {
+  const filtered = useMemo(() => (data ?? []).filter((c) => {
     if (search.trim()) {
       const q = search.toLowerCase();
       if (!(c.name.toLowerCase().includes(q) || unmaskPhone(c.phone).includes(unmaskPhone(search)))) return false;
@@ -137,7 +140,17 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
       if (!s || !statusFilters.has(s)) return false;
     }
     return true;
-  });
+  }), [data, search, typeFilters, statusFilters]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  useEffect(() => { setPage(1); }, [search, typeFilters, statusFilters]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  );
+  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length);
 
   const toggleType = (t: ClientType) => {
     const n = new Set(typeFilters);
