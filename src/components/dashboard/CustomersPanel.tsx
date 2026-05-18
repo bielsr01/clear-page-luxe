@@ -124,6 +124,7 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
           .select("*")
           .eq("restaurant_id", restaurantId)
           .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
           .range(from, from + CHUNK - 1);
         if (error) throw error;
         const rows = (data ?? []) as unknown as Customer[];
