@@ -1,5 +1,6 @@
-// Devolve a Google Maps Browser Key (restrita por HTTP referrer no Console).
-// É segura para expor ao frontend porque o Google bloqueia uso fora dos referrers permitidos.
+// Devolve a Google Maps Browser Key (restrita por HTTP referrer no Google Cloud Console).
+// É segura para expor publicamente porque o Google bloqueia uso fora dos referrers permitidos.
+// É usada no Checkout público (clientes anônimos), por isso NÃO exige autenticação.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
