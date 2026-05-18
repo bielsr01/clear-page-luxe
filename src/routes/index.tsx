@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ClientAppLoader } from "@/components/ClientAppLoader";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  return <ClientAppLoader />;
+  return <div className="min-h-screen bg-gradient-to-b from-white to-gray-400" />;
 }
