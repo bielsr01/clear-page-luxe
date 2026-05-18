@@ -387,7 +387,7 @@ export default function RestaurantPublic() {
                   )}
                   <Sheet>
                     <SheetTrigger asChild>
-                      <button className="text-sm font-semibold text-primary hover:underline whitespace-nowrap shrink-0">Saiba mais</button>
+                      <button className="text-sm font-semibold text-primary border border-primary/30 rounded-full px-2.5 py-0.5 hover:bg-primary/5 whitespace-nowrap shrink-0">Saiba mais</button>
                     </SheetTrigger>
                     <InfoSheetContent restaurant={restaurant} addressLine={addressLine} timeLabel={timeLabel} />
                   </Sheet>
