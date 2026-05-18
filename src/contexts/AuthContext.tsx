@@ -45,22 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let currentUserId: string | null = null;
-
-    const initAuth = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      
-      if (initialSession?.user) {
-        currentUserId = initialSession.user.id;
-        setRolesLoading(true);
-        await loadRoles(initialSession.user.id);
-      }
-      setLoading(false);
-    };
-
-    initAuth();
+    let isFirstLoad = true;
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
@@ -69,12 +54,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (newId && newId !== currentUserId) {
         currentUserId = newId;
-        setRolesLoading(true);
-        loadRoles(newId);
+        if (!isFirstLoad) setRolesLoading(true);
+        loadRoles(newId).finally(() => {
+          if (isFirstLoad) {
+            isFirstLoad = false;
+            setLoading(false);
+          }
+        });
       } else if (!newId) {
         currentUserId = null;
         setRoles([]);
         setRolesLoading(false);
+        if (isFirstLoad) {
+          isFirstLoad = false;
+          setLoading(false);
+        }
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        currentUserId = s.user.id;
+        setRolesLoading(true);
+        loadRoles(s.user.id).finally(() => {
+          isFirstLoad = false;
+          setLoading(false);
+        });
+      } else {
+        isFirstLoad = false;
+        setLoading(false);
       }
     });
 
