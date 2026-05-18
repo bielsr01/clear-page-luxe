@@ -358,8 +358,9 @@ export default function RestaurantPublic() {
         const open = isOpenNow(restaurant.opening_hours, restaurant.manual_override);
         return (
           <div className="container pb-4">
-            <div className="flex items-start gap-3 -mt-10 sm:-mt-12">
-              <div className="relative shrink-0 mx-0 my-[19px] py-0 mr-0 mb-0 px-0 ml-0 mt-[20px]">
+            <div className="flex items-start gap-3 -mt-10 sm:-mt-12 -ml-2 sm:-ml-3">
+              <div className="relative shrink-0 mt-[20px]">
+
                 {restaurant.logo_url ? (
                   <img
                     src={restaurant.logo_url}
@@ -377,7 +378,7 @@ export default function RestaurantPublic() {
               </div>
               <div className="flex-1 min-w-0 pt-10 sm:pt-12">
                 <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words">{restaurant.name}</h1>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <div className="flex items-center gap-2 mt-1 flex-nowrap">
                   {cityLine && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
                       <MapPin className="w-4 h-4 shrink-0" />
@@ -386,11 +387,12 @@ export default function RestaurantPublic() {
                   )}
                   <Sheet>
                     <SheetTrigger asChild>
-                      <button className="text-sm font-semibold text-primary hover:underline">Saiba mais</button>
+                      <button className="text-sm font-semibold text-primary hover:underline whitespace-nowrap shrink-0">Saiba mais</button>
                     </SheetTrigger>
                     <InfoSheetContent restaurant={restaurant} addressLine={addressLine} timeLabel={timeLabel} />
                   </Sheet>
                 </div>
+
               </div>
             </div>
           </div>
