@@ -2453,6 +2453,10 @@ export type Database = {
         Returns: undefined
       }
       credit_loyalty_points: { Args: { _tx_id: string }; Returns: undefined }
+      find_or_create_loyalty_member: {
+        Args: { _name: string; _phone: string; _restaurant_id: string }
+        Returns: string
+      }
       get_restaurant_popup_config: {
         Args: { _restaurant_id: string }
         Returns: {
@@ -2474,6 +2478,15 @@ export type Database = {
       }
       normalize_br_phone: { Args: { _phone: string }; Returns: string }
       recompute_order_stock: { Args: { _order_id: string }; Returns: undefined }
+      record_loyalty_earn: {
+        Args: {
+          _member_id: string
+          _order_id: string
+          _points: number
+          _restaurant_id: string
+        }
+        Returns: string
+      }
       redeem_loyalty_points: {
         Args: { _member_id: string; _restaurant_id: string; _reward_id: string }
         Returns: string
