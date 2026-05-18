@@ -12,6 +12,16 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        auth: path.resolve(__dirname, "auth/index.html"),
+        admin: path.resolve(__dirname, "admin/index.html"),
+        dashboard: path.resolve(__dirname, "dashboard/index.html"),
+      },
+    },
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
