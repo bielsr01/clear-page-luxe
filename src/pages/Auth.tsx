@@ -31,6 +31,7 @@ export default function Auth() {
     if (!loading && !rolesLoading && user) {
       if (isMasterAdmin) navigate("/admin", { replace: true });
       else if (isManager) navigate("/dashboard", { replace: true });
+      else navigate("/", { replace: true });
     }
   }, [user, isMasterAdmin, isManager, loading, rolesLoading, navigate]);
 

@@ -28,16 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadRoles = async (userId: string) => {
     setRolesLoading(true);
     try {
-      const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-      if (error) {
-        console.error("Error loading roles:", error);
-        setRoles([]);
-      } else {
-        setRoles((data?.map((r) => r.role) as AppRole[]) ?? []);
-      }
-    } catch (err) {
-      console.error("Exception loading roles:", err);
-      setRoles([]);
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      setRoles((data?.map((r) => r.role) as AppRole[]) ?? []);
     } finally {
       setRolesLoading(false);
     }
@@ -45,30 +37,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let currentUserId: string | null = null;
-    let isFirstLoad = true;
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       const newId = newSession?.user?.id ?? null;
-      
+      // Only (re)load roles when the user identity actually changes.
+      // Avoids unmounting the app on TOKEN_REFRESHED when switching browser tabs.
       if (newId && newId !== currentUserId) {
         currentUserId = newId;
-        if (!isFirstLoad) setRolesLoading(true);
-        loadRoles(newId).finally(() => {
-          if (isFirstLoad) {
-            isFirstLoad = false;
-            setLoading(false);
-          }
-        });
+        setRolesLoading(true);
+        setTimeout(() => loadRoles(newId), 0);
       } else if (!newId) {
         currentUserId = null;
         setRoles([]);
         setRolesLoading(false);
-        if (isFirstLoad) {
-          isFirstLoad = false;
-          setLoading(false);
-        }
       }
     });
 
@@ -78,12 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         currentUserId = s.user.id;
         setRolesLoading(true);
-        loadRoles(s.user.id).finally(() => {
-          isFirstLoad = false;
-          setLoading(false);
-        });
+        loadRoles(s.user.id).finally(() => setLoading(false));
       } else {
-        isFirstLoad = false;
         setLoading(false);
       }
     });
