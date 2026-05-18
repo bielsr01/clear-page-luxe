@@ -302,7 +302,7 @@ export default function RestaurantPublic() {
       <div className="min-h-screen pb-24">
         <header className="bg-gradient-warm">
           <div className="container py-8 flex items-center gap-4">
-            <Skeleton className="w-20 h-20 rounded-2xl" />
+            <Skeleton className="w-20 h-20 rounded-full" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-8 w-64" />
               <Skeleton className="h-4 w-80" />
