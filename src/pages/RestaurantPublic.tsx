@@ -358,8 +358,9 @@ export default function RestaurantPublic() {
         const open = isOpenNow(restaurant.opening_hours, restaurant.manual_override);
         return (
           <div className="container pb-4">
-            <div className="flex items-start gap-3 -mt-10 sm:-mt-12">
-              <div className="relative shrink-0 mx-0 my-[19px] py-0 mr-0 mb-0 px-0 ml-0 mt-[20px]">
+            <div className="flex items-start gap-3 -mt-10 sm:-mt-12 -ml-2 sm:-ml-3">
+              <div className="relative shrink-0 mt-[20px]">
+
                 {restaurant.logo_url ? (
                   <img
                     src={restaurant.logo_url}
