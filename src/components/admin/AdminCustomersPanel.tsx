@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Users, Filter, X } from "lucide-react";
+import { Search, Users, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { unmaskPhone } from "@/lib/format";
 import { RestaurantMultiSelect, useRestaurants } from "./RestaurantMultiSelect";
 import { Badge } from "@/components/ui/badge";
@@ -69,19 +69,32 @@ export function AdminCustomersPanel() {
   const [search, setSearch] = useState("");
   const [typeFilters, setTypeFilters] = useState<Set<ClientType>>(new Set());
   const [statusFilters, setStatusFilters] = useState<Set<ClientStatus>>(new Set());
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 30;
   const idsKey = selected.slice().sort().join(",");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-customers", idsKey],
     enabled: selected.length > 0,
     queryFn: async () => {
-      const { data } = await sb
-        .from("customers")
-        .select("id, restaurant_id, name, phone, orders_count, last_order_at, created_at")
-        .in("restaurant_id", selected)
-        .order("created_at", { ascending: false })
-        .limit(1000);
-      return (data ?? []) as any[];
+      const CHUNK = 1000;
+      const all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await sb
+          .from("customers")
+          .select("id, restaurant_id, name, phone, orders_count, last_order_at, created_at")
+          .in("restaurant_id", selected)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
+          .range(from, from + CHUNK - 1);
+        if (error) throw error;
+        const rows = data ?? [];
+        all.push(...rows);
+        if (rows.length < CHUNK) break;
+        from += CHUNK;
+      }
+      return all;
     },
   });
 
@@ -91,7 +104,7 @@ export function AdminCustomersPanel() {
     return m;
   }, [all]);
 
-  const filtered = (data ?? []).filter((c) => {
+  const filtered = useMemo(() => (data ?? []).filter((c) => {
     if (search.trim()) {
       const q = search.toLowerCase();
       if (!(c.name?.toLowerCase().includes(q) || unmaskPhone(c.phone || "").includes(unmaskPhone(search)))) return false;
@@ -105,7 +118,18 @@ export function AdminCustomersPanel() {
       if (!s || !statusFilters.has(s)) return false;
     }
     return true;
-  });
+  }), [data, search, typeFilters, statusFilters]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  );
+  const rangeStart = filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, filtered.length);
+
+  useMemo(() => { setPage(1); }, [idsKey, search, typeFilters, statusFilters]);
+  useMemo(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
   const toggleType = (t: ClientType) => {
     const n = new Set(typeFilters);
@@ -215,7 +239,7 @@ export function AdminCustomersPanel() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map((c) => {
+                    {paginated.map((c) => {
                       const t = getClientType(c.orders_count);
                       const s = getClientStatus(c.last_order_at);
                       return (
@@ -236,7 +260,7 @@ export function AdminCustomersPanel() {
               </div>
 
               <div className="md:hidden space-y-2">
-                {filtered.map((c) => {
+                {paginated.map((c) => {
                   const t = getClientType(c.orders_count);
                   const s = getClientStatus(c.last_order_at);
                   return (
@@ -264,7 +288,22 @@ export function AdminCustomersPanel() {
             </>
           )}
 
-          <div className="text-xs text-muted-foreground">Total: <strong>{filtered.length}</strong> cliente(s)</div>
+          {filtered.length > 0 && (
+            <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+              <div className="text-xs text-muted-foreground">
+                Mostrando {rangeStart}–{rangeEnd} de {filtered.length} cliente(s)
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                  <ChevronLeft className="w-4 h-4" /> Anterior
+                </Button>
+                <span className="text-sm tabular-nums">Página {page} de {totalPages}</span>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                  Próxima <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
