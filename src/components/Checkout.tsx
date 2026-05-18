@@ -648,7 +648,7 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
       } catch (_) {}
     }
 
-    // Programa de fidelidade — cria/atualiza membro e cria transação pendente
+    // Programa de fidelidade — cria/atualiza membro e cria transação pendente via RPC (SECURITY DEFINER)
     let earnedPoints = 0;
     if (loyaltyEnabled && loyaltyOptIn) {
       try {
@@ -656,39 +656,17 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
         const phoneFmt = normalizeBrPhone(phone);
         earnedPoints = Math.floor(Number(subtotal) * Number(loyaltyPointsPerReal || 0));
         const sb = supabase as any;
-        const { data: existing } = await sb
-          .from("loyalty_members")
-          .select("id")
-          .eq("restaurant_id", restaurant.id)
-          .eq("phone", phoneFmt)
-          .maybeSingle();
-        let memberId = existing?.id as string | undefined;
-        if (!memberId) {
-          const { data: created, error: insErr } = await sb
-            .from("loyalty_members")
-            .insert({ restaurant_id: restaurant.id, name: name.trim(), phone: phoneFmt, points: 0 })
-            .select("id")
-            .single();
-          if (insErr && (insErr.code === "23505" || /duplicate/i.test(insErr.message ?? ""))) {
-            const { data: again } = await sb
-              .from("loyalty_members")
-              .select("id")
-              .eq("restaurant_id", restaurant.id)
-              .eq("phone", phoneFmt)
-              .maybeSingle();
-            memberId = again?.id;
-          } else {
-            memberId = created?.id;
-          }
-        }
+        const { data: memberId } = await sb.rpc("find_or_create_loyalty_member", {
+          _restaurant_id: restaurant.id,
+          _name: name.trim(),
+          _phone: phoneFmt,
+        });
         if (memberId && earnedPoints > 0) {
-          await sb.from("loyalty_transactions").insert({
-            restaurant_id: restaurant.id,
-            member_id: memberId,
-            order_id: order.id,
-            points: earnedPoints,
-            type: "earn",
-            status: "pending",
+          await sb.rpc("record_loyalty_earn", {
+            _restaurant_id: restaurant.id,
+            _member_id: memberId,
+            _order_id: order.id,
+            _points: earnedPoints,
           });
         }
       } catch (_) {}
