@@ -313,7 +313,7 @@ export function BulkCampaignsPanel({
           open={!!editing}
           onOpenChange={(o) => !o && setEditing(null)}
           scope={scope}
-          restaurantIds={[editing.restaurant_id]}
+          restaurantIds={scope === "admin" && editing.is_admin ? (filterIds.length > 0 ? filterIds : allRest.map((r) => r.id)) : [editing.restaurant_id]}
           allRest={allRest}
           campaign={editing}
           onSaved={() => qc.invalidateQueries({ queryKey: ["bulk-campaigns"] })}
@@ -400,11 +400,23 @@ function CampaignDialog({
     queryKey: ["bulk-recipients", campaign?.id],
     enabled: open && isEdit,
     queryFn: async () => {
-      const { data } = await sb.from("bulk_campaign_recipients")
-        .select("id, customer_id, name, phone, status, error, sent_at")
-        .eq("campaign_id", campaign.id)
-        .order("created_at", { ascending: true });
-      return data ?? [];
+      const CHUNK = 1000;
+      const all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await sb.from("bulk_campaign_recipients")
+          .select("id, customer_id, name, phone, status, error, sent_at")
+          .eq("campaign_id", campaign.id)
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, from + CHUNK - 1);
+        if (error) throw error;
+        const rows = data ?? [];
+        all.push(...rows);
+        if (rows.length < CHUNK) break;
+        from += CHUNK;
+      }
+      return all;
     },
   });
 
