@@ -1,12 +1,12 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import App from "../App";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/$")({
   ssr: false,
-  component: SpaIndex,
+  component: SpaCatchAll,
 });
 
-function SpaIndex() {
+function SpaCatchAll() {
   return (
     <ClientOnly
       fallback={
