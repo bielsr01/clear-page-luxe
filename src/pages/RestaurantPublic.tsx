@@ -302,7 +302,7 @@ export default function RestaurantPublic() {
       <div className="min-h-screen pb-24">
         <header className="bg-gradient-warm">
           <div className="container py-8 flex items-center gap-4">
-            <Skeleton className="w-20 h-20 rounded-2xl" />
+            <Skeleton className="w-20 h-20 rounded-full" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-8 w-64" />
               <Skeleton className="h-4 w-80" />
@@ -350,10 +350,10 @@ export default function RestaurantPublic() {
               <img
                 src={restaurant.logo_url}
                 alt={restaurant.name}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-background shadow-lg bg-background"
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-background shadow-lg bg-background"
               />
             ) : (
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-primary text-primary-foreground grid place-items-center text-3xl font-bold border-4 border-background shadow-lg">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-primary text-primary-foreground grid place-items-center text-3xl font-bold border-4 border-background shadow-lg">
                 {restaurant.name[0]}
               </div>
             )}
