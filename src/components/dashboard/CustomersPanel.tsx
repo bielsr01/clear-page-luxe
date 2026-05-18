@@ -115,14 +115,23 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ["customers", restaurantId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("customers" as any)
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("created_at", { ascending: false })
-        .range(0, 9999);
-      if (error) throw error;
-      return (data ?? []) as unknown as Customer[];
+      const CHUNK = 1000;
+      const all: Customer[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("customers" as any)
+          .select("*")
+          .eq("restaurant_id", restaurantId)
+          .order("created_at", { ascending: false })
+          .range(from, from + CHUNK - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as unknown as Customer[];
+        all.push(...rows);
+        if (rows.length < CHUNK) break;
+        from += CHUNK;
+      }
+      return all;
     },
   });
 
