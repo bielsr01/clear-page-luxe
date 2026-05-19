@@ -323,7 +323,7 @@ export function OrderHistoryDialog({
                       </div>
                       <div className="text-right font-semibold">{brl(Number(o.total))}</div>
                       <div className="text-right">
-                        <Button size="icon" variant="ghost" onClick={() => setDetailsTarget(o)} title="Ver detalhes">
+                        <Button size="icon" variant="ghost" onClick={() => setDetailsId(o.id)} title="Ver detalhes">
                           <Eye className="w-4 h-4" />
                         </Button>
                       </div>
