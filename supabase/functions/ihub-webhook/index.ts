@@ -188,6 +188,11 @@ async function handlePlaced(integration: any, ev: IHubEvent) {
   const lat = addr?.coordinates?.latitude ?? addr?.latitude ?? null;
   const lng = addr?.coordinates?.longitude ?? addr?.longitude ?? null;
 
+  // Usa o displayId do iFood como número do pedido interno
+  const displayIdRaw = od.displayId ?? null;
+  const displayIdNum = displayIdRaw != null ? parseInt(String(displayIdRaw).replace(/\D/g, ""), 10) : NaN;
+  const orderNumberFromIfood = Number.isFinite(displayIdNum) && displayIdNum > 0 ? displayIdNum : null;
+
   const { data, error } = await supabase
     .from("orders")
     .insert({
@@ -218,6 +223,7 @@ async function handlePlaced(integration: any, ev: IHubEvent) {
       external_display_id: od.displayId ?? null,
       ifood_subsidy: ifoodSubsidy,
       merchant_subsidy: merchantSubsidy,
+      ...(orderNumberFromIfood ? { order_number: orderNumberFromIfood } : {}),
     })
     .select("id")
     .single();
