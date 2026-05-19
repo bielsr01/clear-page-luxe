@@ -199,7 +199,13 @@ export function AdminMenuClonerDialog({ destRestaurantId, open, onOpenChange }: 
 
         const links = pogs.filter((po) => po.product_id === p.id);
         const linkRows = links
-          .map((l) => ({ product_id: data.id, group_id: grpMap.get(l.group_id), sort_order: l.sort_order }))
+          .map((l) => ({
+            product_id: data.id,
+            group_id: grpMap.get(l.group_id),
+            sort_order: l.sort_order,
+            min_select_override: l.min_select_override,
+            max_select_override: l.max_select_override,
+          }))
           .filter((l) => !!l.group_id);
         if (linkRows.length) {
           const { error: pe } = await sb.from("product_option_groups").insert(linkRows);
