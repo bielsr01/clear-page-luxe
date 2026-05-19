@@ -339,7 +339,7 @@ export function OrderDetailsDialog({
                           const key = `${o.item_name}|${Number(o.extra_price ?? 0)}`;
                           let agg = g.items.find((x) => x.key === key);
                           if (!agg) {
-                            agg = { key, name: opt_safe(o.item_name), qty: 0, extra: Number(o.extra_price ?? 0) };
+                            agg = { key, name: o.item_name ?? "", qty: 0, extra: Number(o.extra_price ?? 0) };
                             g.items.push(agg);
                           }
                           agg.qty += 1;
