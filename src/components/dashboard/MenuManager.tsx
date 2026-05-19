@@ -37,9 +37,20 @@ export async function fetchProducts(restaurantId: string): Promise<Product[]> {
   const { data } = await supabase.from("products").select("*").eq("restaurant_id", restaurantId).order("sort_order").order("created_at");
   return (data ?? []) as Product[];
 }
-async function fetchProductGroupIds(productId: string): Promise<string[]> {
-  const { data } = await supabase.from("product_option_groups").select("group_id, sort_order").eq("product_id", productId).order("sort_order");
-  return (data ?? []).map((r: any) => r.group_id);
+export interface ProductGroupLink {
+  group_id: string;
+  min_override: number | null;
+  max_override: number | null;
+}
+async function fetchProductGroupLinks(productId: string): Promise<ProductGroupLink[]> {
+  const { data } = await supabase.from("product_option_groups")
+    .select("group_id, sort_order, min_select_override, max_select_override")
+    .eq("product_id", productId).order("sort_order");
+  return (data ?? []).map((r: any) => ({
+    group_id: r.group_id,
+    min_override: r.min_select_override,
+    max_override: r.max_select_override,
+  }));
 }
 
 type StockGroup = { id: string; name: string };
