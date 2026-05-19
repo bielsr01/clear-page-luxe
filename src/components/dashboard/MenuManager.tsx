@@ -212,9 +212,15 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
 
       // Sync product_option_groups (preserve order)
       await supabase.from("product_option_groups").delete().eq("product_id", productId);
-      if (selectedGroupIds.length) {
+      if (selectedGroups.length) {
         await supabase.from("product_option_groups").insert(
-          selectedGroupIds.map((gid, idx) => ({ product_id: productId, group_id: gid, sort_order: idx }))
+          selectedGroups.map((g, idx) => ({
+            product_id: productId,
+            group_id: g.group_id,
+            sort_order: idx,
+            min_select_override: g.min_override,
+            max_select_override: g.max_override,
+          }))
         );
       }
 
