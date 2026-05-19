@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Eye, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { brl, formatPhone, formatIfoodPhone, orderStatusLabel } from "@/lib/format";
+import { APP_TIMEZONE, brl, formatPhone, formatIfoodPhone, orderStatusLabel } from "@/lib/format";
 import { OrderDetailsDialog } from "./OrderDetailsDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
