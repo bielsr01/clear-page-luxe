@@ -63,7 +63,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-2">
           <img src={logoIcon} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
-          {!collapsed && <span className="font-bold">MesaPro Admin</span>}
+          {!collapsed && <span className="font-bold">CS Pro Admin</span>}
         </div>
       </SidebarHeader>
       <SidebarContent>

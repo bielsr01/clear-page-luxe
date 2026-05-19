@@ -123,7 +123,7 @@ export function AppSidebar({
       <SidebarHeader className="border-b">
         <div className={cn("flex items-center h-12", collapsed ? "justify-center px-0" : "gap-2 px-2") }>
           <img src={logoIcon} alt="Logo" className="rounded-lg object-cover shrink-0 w-8 h-8" />
-          {!collapsed && <span className="font-bold">MesaPro</span>}
+          {!collapsed && <span className="font-bold">CS Pro</span>}
         </div>
       </SidebarHeader>
 
