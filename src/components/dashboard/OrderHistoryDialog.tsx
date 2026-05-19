@@ -344,7 +344,7 @@ export function OrderHistoryDialog({
       <OrderDetailsDialog
         order={detailsTarget as any}
         items={detailsTarget ? (items[detailsTarget.id] ?? []) as any : []}
-        onClose={() => setDetailsTarget(null)}
+        onClose={() => setDetailsId(null)}
         onAdvance={(o) => onAdvance?.(o)}
         onCancel={(o) => onCancel?.(o)}
         onDelete={(o) => onDelete?.(o)}
