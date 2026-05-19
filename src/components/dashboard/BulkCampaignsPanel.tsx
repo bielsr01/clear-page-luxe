@@ -15,6 +15,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Send, Play, Pause, Plus, Search, Filter, X, Trash2, Users, Pencil, RotateCcw } from "lucide-react";
@@ -74,6 +77,36 @@ export function BulkCampaignsPanel({
 
   const filterIds = scope === "admin" ? adminFilter : [restaurantId!];
   const filterKey = filterIds.slice().sort().join(",");
+
+  // Per-restaurant bulk_campaigns_enabled flag
+  const { data: restEnabled } = useQuery({
+    queryKey: ["bulk-enabled", restaurantId],
+    enabled: scope === "restaurant" && !!restaurantId,
+    queryFn: async () => {
+      const { data } = await sb.from("restaurants").select("bulk_campaigns_enabled").eq("id", restaurantId).maybeSingle();
+      return (data?.bulk_campaigns_enabled ?? true) as boolean;
+    },
+  });
+  const bulkDisabled = scope === "restaurant" && restEnabled === false;
+
+  const singleAdminTarget = scope === "admin" && adminFilter.length === 1 ? adminFilter[0] : null;
+  const { data: adminTargetEnabled } = useQuery({
+    queryKey: ["bulk-enabled-admin", singleAdminTarget],
+    enabled: !!singleAdminTarget,
+    queryFn: async () => {
+      const { data } = await sb.from("restaurants").select("bulk_campaigns_enabled").eq("id", singleAdminTarget).maybeSingle();
+      return (data?.bulk_campaigns_enabled ?? true) as boolean;
+    },
+  });
+
+  const toggleRestaurantBulk = async (next: boolean) => {
+    if (!singleAdminTarget) return;
+    const { error } = await sb.from("restaurants").update({ bulk_campaigns_enabled: next }).eq("id", singleAdminTarget);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Envio em massa habilitado para o restaurante" : "Envio em massa desabilitado para o restaurante");
+    qc.invalidateQueries({ queryKey: ["bulk-enabled-admin", singleAdminTarget] });
+    qc.invalidateQueries({ queryKey: ["bulk-enabled", singleAdminTarget] });
+  };
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["bulk-campaigns", scope, filterKey],
@@ -140,12 +173,37 @@ export function BulkCampaignsPanel({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       {scope === "admin" && (
-        <Card><CardContent className="p-4">
+        <Card><CardContent className="p-4 space-y-3">
           <RestaurantMultiSelect all={allRest} selected={adminFilter} onChange={setAdminFilter} />
+          {singleAdminTarget && (
+            <div className="flex items-center justify-between gap-3 border-t pt-3">
+              <div className="text-sm">
+                <div className="font-medium">Envio em massa para este restaurante</div>
+                <div className="text-xs text-muted-foreground">Quando desativado, o restaurante vê a aba borrada com aviso. O admin continua podendo criar campanhas em nome dele.</div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-muted-foreground">{adminTargetEnabled === false ? "Desativado" : "Ativado"}</span>
+                <Switch checked={adminTargetEnabled !== false} onCheckedChange={toggleRestaurantBulk} />
+              </div>
+            </div>
+          )}
         </CardContent></Card>
       )}
+
+      {bulkDisabled && (
+        <Alert className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950/40 dark:border-yellow-900">
+          <Lock className="w-4 h-4" />
+          <AlertTitle>Função desativada</AlertTitle>
+          <AlertDescription>
+            O admin do sistema desativou o envio em massa para o seu restaurante. Caso deseje utilizá-la, solicite a ativação pelo admin.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className={bulkDisabled ? "blur-sm pointer-events-none select-none opacity-70" : ""} aria-disabled={bulkDisabled || undefined}>
+
 
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -297,6 +355,9 @@ export function BulkCampaignsPanel({
           )}
         </CardContent>
       </Card>
+      </div>
+
+
 
       {createOpen && (
         <CampaignDialog
