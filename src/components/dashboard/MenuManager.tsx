@@ -586,15 +586,16 @@ function SortableProductCard({
 }
 
 function SelectedGroupsSorter({
-  allGroups, selectedIds, onChange,
+  allGroups, selected, onChange,
 }: {
   allGroups: OptionGroup[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
+  selected: ProductGroupLink[];
+  onChange: (links: ProductGroupLink[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const groupById = new Map(allGroups.map((g) => [g.id, g]));
-  const selected = selectedIds.map((id) => groupById.get(id)).filter(Boolean) as OptionGroup[];
+  const selectedIds = selected.map((s) => s.group_id);
+  const visible = selected.filter((s) => groupById.has(s.group_id));
   const unselected = allGroups.filter((g) => !selectedIds.includes(g.id));
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -603,26 +604,35 @@ function SelectedGroupsSorter({
     const oldIdx = selectedIds.indexOf(String(active.id));
     const newIdx = selectedIds.indexOf(String(over.id));
     if (oldIdx < 0 || newIdx < 0) return;
-    onChange(arrayMove(selectedIds, oldIdx, newIdx));
+    onChange(arrayMove(selected, oldIdx, newIdx));
   };
 
-  const toggle = (id: string, checked: boolean) => {
-    if (checked) onChange([...selectedIds, id]);
-    else onChange(selectedIds.filter((x) => x !== id));
-  };
+  const add = (id: string) => onChange([...selected, { group_id: id, min_override: null, max_override: null }]);
+  const remove = (id: string) => onChange(selected.filter((s) => s.group_id !== id));
+  const updateOverride = (id: string, field: "min_override" | "max_override", value: number | null) =>
+    onChange(selected.map((s) => (s.group_id === id ? { ...s, [field]: value } : s)));
 
   return (
-    <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-2">
-      {selected.length > 0 && (
+    <div className="space-y-2 max-h-80 overflow-y-auto border rounded-md p-2">
+      {visible.length > 0 && (
         <div className="space-y-1">
           <div className="text-[10px] uppercase font-semibold text-muted-foreground px-1">
-            Selecionados (arraste para ordenar)
+            Selecionados (arraste para ordenar · ajuste mín/máx por produto)
           </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={selectedIds} strategy={verticalListSortingStrategy}>
-              {selected.map((g) => (
-                <SortableSelectedGroup key={g.id} group={g} onRemove={() => toggle(g.id, false)} />
-              ))}
+              {visible.map((link) => {
+                const g = groupById.get(link.group_id)!;
+                return (
+                  <SortableSelectedGroup
+                    key={link.group_id}
+                    group={g}
+                    link={link}
+                    onRemove={() => remove(link.group_id)}
+                    onOverride={(field, value) => updateOverride(link.group_id, field, value)}
+                  />
+                );
+              })}
             </SortableContext>
           </DndContext>
         </div>
@@ -632,7 +642,7 @@ function SelectedGroupsSorter({
           <div className="text-[10px] uppercase font-semibold text-muted-foreground px-1">Disponíveis</div>
           {unselected.map((g) => (
             <label key={g.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted px-2 py-1 rounded">
-              <input type="checkbox" checked={false} onChange={(e) => toggle(g.id, e.target.checked)} />
+              <input type="checkbox" checked={false} onChange={(e) => e.target.checked && add(g.id)} />
               <span className="flex-1">{g.name}</span>
               <span className="text-xs text-muted-foreground">mín {g.min_select} · máx {g.max_select}</span>
             </label>
@@ -643,11 +653,24 @@ function SelectedGroupsSorter({
   );
 }
 
-function SortableSelectedGroup({ group: g, onRemove }: { group: OptionGroup; onRemove: () => void }) {
+function SortableSelectedGroup({
+  group: g, link, onRemove, onOverride,
+}: {
+  group: OptionGroup;
+  link: ProductGroupLink;
+  onRemove: () => void;
+  onOverride: (field: "min_override" | "max_override", value: number | null) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: g.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const parse = (v: string): number | null => {
+    const t = v.trim();
+    if (t === "") return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 text-sm bg-muted/50 px-2 py-1 rounded">
+    <div ref={setNodeRef} style={style} className="flex flex-wrap items-center gap-2 text-sm bg-muted/50 px-2 py-1.5 rounded">
       <button
         type="button"
         className="touch-none cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
@@ -657,8 +680,23 @@ function SortableSelectedGroup({ group: g, onRemove }: { group: OptionGroup; onR
       >
         <GripVertical className="w-4 h-4" />
       </button>
-      <span className="flex-1">{g.name}</span>
-      <span className="text-xs text-muted-foreground">mín {g.min_select} · máx {g.max_select}</span>
+      <span className="flex-1 min-w-[120px]">{g.name}</span>
+      <div className="flex items-center gap-1">
+        <Label className="text-[10px] text-muted-foreground">Mín</Label>
+        <Input
+          type="number" min="0" className="h-7 w-16 text-xs"
+          placeholder={String(g.min_select)}
+          value={link.min_override ?? ""}
+          onChange={(e) => onOverride("min_override", parse(e.target.value))}
+        />
+        <Label className="text-[10px] text-muted-foreground">Máx</Label>
+        <Input
+          type="number" min="1" className="h-7 w-16 text-xs"
+          placeholder={String(g.max_select)}
+          value={link.max_override ?? ""}
+          onChange={(e) => onOverride("max_override", parse(e.target.value))}
+        />
+      </div>
       <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={onRemove}>
         <Trash2 className="w-3.5 h-3.5" />
       </Button>
