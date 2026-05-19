@@ -286,7 +286,7 @@ export function buildTicketHtml(
     <div class="row"><span>Subtotal</span><span>${brl(subtotal)}</span></div>
     ${order.order_type === "delivery" ? `<div class="row"><span>Taxa de entrega</span><span>${brl(deliveryFee)}</span></div>` : ""}
     ${serviceFee > 0 ? `<div class="row"><span>Taxa de serviço</span><span>${brl(serviceFee)}</span></div>` : ""}
-    ${discount > 0 ? `<div class="row"><span>Descontos</span><span>- ${brl(discount)}</span></div>` : ""}
+    ${discount > 0 ? `<div class="row"><span>Desconto${(order as any).coupon_code ? ` (${esc((order as any).coupon_code)})` : ""}</span><span>- ${brl(discount)}</span></div>` : ""}
     <div class="row total" style="margin-top:4px"><span>TOTAL</span><span>${brl(order.total)}</span></div>
   ` : ""}
   ${ps.payment_method ? `
