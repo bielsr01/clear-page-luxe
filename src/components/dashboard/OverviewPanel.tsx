@@ -191,8 +191,9 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   // independent of the selected preset.
   const compareWindow = useMemo(() => {
     const now = new Date();
-    const from = startOfMonth(subDays(startOfMonth(now), 1));
-    return { from, to: endOfDay(now) };
+    const monthStart = brasiliaMonthStartUTC(now);
+    const prevMonthAnchor = new Date(monthStart.getTime() - 1);
+    return { from: brasiliaMonthStartUTC(prevMonthAnchor), to: brasiliaEndOfDayUTC(now) };
   }, []);
   const compareOrdersQ = useQuery({
     queryKey: ["overview-compare", idsKey, compareWindow.from.toISOString()],
