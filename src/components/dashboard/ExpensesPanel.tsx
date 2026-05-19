@@ -328,7 +328,7 @@ export function ExpensesPanel({ restaurantId }: { restaurantId: string }) {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="font-medium truncate">{catName ?? "—"}</div>
-                          <div className="text-xs text-muted-foreground">{new Date(e.expense_date + "T00:00:00").toLocaleDateString("pt-BR")}</div>
+                          <div className="text-xs text-muted-foreground">{new Date(e.expense_date + "T12:00:00Z").toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</div>
                         </div>
                         <div className="text-right font-semibold whitespace-nowrap">{brl(Number(e.amount))}</div>
                       </div>
@@ -372,7 +372,7 @@ export function ExpensesPanel({ restaurantId }: { restaurantId: string }) {
                       const showNotes = e.notes && !e.notes.startsWith("supply_order");
                       return (
                         <TableRow key={e.id}>
-                          <TableCell className="whitespace-nowrap">{new Date(e.expense_date + "T00:00:00").toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell className="whitespace-nowrap">{new Date(e.expense_date + "T12:00:00Z").toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}</TableCell>
                           <TableCell className="font-medium">{catName ?? "—"}</TableCell>
                           <TableCell>
                             {hasDistinctDesc ? <div>{e.description}</div> : <span className="text-muted-foreground">—</span>}
