@@ -115,8 +115,10 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
 
   const range = useMemo(() => rangeFor(preset, custom), [preset, custom]);
   const prevRange = useMemo(() => {
-    const days = differenceInCalendarDays(range.to, range.from) + 1;
-    return { from: startOfDay(subDays(range.from, days)), to: endOfDay(subDays(range.to, days)) };
+    const days = Math.round((range.to.getTime() - range.from.getTime()) / 86_400_000);
+    const from = new Date(range.from.getTime() - days * 86_400_000);
+    const to = new Date(range.to.getTime() - days * 86_400_000);
+    return { from, to };
   }, [range]);
 
   const ordersQ = useQuery({
