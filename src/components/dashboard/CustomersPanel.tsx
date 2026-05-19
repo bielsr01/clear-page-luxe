@@ -123,6 +123,7 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
           .from("customers" as any)
           .select("*")
           .eq("restaurant_id", restaurantId)
+          .order("last_order_at", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
           .order("id", { ascending: true })
           .range(from, from + CHUNK - 1);
