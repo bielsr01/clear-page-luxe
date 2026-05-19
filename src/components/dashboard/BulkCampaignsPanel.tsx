@@ -710,7 +710,7 @@ function CampaignDialog({
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Filter className="w-4 h-4 mr-1" /> Filtros
-                    {(typeFilters.size + statusFilters.size + restaurantFilters.size + (lStart ? 1 : 0) + (dFrom !== null || dTo !== null ? 1 : 0)) > 0 && <Badge variant="secondary" className="ml-2">{typeFilters.size + statusFilters.size + restaurantFilters.size + (lStart ? 1 : 0) + (dFrom !== null || dTo !== null ? 1 : 0)}</Badge>}
+                    {(() => { const n = typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length; return n > 0 && <Badge variant="secondary" className="ml-2">{n}</Badge>; })()}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 max-h-[70vh] overflow-y-auto" align="start">
