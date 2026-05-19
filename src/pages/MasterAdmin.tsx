@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 // tabs removed in favor of sidebar layout
 import { Plus, ChefHat, ExternalLink, LogOut, Store, ShoppingBag, DollarSign, Pencil, Trash2, RefreshCw, Eye, EyeOff } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 import { toast } from "sonner";
 import { z } from "zod";
 import { brl, slugify } from "@/lib/format";
@@ -205,9 +206,7 @@ export default function MasterAdmin() {
               <div className="flex items-center gap-2 min-w-0">
                 <SidebarTrigger />
                 <div className="flex items-center gap-2 font-bold min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0">
-                    <ChefHat className="w-5 h-5 text-primary-foreground" />
-                  </div>
+                  <img src={logoIcon} alt="Logo" className="w-9 h-9 rounded-lg object-cover shrink-0" />
                   <span className="hidden sm:inline">MesaPro</span>
                   <Badge variant="secondary" className="ml-0 sm:ml-2">Admin</Badge>
                 </div>

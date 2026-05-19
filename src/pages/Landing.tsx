@@ -2,6 +2,7 @@ import { Link } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChefHat, ShoppingBag, BarChart3, Smartphone, Zap, Shield } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 
 export default function Landing() {
   const { user, isMasterAdmin, isManager } = useAuth();
@@ -11,9 +12,7 @@ export default function Landing() {
       <header className="border-b bg-background/80 backdrop-blur sticky top-0 z-40">
         <div className="container flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="w-9 h-9 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <ChefHat className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={logoIcon} alt="Logo" className="w-9 h-9 rounded-lg object-cover" />
             <span>MesaPro</span>
           </Link>
           <nav className="flex items-center gap-2">

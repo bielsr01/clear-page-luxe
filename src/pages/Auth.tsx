@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ChefHat } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 
 const signInSchema = z.object({
   email: z.string().trim().email("Email inválido").max(255),
@@ -44,9 +45,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-accent/30">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-6 font-bold text-xl">
-          <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-            <ChefHat className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={logoIcon} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
           MesaPro
         </Link>
         <Card className="shadow-elegant">
