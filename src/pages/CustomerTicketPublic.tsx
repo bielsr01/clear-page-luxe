@@ -7,6 +7,7 @@ import {
   PrintSettings,
   normalizePrintSettings,
 } from "@/components/dashboard/PrintSettings";
+import { TicketItemsBlock } from "@/components/TicketItemsBlock";
 
 export default function CustomerTicketPublic() {
   const { orderId } = useParams<{ orderId: string }>();
