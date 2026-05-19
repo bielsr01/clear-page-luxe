@@ -300,15 +300,16 @@ export function OrderHistoryDialog({
         order={detailsTarget as any}
         items={detailsTarget ? (items[detailsTarget.id] ?? []) as any : []}
         onClose={() => setDetailsTarget(null)}
-        onAdvance={() => {}}
-        onCancel={() => {}}
-        onDelete={() => {}}
-        onPrint={() => {}}
-        pending={false}
-        canChangeStatus={false}
-        canEditOrders={false}
+        onAdvance={(o) => onAdvance?.(o)}
+        onCancel={(o) => onCancel?.(o)}
+        onDelete={(o) => onDelete?.(o)}
+        onPrint={(o) => onPrint?.(o)}
+        pending={detailsTarget ? !!pendingAction?.[detailsTarget.id] : false}
+        canChangeStatus={canChangeStatus}
+        canEditOrders={canEditOrders}
         canViewFeeBreakdown={canViewFeeBreakdown}
       />
+
     </>
   );
 }
