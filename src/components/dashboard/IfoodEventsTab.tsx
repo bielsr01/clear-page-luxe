@@ -93,7 +93,7 @@ export function IfoodEventsTab({ restaurantId }: Props) {
             </div>
             {integration?.last_event_at && (
               <div className="text-xs text-muted-foreground">
-                Último evento: {new Date(integration.last_event_at).toLocaleString("pt-BR")}{" "}
+                Último evento: {new Date(integration.last_event_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}{" "}
                 {integration.last_event_code && (
                   <Badge variant="outline" className="ml-1">
                     {integration.last_event_code}
@@ -155,7 +155,7 @@ export function IfoodEventsTab({ restaurantId }: Props) {
                       )}
                       {ev.code && <Badge variant="outline">{ev.full_code ?? ev.code}</Badge>}
                       <span className="text-xs text-muted-foreground">
-                        {new Date(ev.created_at).toLocaleString("pt-BR")}
+                        {new Date(ev.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                       </span>
                     </div>
                   </div>

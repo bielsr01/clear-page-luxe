@@ -552,8 +552,8 @@ function MemberHistoryDialog({
                 <TableRow key={t.id}>
                   <TableCell className="text-xs">
                     {t.status === "credited" && t.credited_at
-                      ? new Date(t.credited_at).toLocaleString("pt-BR")
-                      : new Date(t.created_at).toLocaleString("pt-BR")}
+                      ? new Date(t.credited_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+                      : new Date(t.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </TableCell>
                   <TableCell className="font-mono">{t.orders?.order_number ? `#${t.orders.order_number}` : "—"}</TableCell>
                   <TableCell>

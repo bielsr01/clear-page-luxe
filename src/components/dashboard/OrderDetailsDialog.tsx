@@ -242,7 +242,7 @@ export function OrderDetailsDialog({
             <div className="text-sm flex items-center flex-wrap gap-3">
               <span className="inline-flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                {new Date(order.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                {new Date(order.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
               </span>
               <span className="inline-flex items-center gap-1">
                 <Phone className="w-3.5 h-3.5 text-muted-foreground" />
@@ -547,7 +547,7 @@ export function OrderDetailsDialog({
                     <span className={t.done ? "" : "text-muted-foreground"}>{t.label}</span>
                     {t.done && ts && (
                       <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                        {new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(ts).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     )}
                   </li>

@@ -193,14 +193,14 @@ export function BulkCampaignsPanel({
                             <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[c.status]}`}>{STATUS_LABEL[c.status]}</span>
                             {c.status === "running" && isAutoPaused && (
                               <div className="text-[10px] text-yellow-700 dark:text-yellow-300 mt-0.5">
-                                Pausa auto até {new Date(c.paused_until).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                                Pausa auto até {new Date(c.paused_until).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}
                               </div>
                             )}
                           </TableCell>
                           <TableCell className="text-center">{c.sent}</TableCell>
                           <TableCell className="text-center">{c.failed}</TableCell>
                           <TableCell className="text-center">{c.total}</TableCell>
-                          <TableCell>{new Date(c.created_at).toLocaleString("pt-BR")}</TableCell>
+                          <TableCell>{new Date(c.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
                               {canEdit && isAutoPaused && (
@@ -245,7 +245,7 @@ export function BulkCampaignsPanel({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="font-medium truncate">{c.name}</div>
-                          <div className="text-[11px] text-muted-foreground">{new Date(c.created_at).toLocaleString("pt-BR")}</div>
+                          <div className="text-[11px] text-muted-foreground">{new Date(c.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</div>
                         </div>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${STATUS_BADGE[c.status]}`}>{STATUS_LABEL[c.status]}</span>
                       </div>
@@ -254,7 +254,7 @@ export function BulkCampaignsPanel({
                       )}
                       {c.status === "running" && isAutoPaused && (
                         <div className="text-[10px] text-yellow-700 dark:text-yellow-300">
-                          Pausa auto até {new Date(c.paused_until).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          Pausa auto até {new Date(c.paused_until).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}
                         </div>
                       )}
                       <div className="grid grid-cols-3 gap-2 text-center text-xs border-t pt-2">

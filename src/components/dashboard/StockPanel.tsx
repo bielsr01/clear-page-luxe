@@ -204,7 +204,7 @@ function MovementList({
                   <div className="min-w-0 flex-1">
                     <div className="font-medium truncate">{groupMap[m.group_id]?.name ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">
-                      {d.title} · {new Date(m.created_at).toLocaleString("pt-BR")}
+                      {d.title} · {new Date(m.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                     </div>
                     {d.subtitle && (
                       <div className="text-xs italic text-muted-foreground line-clamp-2">{d.subtitle}</div>

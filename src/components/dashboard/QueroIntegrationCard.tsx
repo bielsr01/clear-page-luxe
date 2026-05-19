@@ -137,8 +137,8 @@ export function QueroIntegrationCard({ restaurantId }: { restaurantId: string })
 
             {data?.last_poll_at && (
               <div className="text-xs text-muted-foreground space-y-0.5 rounded-md border p-2 bg-muted/30">
-                <div>Última checagem: {new Date(data.last_poll_at).toLocaleString("pt-BR")}</div>
-                {data.last_event_at && <div>Último evento: {new Date(data.last_event_at).toLocaleString("pt-BR")} {data.last_event_code ? `— ${data.last_event_code}` : ""}</div>}
+                <div>Última checagem: {new Date(data.last_poll_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</div>
+                {data.last_event_at && <div>Último evento: {new Date(data.last_event_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} {data.last_event_code ? `— ${data.last_event_code}` : ""}</div>}
                 {data.last_status && data.last_status !== "ok" && <div className="text-destructive">Erro: {data.last_status}</div>}
               </div>
             )}
@@ -191,7 +191,7 @@ function QueroEventsViewer({ restaurantId }: { restaurantId: string }) {
                   className="w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-muted/60">
                   {isOpen ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
                   <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                    {new Date(ev.created_at).toLocaleString("pt-BR")}
+                    {new Date(ev.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </span>
                   <Badge variant={ev.processed ? "default" : ev.error ? "destructive" : "secondary"} className="text-[10px] py-0 h-4">
                     {ev.status || "?"}

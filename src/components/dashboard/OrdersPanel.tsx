@@ -592,7 +592,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               </div>
               <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 shrink-0">
                 <Clock className="w-2.5 h-2.5" />
-                {new Date(o.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                {new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
             <div className="flex items-center justify-between gap-2">
@@ -658,7 +658,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
             </div>
             <div className="text-[11px] text-muted-foreground flex items-center gap-1 shrink-0">
               <Clock className="w-3 h-3" />
-              {new Date(o.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              {new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" })}
             </div>
           </div>
 

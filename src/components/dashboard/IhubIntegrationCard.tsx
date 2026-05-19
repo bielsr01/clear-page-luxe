@@ -279,7 +279,7 @@ export function IhubIntegrationCard({ restaurantId }: { restaurantId: string }) 
 
             {data?.last_event_at && (
               <p className="text-xs text-muted-foreground">
-                Último evento: {new Date(data.last_event_at).toLocaleString("pt-BR")}
+                Último evento: {new Date(data.last_event_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                 {data.last_event_code ? ` — ${data.last_event_code}` : ""}
               </p>
             )}
@@ -343,7 +343,7 @@ function IhubEventsViewer({ restaurantId }: { restaurantId: string }) {
                 >
                   {isOpen ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
                   <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                    {new Date(ev.created_at).toLocaleString("pt-BR")}
+                    {new Date(ev.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </span>
                   <Badge variant={ev.processed ? "default" : ev.error ? "destructive" : "secondary"} className="text-[10px] py-0 h-4">
                     {ev.full_code || ev.code || "?"}

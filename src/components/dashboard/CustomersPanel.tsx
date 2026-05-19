@@ -342,7 +342,7 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
                         <TableCell>{t ? <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${TYPE_BADGE[t]}`}>{TYPE_LABELS[t]}</span> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
                         <TableCell>{s ? <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${STATUS_BADGE[s]}`}>{STATUS_LABELS[s]}</span> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
                         <TableCell className="text-center">{c.orders_count}</TableCell>
-                        <TableCell>{c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("pt-BR") : "—"}</TableCell>
+                        <TableCell>{c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             {canEdit && <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>}
@@ -378,7 +378,7 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-2">
                       <span><strong className="text-foreground">{c.orders_count}</strong> pedido(s)</span>
-                      <span>Últ.: {c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("pt-BR") : "—"}</span>
+                      <span>Últ.: {c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}</span>
                     </div>
                   </div>
                 );
