@@ -55,7 +55,6 @@ import {
   Bar,
 } from "recharts";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
 
 const sb = supabase as any;
