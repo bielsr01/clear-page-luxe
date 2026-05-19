@@ -327,13 +327,12 @@ export default function RestaurantPublic() {
       {/* Banner com foto de capa + logo à esquerda */}
       <header className="relative">
         <div className="relative w-full aspect-[16/7] sm:aspect-auto sm:h-48 md:h-56 lg:h-64 overflow-hidden bg-gradient-warm rounded-b-3xl">
-          {restaurant.cover_url && (
-            <img
-              src={restaurant.cover_url}
-              alt={`Capa ${restaurant.name}`}
-              className="absolute inset-0 w-full h-full object-cover object-center"
-            />
-          )}
+          {(() => {
+            const arr = (restaurant.cover_urls && restaurant.cover_urls.length
+              ? restaurant.cover_urls
+              : (restaurant.cover_url ? [restaurant.cover_url] : [])).filter(Boolean);
+            return arr.length > 0 ? <CoverCarousel images={arr} alt={`Capa ${restaurant.name}`} /> : null;
+          })()}
         </div>
       </header>
 
