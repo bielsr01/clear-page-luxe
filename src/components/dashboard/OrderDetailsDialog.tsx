@@ -378,7 +378,13 @@ export function OrderDetailsDialog({
                 <div className="flex justify-between"><span>Taxa de serviço:</span><span className="tabular-nums">{brl(Number(order.service_fee))}</span></div>
               )}
               {Number(order.discount ?? 0) > 0 && (
-                <div className="flex justify-between"><span>Descontos:</span><span className="tabular-nums">- {brl(Number(order.discount))}</span></div>
+                <div className="flex justify-between text-destructive">
+                  <span>Desconto{order.coupon_code ? ` (cupom ${order.coupon_code})` : ""}:</span>
+                  <span className="tabular-nums">- {brl(Number(order.discount))}</span>
+                </div>
+              )}
+              {order.coupon_code && Number(order.discount ?? 0) === 0 && (
+                <div className="flex justify-between"><span>Cupom:</span><span className="tabular-nums">{order.coupon_code}</span></div>
               )}
               <div className="border-t pt-2 mt-2 flex justify-between items-center">
                 <span className="font-semibold">Valor:</span>
