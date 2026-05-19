@@ -114,16 +114,25 @@ export function OrderHistoryDialog({
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [search, setSearch] = useState("");
-  const [detailsTarget, setDetailsTarget] = useState<Order | null>(null);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
   const { can } = usePermissions(restaurantId);
+  const qc = useQueryClient();
   const canViewFeeBreakdown = can("finance.view_fee_breakdown");
 
 
   const range = useMemo(() => rangeFor(dateKind, customFrom, customTo), [dateKind, customFrom, customTo]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["order-history", restaurantId, range.from.toISOString(), range.to.toISOString()],
+  const historyKey = useMemo(
+    () => ["order-history", restaurantId, range.from.toISOString(), range.to.toISOString()] as const,
+    [restaurantId, range.from, range.to],
+  );
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: historyKey,
     enabled: open,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data: orders } = await supabase
         .from("orders")
@@ -144,8 +153,26 @@ export function OrderHistoryDialog({
     },
   });
 
+  // Sempre que o diálogo abrir, força refetch
+  useEffect(() => {
+    if (open) refetch();
+  }, [open, refetch]);
+
+  // Realtime: invalida o histórico quando há mudança nos pedidos
+  useEffect(() => {
+    if (!open) return;
+    const ch = supabase
+      .channel(`order-history-${restaurantId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `restaurant_id=eq.${restaurantId}` }, () => {
+        qc.invalidateQueries({ queryKey: ["order-history", restaurantId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [open, restaurantId, qc]);
+
   const orders = data?.orders ?? [];
   const items = data?.items ?? {};
+  const detailsTarget = detailsId ? orders.find((o) => o.id === detailsId) ?? null : null;
 
   const channelOrders = orders.filter((o) => {
     if (channel === "all") return true;
