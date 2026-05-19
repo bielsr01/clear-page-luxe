@@ -28,6 +28,7 @@ export interface TicketOrder {
   delivery_fee?: number;
   discount?: number | null;
   service_fee?: number | null;
+  coupon_code?: string | null;
   total: number;
   created_at: string;
   external_source?: string | null;
