@@ -234,7 +234,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
       }
 
       toast.success("Produto salvo");
-      setProdOpen(false); setEditingProd(null); setSelectedGroupIds([]); setStockConsumption([]); reload();
+      setProdOpen(false); setEditingProd(null); setSelectedGroups([]); setStockConsumption([]); reload();
     } finally {
       setSavingProduct(false);
     }
@@ -270,7 +270,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
     }).select("id").single();
     if (error || !data) return toast.error(error?.message || "Erro");
     qc.invalidateQueries({ queryKey: optionKeys.groups(restaurantId) });
-    setSelectedGroupIds((prev) => [...prev, data.id]);
+    setSelectedGroups((prev) => [...prev, data.id]);
     setQuickGroupOpen(false);
     toast.success("Grupo criado. Adicione itens depois em 'Grupos de opções'.");
   };
@@ -291,7 +291,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
               </form>
             </DialogContent>
           </Dialog>}
-          {canEdit && <Dialog open={prodOpen} onOpenChange={(o) => { setProdOpen(o); if (!o) { setEditingProd(null); setSelectedGroupIds([]); setStockConsumption([]); } }}>
+          {canEdit && <Dialog open={prodOpen} onOpenChange={(o) => { setProdOpen(o); if (!o) { setEditingProd(null); setSelectedGroups([]); setStockConsumption([]); } }}>
             <DialogTrigger asChild><Button onClick={() => setDefaultCat(categories[0]?.id ?? null)} disabled={categories.length === 0}><Plus className="w-4 h-4 mr-1" />Produto</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingProd ? "Editar" : "Novo"} produto</DialogTitle></DialogHeader>
@@ -323,7 +323,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
                     <SelectedGroupsSorter
                       allGroups={groups}
                       selectedIds={selectedGroupIds}
-                      onChange={setSelectedGroupIds}
+                      onChange={setSelectedGroups}
                     />
                   )}
                 </div>
