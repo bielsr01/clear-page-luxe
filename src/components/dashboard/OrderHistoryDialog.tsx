@@ -76,7 +76,20 @@ function rangeFor(kind: DateRange, customFrom?: Date, customTo?: Date): { from: 
 
 export function OrderHistoryDialog({
   open, onOpenChange, restaurantId,
-}: { open: boolean; onOpenChange: (v: boolean) => void; restaurantId: string }) {
+  onAdvance, onCancel, onDelete, onPrint,
+  pendingAction, canChangeStatus = false, canEditOrders = false,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  restaurantId: string;
+  onAdvance?: (o: any) => void;
+  onCancel?: (o: any) => void;
+  onDelete?: (o: any) => void;
+  onPrint?: (o: any) => void;
+  pendingAction?: Record<string, boolean>;
+  canChangeStatus?: boolean;
+  canEditOrders?: boolean;
+}) {
   const [channel, setChannel] = useState<Channel>("all");
   const [status, setStatus] = useState<string>("all");
   const [dateKind, setDateKind] = useState<DateRange>("7d");
@@ -86,6 +99,7 @@ export function OrderHistoryDialog({
   const [detailsTarget, setDetailsTarget] = useState<Order | null>(null);
   const { can } = usePermissions(restaurantId);
   const canViewFeeBreakdown = can("finance.view_fee_breakdown");
+
 
   const range = useMemo(() => rangeFor(dateKind, customFrom, customTo), [dateKind, customFrom, customTo]);
 
