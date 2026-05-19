@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Eye, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { brl, formatPhone, formatIfoodPhone, orderStatusLabel } from "@/lib/format";
+import { APP_TIMEZONE, brl, formatPhone, formatIfoodPhone, orderStatusLabel } from "@/lib/format";
 import { OrderDetailsDialog } from "./OrderDetailsDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -53,25 +53,43 @@ const STATUS_FILTERS = [
   { value: "cancelled", label: "Cancelados" },
 ];
 
+/** Resolve YYYY-MM-DD components of a Date in Brasília (GMT-3, sem DST). */
+function brasiliaYMD(date: Date): { y: number; m: number; d: number } {
+  const [y, m, d] = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(date).split("-").map(Number);
+  return { y, m, d };
+}
+
+/** Início (00:00) e fim (23:59:59.999) de um dia em Brasília, em UTC. */
+function brasiliaDayBounds(date: Date): { from: Date; to: Date } {
+  const { y, m, d } = brasiliaYMD(date);
+  // Brasília = UTC-3 fixo ⇒ 00:00 BRT = 03:00 UTC
+  const from = new Date(Date.UTC(y, m - 1, d, 3, 0, 0, 0));
+  const to = new Date(Date.UTC(y, m - 1, d + 1, 2, 59, 59, 999));
+  return { from, to };
+}
+
 function rangeFor(kind: DateRange, customFrom?: Date, customTo?: Date): { from: Date; to: Date } {
-  const now = new Date();
-  const to = new Date(now); to.setHours(23, 59, 59, 999);
+  const todayBounds = brasiliaDayBounds(new Date());
   if (kind === "7d") {
-    const from = new Date(now); from.setDate(from.getDate() - 6); from.setHours(0, 0, 0, 0);
-    return { from, to };
+    const start = brasiliaDayBounds(new Date(Date.now() - 6 * 86400000));
+    return { from: start.from, to: todayBounds.to };
   }
   if (kind === "30d") {
-    const from = new Date(now); from.setDate(from.getDate() - 29); from.setHours(0, 0, 0, 0);
-    return { from, to };
+    const start = brasiliaDayBounds(new Date(Date.now() - 29 * 86400000));
+    return { from: start.from, to: todayBounds.to };
   }
   if (kind === "month") {
-    const from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    return { from, to };
+    const { y, m } = brasiliaYMD(new Date());
+    const from = new Date(Date.UTC(y, m - 1, 1, 3, 0, 0, 0));
+    return { from, to: todayBounds.to };
   }
-  return {
-    from: customFrom ?? new Date(now.getFullYear(), now.getMonth(), 1),
-    to: customTo ?? to,
-  };
+  const from = customFrom ? brasiliaDayBounds(customFrom).from
+    : new Date(Date.UTC(brasiliaYMD(new Date()).y, brasiliaYMD(new Date()).m - 1, 1, 3, 0, 0, 0));
+  const to = customTo ? brasiliaDayBounds(customTo).to : todayBounds.to;
+  return { from, to };
 }
 
 export function OrderHistoryDialog({
@@ -96,16 +114,25 @@ export function OrderHistoryDialog({
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [search, setSearch] = useState("");
-  const [detailsTarget, setDetailsTarget] = useState<Order | null>(null);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
   const { can } = usePermissions(restaurantId);
+  const qc = useQueryClient();
   const canViewFeeBreakdown = can("finance.view_fee_breakdown");
 
 
   const range = useMemo(() => rangeFor(dateKind, customFrom, customTo), [dateKind, customFrom, customTo]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["order-history", restaurantId, range.from.toISOString(), range.to.toISOString()],
+  const historyKey = useMemo(
+    () => ["order-history", restaurantId, range.from.toISOString(), range.to.toISOString()] as const,
+    [restaurantId, range.from, range.to],
+  );
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: historyKey,
     enabled: open,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data: orders } = await supabase
         .from("orders")
@@ -126,8 +153,26 @@ export function OrderHistoryDialog({
     },
   });
 
+  // Sempre que o diálogo abrir, força refetch
+  useEffect(() => {
+    if (open) refetch();
+  }, [open, refetch]);
+
+  // Realtime: invalida o histórico quando há mudança nos pedidos
+  useEffect(() => {
+    if (!open) return;
+    const ch = supabase
+      .channel(`order-history-${restaurantId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `restaurant_id=eq.${restaurantId}` }, () => {
+        qc.invalidateQueries({ queryKey: ["order-history", restaurantId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [open, restaurantId, qc]);
+
   const orders = data?.orders ?? [];
   const items = data?.items ?? {};
+  const detailsTarget = detailsId ? orders.find((o) => o.id === detailsId) ?? null : null;
 
   const channelOrders = orders.filter((o) => {
     if (channel === "all") return true;
@@ -263,8 +308,8 @@ export function OrderHistoryDialog({
                     <div key={o.id} className="grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 items-center text-sm hover:bg-accent/30">
                       <div className="font-mono">#{o.order_number}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString("pt-BR")}<br />
-                        {new Date(o.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(o.created_at).toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })}<br />
+                        {new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit" })}
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium truncate">{o.customer_name}</div>
@@ -278,7 +323,7 @@ export function OrderHistoryDialog({
                       </div>
                       <div className="text-right font-semibold">{brl(Number(o.total))}</div>
                       <div className="text-right">
-                        <Button size="icon" variant="ghost" onClick={() => setDetailsTarget(o)} title="Ver detalhes">
+                        <Button size="icon" variant="ghost" onClick={() => setDetailsId(o.id)} title="Ver detalhes">
                           <Eye className="w-4 h-4" />
                         </Button>
                       </div>
@@ -299,7 +344,7 @@ export function OrderHistoryDialog({
       <OrderDetailsDialog
         order={detailsTarget as any}
         items={detailsTarget ? (items[detailsTarget.id] ?? []) as any : []}
-        onClose={() => setDetailsTarget(null)}
+        onClose={() => setDetailsId(null)}
         onAdvance={(o) => onAdvance?.(o)}
         onCancel={(o) => onCancel?.(o)}
         onDelete={(o) => onDelete?.(o)}
