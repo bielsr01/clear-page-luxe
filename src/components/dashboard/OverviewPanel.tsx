@@ -76,15 +76,21 @@ const presets: { id: Preset; label: string }[] = [
 function rangeFor(preset: Preset, custom?: DateRange): { from: Date; to: Date } {
   const now = new Date();
   switch (preset) {
-    case "today": return { from: startOfDay(now), to: endOfDay(now) };
-    case "yesterday": { const y = subDays(now, 1); return { from: startOfDay(y), to: endOfDay(y) }; }
-    case "7d": return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
-    case "30d": return { from: startOfDay(subDays(now, 29)), to: endOfDay(now) };
-    case "month": return { from: startOfMonth(now), to: endOfMonth(now) };
-    case "lastmonth": { const lm = subDays(startOfMonth(now), 1); return { from: startOfMonth(lm), to: endOfMonth(lm) }; }
+    case "today": return { from: brasiliaStartOfDayUTC(now), to: brasiliaEndOfDayUTC(now) };
+    case "yesterday": {
+      const y = brasiliaAddDaysUTC(now, -1);
+      return { from: y, to: new Date(y.getTime() + 86_400_000 - 1) };
+    }
+    case "7d": return { from: brasiliaAddDaysUTC(now, -6), to: brasiliaEndOfDayUTC(now) };
+    case "30d": return { from: brasiliaAddDaysUTC(now, -29), to: brasiliaEndOfDayUTC(now) };
+    case "month": return { from: brasiliaMonthStartUTC(now), to: brasiliaMonthEndUTC(now) };
+    case "lastmonth": {
+      const lm = new Date(brasiliaMonthStartUTC(now).getTime() - 1);
+      return { from: brasiliaMonthStartUTC(lm), to: brasiliaMonthEndUTC(lm) };
+    }
     case "custom":
-      if (custom?.from && custom?.to) return { from: startOfDay(custom.from), to: endOfDay(custom.to) };
-      return { from: startOfDay(now), to: endOfDay(now) };
+      if (custom?.from && custom?.to) return { from: brasiliaStartOfDayUTC(custom.from), to: brasiliaEndOfDayUTC(custom.to) };
+      return { from: brasiliaStartOfDayUTC(now), to: brasiliaEndOfDayUTC(now) };
   }
 }
 
