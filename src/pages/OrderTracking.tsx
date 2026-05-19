@@ -26,6 +26,7 @@ export default function OrderTracking() {
   const { token } = useParams<{ token: string }>();
   const [order, setOrder] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
   const [restaurant, setRestaurant] = useState<any | null>(null);
 
   const load = async () => {
@@ -36,8 +37,18 @@ export default function OrderTracking() {
       supabase.from("order_items").select("*").eq("order_id", o.id),
       supabase.from("restaurants").select("name,slug,logo_url,address_street,address_number,address_complement,address_neighborhood,address_city,address_state,address_cep,phone").eq("id", o.restaurant_id).maybeSingle(),
     ]);
-    setItems(its ?? []);
+    const itemList = its ?? [];
+    setItems(itemList);
     setRestaurant(r);
+    if (itemList.length) {
+      const { data: opts } = await supabase
+        .from("order_item_options")
+        .select("order_item_id,group_name,item_name,extra_price")
+        .in("order_item_id", itemList.map((i: any) => i.id));
+      setOptions(opts ?? []);
+    } else {
+      setOptions([]);
+    }
   };
 
   useEffect(() => {
