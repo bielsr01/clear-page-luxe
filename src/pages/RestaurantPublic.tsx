@@ -18,6 +18,7 @@ import { CouponsBanner } from "@/components/CouponsBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isOpenNow, ManualOverride, DAY_LABELS } from "@/lib/hours";
 import { toast } from "sonner";
+import { CoverCarousel } from "@/components/CoverCarousel";
 
 interface Restaurant { id: string; name: string; slug: string; description: string | null; logo_url: string | null; cover_url: string | null; cover_urls: string[] | null; is_open: boolean; phone: string | null; opening_hours: any; latitude: number | null; longitude: number | null; delivery_zones: any; manual_override: ManualOverride; address_cep: string | null; address_street: string | null; address_number: string | null; address_complement: string | null; address_neighborhood: string | null; address_city: string | null; address_state: string | null; delivery_time_min: number | null; delivery_time_max: number | null; whatsapp_url: string | null; instagram_url: string | null; facebook_url: string | null; service_delivery: boolean | null; service_pickup: boolean | null; }
 interface Category { id: string; name: string; sort_order: number; }
