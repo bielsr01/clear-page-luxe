@@ -61,8 +61,15 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <img src={logoIcon} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+        <div className={`flex items-center h-12 ${collapsed ? "justify-center px-0" : "gap-2 px-2"}`}>
+          <img
+            src={logoIcon}
+            alt="Logo"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-lg object-contain shrink-0"
+            style={{ imageRendering: "auto" }}
+          />
           {!collapsed && <span className="font-bold">CS Pro Admin</span>}
         </div>
       </SidebarHeader>
