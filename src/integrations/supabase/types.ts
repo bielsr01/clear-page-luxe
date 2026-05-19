@@ -1979,6 +1979,7 @@ export type Database = {
           address_state: string | null
           address_street: string | null
           cover_url: string | null
+          cover_urls: Json
           created_at: string
           delivery_fee_mode: string
           delivery_fixed_fee: number
@@ -2017,6 +2018,7 @@ export type Database = {
           address_state?: string | null
           address_street?: string | null
           cover_url?: string | null
+          cover_urls?: Json
           created_at?: string
           delivery_fee_mode?: string
           delivery_fixed_fee?: number
@@ -2055,6 +2057,7 @@ export type Database = {
           address_state?: string | null
           address_street?: string | null
           cover_url?: string | null
+          cover_urls?: Json
           created_at?: string
           delivery_fee_mode?: string
           delivery_fixed_fee?: number

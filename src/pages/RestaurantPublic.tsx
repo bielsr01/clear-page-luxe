@@ -18,8 +18,9 @@ import { CouponsBanner } from "@/components/CouponsBanner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isOpenNow, ManualOverride, DAY_LABELS } from "@/lib/hours";
 import { toast } from "sonner";
+import { CoverCarousel } from "@/components/CoverCarousel";
 
-interface Restaurant { id: string; name: string; slug: string; description: string | null; logo_url: string | null; cover_url: string | null; is_open: boolean; phone: string | null; opening_hours: any; latitude: number | null; longitude: number | null; delivery_zones: any; manual_override: ManualOverride; address_cep: string | null; address_street: string | null; address_number: string | null; address_complement: string | null; address_neighborhood: string | null; address_city: string | null; address_state: string | null; delivery_time_min: number | null; delivery_time_max: number | null; whatsapp_url: string | null; instagram_url: string | null; facebook_url: string | null; service_delivery: boolean | null; service_pickup: boolean | null; }
+interface Restaurant { id: string; name: string; slug: string; description: string | null; logo_url: string | null; cover_url: string | null; cover_urls: string[] | null; is_open: boolean; phone: string | null; opening_hours: any; latitude: number | null; longitude: number | null; delivery_zones: any; manual_override: ManualOverride; address_cep: string | null; address_street: string | null; address_number: string | null; address_complement: string | null; address_neighborhood: string | null; address_city: string | null; address_state: string | null; delivery_time_min: number | null; delivery_time_max: number | null; whatsapp_url: string | null; instagram_url: string | null; facebook_url: string | null; service_delivery: boolean | null; service_pickup: boolean | null; }
 interface Category { id: string; name: string; sort_order: number; }
 interface Product { id: string; name: string; description: string | null; price: number; image_url: string | null; category_id: string | null; }
 interface OptionGroup { id: string; name: string; min_select: number; max_select: number; sort_order: number; allow_repeat?: boolean; items: { id: string; name: string; extra_price: number; image_url?: string | null }[]; }
@@ -326,13 +327,12 @@ export default function RestaurantPublic() {
       {/* Banner com foto de capa + logo à esquerda */}
       <header className="relative">
         <div className="relative w-full aspect-[16/7] sm:aspect-auto sm:h-48 md:h-56 lg:h-64 overflow-hidden bg-gradient-warm rounded-b-3xl">
-          {restaurant.cover_url && (
-            <img
-              src={restaurant.cover_url}
-              alt={`Capa ${restaurant.name}`}
-              className="absolute inset-0 w-full h-full object-cover object-center"
-            />
-          )}
+          {(() => {
+            const arr = (restaurant.cover_urls && restaurant.cover_urls.length
+              ? restaurant.cover_urls
+              : (restaurant.cover_url ? [restaurant.cover_url] : [])).filter(Boolean);
+            return arr.length > 0 ? <CoverCarousel images={arr} alt={`Capa ${restaurant.name}`} /> : null;
+          })()}
         </div>
       </header>
 

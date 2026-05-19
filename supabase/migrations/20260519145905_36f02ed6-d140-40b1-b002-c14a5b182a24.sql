@@ -1,0 +1,2 @@
+alter table public.restaurants add column if not exists cover_urls jsonb not null default '[]'::jsonb;
+update public.restaurants set cover_urls = jsonb_build_array(cover_url) where (cover_urls is null or cover_urls = '[]'::jsonb) and cover_url is not null and cover_url <> '';

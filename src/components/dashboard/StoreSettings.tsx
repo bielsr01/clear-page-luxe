@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, Plus, MapPin, Loader2, Crop } from "lucide-react";
+import { Trash2, Plus, MapPin, Loader2, Crop, X } from "lucide-react";
 import { toast } from "sonner";
 import { DAY_LABELS, defaultHours, OpeningHours } from "@/lib/hours";
 import { DeliveryZone, geocodeAddress } from "@/lib/delivery";
@@ -20,6 +20,7 @@ type Restaurant = {
   id: string; name: string; slug: string;
   description?: string | null; phone?: string | null; logo_url?: string | null;
   cover_url?: string | null;
+  cover_urls?: string[] | null;
   opening_hours?: OpeningHours | null;
   address_cep?: string | null; address_street?: string | null; address_number?: string | null;
   address_complement?: string | null; address_neighborhood?: string | null;
@@ -45,11 +46,13 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [geocoding, setGeocoding] = useState(false);
 
-  // Cropper de capa
+  // Cropper de capa — suporta múltiplas fotos
+  type CoverItem = { id: string; saved?: string; blob?: Blob; preview: string };
+  const [covers, setCovers] = useState<CoverItem[]>([]);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
-  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  // null = novo item; string = id de item existente sendo recortado
+  const [cropperTargetId, setCropperTargetId] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   const onCoverFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,8 +60,8 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
     if (!file) return;
     const url = URL.createObjectURL(file);
     setCropperSrc(url);
+    setCropperTargetId(null);
     setCropperOpen(true);
-    // Permite reescolher o mesmo arquivo depois
     e.target.value = "";
   };
 
@@ -72,6 +75,10 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
         const oh = data.opening_hours as unknown as OpeningHours | null;
         setHours(oh && Object.keys(oh).length ? oh : defaultHours());
         setZones(((data.delivery_zones as unknown) ?? []) as DeliveryZone[]);
+        const arr = Array.isArray((data as any).cover_urls) ? ((data as any).cover_urls as string[]) : [];
+        const initial = (arr.length ? arr : (data.cover_url ? [data.cover_url as string] : []))
+          .filter((u) => typeof u === "string" && u);
+        setCovers(initial.map((u) => ({ id: crypto.randomUUID(), saved: u, preview: u })));
       }
       setLoaded(true);
     })();
@@ -165,15 +172,23 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
       return toast.error("Envie a logo da loja");
     }
 
-    let cover_url: string | null | undefined;
-    if (coverBlob) {
-      try {
-        cover_url = await uploadToR2(coverBlob, `menu-images/${restaurant.id}`, `cover-${Date.now()}.jpg`);
-      } catch (e: any) { setBusy(false); return toast.error(e.message || "Falha no upload da capa"); }
-    }
-    if (!cover_url && !full.cover_url) {
+    if (covers.length === 0) {
       setBusy(false);
-      return toast.error("Envie a foto de capa da loja");
+      return toast.error("Envie ao menos uma foto de capa da loja");
+    }
+    let finalCoverUrls: string[] = [];
+    try {
+      finalCoverUrls = await Promise.all(
+        covers.map(async (c) => {
+          if (c.blob) {
+            return await uploadToR2(c.blob, `menu-images/${restaurant.id}`, `cover-${Date.now()}-${Math.random().toString(36).slice(2,8)}.jpg`);
+          }
+          return c.saved!;
+        })
+      );
+    } catch (e: any) {
+      setBusy(false);
+      return toast.error(e.message || "Falha no upload da capa");
     }
 
     const update: any = {
@@ -195,21 +210,24 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
       facebook_url: full.facebook_url || null,
       service_delivery: full.service_delivery ?? true,
       service_pickup: full.service_pickup ?? false,
+      cover_urls: finalCoverUrls,
+      cover_url: finalCoverUrls[0] || null,
     };
     if (logo_url !== undefined) update.logo_url = logo_url;
-    if (cover_url !== undefined) update.cover_url = cover_url;
 
     const { error } = await supabase.from("restaurants").update(update).eq("id", restaurant.id);
     setBusy(false);
     if (error) return toast.error(error.message);
-    if (cover_url) {
-      setFull((p) => ({ ...p, cover_url }));
-      setCoverBlob(null);
-      if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
-    }
+    // Atualiza estado local liberando blobs
+    setCovers((prev) => {
+      prev.forEach((c) => { if (c.blob && c.preview.startsWith("blob:")) URL.revokeObjectURL(c.preview); });
+      return finalCoverUrls.map((u) => ({ id: crypto.randomUUID(), saved: u, preview: u }));
+    });
+    setFull((p) => ({ ...p, cover_url: finalCoverUrls[0] || null, cover_urls: finalCoverUrls }));
     toast.success("Configurações salvas");
     onUpdated();
   };
+
 
   if (!loaded) {
     return (
@@ -246,13 +264,39 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
             <p className="text-xs text-muted-foreground">{full.logo_url ? "Envie um arquivo para substituir." : "Obrigatório."}</p>
           </div>
           <div className="space-y-2">
-            <Label>Foto de capa *</Label>
-            {(coverPreview || full.cover_url) && (
-              <div className="relative w-full aspect-[16/6] rounded-lg overflow-hidden border bg-muted">
-                <img src={coverPreview || full.cover_url!} alt="Capa atual" className="w-full h-full object-cover" />
-                {coverPreview && (
-                  <span className="absolute top-2 left-2 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Pré-visualização (salve para aplicar)</span>
-                )}
+            <Label>Fotos de capa *</Label>
+            {covers.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {covers.map((c, idx) => (
+                  <div key={c.id} className="relative w-full aspect-[16/6] rounded-lg overflow-hidden border bg-muted group">
+                    <img src={c.preview} alt={`Capa ${idx + 1}`} className="w-full h-full object-cover" />
+                    {!c.saved && (
+                      <span className="absolute top-2 left-2 text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Não salvo</span>
+                    )}
+                    <span className="absolute top-2 right-10 text-[10px] bg-background/80 text-foreground px-2 py-0.5 rounded-full border">{idx + 1}/{covers.length}</span>
+                    <button
+                      type="button"
+                      aria-label="Remover"
+                      onClick={() => {
+                        setCovers((prev) => {
+                          const rem = prev.find((x) => x.id === c.id);
+                          if (rem?.blob && rem.preview.startsWith("blob:")) URL.revokeObjectURL(rem.preview);
+                          return prev.filter((x) => x.id !== c.id);
+                        });
+                      }}
+                      className="absolute top-2 right-2 bg-background/90 hover:bg-destructive hover:text-destructive-foreground rounded-full w-7 h-7 grid place-items-center border shadow"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCropperSrc(c.preview); setCropperTargetId(c.id); setCropperOpen(true); }}
+                      className="absolute bottom-2 right-2 bg-background/90 hover:bg-primary hover:text-primary-foreground rounded-full px-2 py-1 text-xs border shadow flex items-center gap-1"
+                    >
+                      <Crop className="w-3.5 h-3.5" /> Recortar
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
             <input
@@ -262,26 +306,10 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
               className="hidden"
               onChange={onCoverFileChosen}
             />
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" onClick={() => coverInputRef.current?.click()} className="w-full sm:w-auto">
-                {full.cover_url || coverPreview ? "Trocar foto de capa" : "Enviar foto de capa"}
-              </Button>
-              {(coverPreview || full.cover_url) && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    const src = coverPreview || full.cover_url!;
-                    setCropperSrc(src);
-                    setCropperOpen(true);
-                  }}
-                  className="w-full sm:w-auto"
-                >
-                  <Crop className="w-4 h-4 mr-1" /> Ajustar enquadramento
-                </Button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Aparece como fundo do cabeçalho do site do cliente. Ao escolher uma imagem, abre o editor para arrastar, dar zoom e cortar exatamente como deve aparecer.</p>
+            <Button type="button" variant="outline" onClick={() => coverInputRef.current?.click()} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-1" /> Adicionar foto de capa
+            </Button>
+            <p className="text-xs text-muted-foreground">Você pode enviar uma ou mais fotos. Quando houver mais de uma, elas trocam automaticamente a cada 4s no site do cliente (também é possível arrastar). Ao adicionar uma imagem, abre o editor para arrastar, dar zoom e cortar.</p>
           </div>
           <div className="space-y-2"><Label>URL pública</Label><Input value={`/r/${restaurant.slug}`} readOnly /></div>
         </CardContent>
@@ -385,21 +413,33 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
       aspect={16 / 6}
       onCancel={() => {
         setCropperOpen(false);
-        if (cropperSrc && cropperSrc.startsWith("blob:") && cropperSrc !== coverPreview && cropperSrc !== full.cover_url) {
+        const isExistingPreview = covers.some((c) => c.preview === cropperSrc);
+        if (cropperSrc && cropperSrc.startsWith("blob:") && !isExistingPreview) {
           URL.revokeObjectURL(cropperSrc);
         }
         setCropperSrc(null);
+        setCropperTargetId(null);
       }}
       onConfirm={(blob, url) => {
-        if (coverPreview) URL.revokeObjectURL(coverPreview);
-        setCoverBlob(blob);
-        setCoverPreview(url);
+        if (cropperTargetId) {
+          // Recortando uma capa existente — substitui
+          setCovers((prev) => prev.map((c) => {
+            if (c.id !== cropperTargetId) return c;
+            if (c.blob && c.preview.startsWith("blob:")) URL.revokeObjectURL(c.preview);
+            return { id: c.id, blob, preview: url };
+          }));
+        } else {
+          // Nova foto
+          setCovers((prev) => [...prev, { id: crypto.randomUUID(), blob, preview: url }]);
+        }
         setCropperOpen(false);
-        if (cropperSrc && cropperSrc.startsWith("blob:") && cropperSrc !== url) {
+        const isExistingPreview = covers.some((c) => c.preview === cropperSrc && c.id !== cropperTargetId);
+        if (cropperSrc && cropperSrc.startsWith("blob:") && !isExistingPreview && cropperSrc !== url) {
           URL.revokeObjectURL(cropperSrc);
         }
         setCropperSrc(null);
-        toast.success("Enquadramento aplicado — clique em Salvar tudo.");
+        setCropperTargetId(null);
+        toast.success("Foto adicionada — clique em Salvar tudo para aplicar.");
       }}
     />
     </>
