@@ -3,6 +3,7 @@ import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel } from "@/lib/format";
 import { DEFAULT_PRINT_SETTINGS, PrintSettings, normalizePrintSettings } from "@/components/dashboard/PrintSettings";
+import { TicketItemsBlock } from "@/components/TicketItemsBlock";
 
 interface OrderRow {
   id: string;
@@ -177,15 +178,7 @@ export default function OrderTicket() {
         {ps.products && (
           <>
             <div className="sep" />
-            {items.map((it) => (
-              <div key={it.id} style={{ marginBottom: 4 }}>
-                <div className="row">
-                  <span className="item-name">{it.quantity}× {it.product_name}</span>
-                  {ps.prices && <span>{brl(it.unit_price * it.quantity)}</span>}
-                </div>
-                {it.notes && <div className="muted" style={{ fontSize: 11 }}>obs: {it.notes}</div>}
-              </div>
-            ))}
+            <TicketItemsBlock items={items} showPrices={!!ps.prices} />
           </>
         )}
         {ps.prices && (
