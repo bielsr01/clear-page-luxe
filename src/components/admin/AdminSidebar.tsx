@@ -1,4 +1,5 @@
 import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
   Sidebar,
@@ -61,9 +62,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0">
-            <ChefHat className="w-4 h-4 text-primary-foreground" />
-          </div>
+          <img src={logoIcon} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
           {!collapsed && <span className="font-bold">MesaPro Admin</span>}
         </div>
       </SidebarHeader>

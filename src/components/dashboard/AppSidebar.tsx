@@ -1,4 +1,5 @@
 import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck } from "lucide-react";
+import logoIcon from "@/assets/logo-icon.png";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 import { Permissions } from "@/lib/permissions";
@@ -121,9 +122,7 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className={cn("flex items-center h-12", collapsed ? "justify-center px-0" : "gap-2 px-2") }>
-          <div className="rounded-lg bg-gradient-primary flex items-center justify-center shrink-0 w-8 h-8">
-            <ChefHat className="text-primary-foreground w-4 h-4" />
-          </div>
+          <img src={logoIcon} alt="Logo" className="rounded-lg object-cover shrink-0 w-8 h-8" />
           {!collapsed && <span className="font-bold">MesaPro</span>}
         </div>
       </SidebarHeader>
