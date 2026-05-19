@@ -322,10 +322,9 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
                   ) : (
                     <SelectedGroupsSorter
                       allGroups={groups}
-                      selectedIds={selectedGroupIds}
+                      selected={selectedGroups}
                       onChange={setSelectedGroups}
-                    />
-                  )}
+                    />)}
                 </div>
 
                 <div className="space-y-2 border-t pt-3">
