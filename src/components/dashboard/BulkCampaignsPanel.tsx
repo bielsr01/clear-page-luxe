@@ -807,8 +807,8 @@ function CampaignDialog({
                         </div>
                       </div>
                     )}
-                    {(typeFilters.size + statusFilters.size + restaurantFilters.size > 0 || lStart || orderDateFrom || orderDateTo) && (
-                      <Button variant="ghost" size="sm" className="w-full" onClick={() => { setTypeFilters(new Set()); setStatusFilters(new Set()); setRestaurantFilters(new Set()); setLetterStart(""); setLetterEnd(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
+                    {(typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length) > 0 && (
+                      <Button variant="ghost" size="sm" className="w-full" onClick={() => { setTypeFilters(new Set()); setStatusFilters(new Set()); setRestaurantFilters(new Set()); setLetterRanges([]); setDateRanges([]); setLetterDraftStart(""); setLetterDraftEnd(""); setDateDraftFrom(""); setDateDraftTo(""); }}>
                         <X className="w-4 h-4 mr-1" /> Limpar filtros
                       </Button>
                     )}
