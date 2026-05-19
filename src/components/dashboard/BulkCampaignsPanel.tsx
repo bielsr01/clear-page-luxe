@@ -441,10 +441,11 @@ function CampaignDialog({
     const c = (s || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     return c.charAt(0);
   };
-  const lStart = letterStart ? letterStart.toUpperCase() : "";
-  const lEnd = letterEnd ? letterEnd.toUpperCase() : lStart;
-  const dFrom = orderDateFrom ? new Date(orderDateFrom + "T00:00:00").getTime() : null;
-  const dTo = orderDateTo ? new Date(orderDateTo + "T23:59:59").getTime() : null;
+  const letterRangesNorm = letterRanges.map(r => ({ start: r.start.toUpperCase(), end: (r.end || r.start).toUpperCase() }));
+  const dateRangesNorm = dateRanges.map(r => ({
+    from: r.from ? new Date(r.from + "T00:00:00").getTime() : null,
+    to: r.to ? new Date(r.to + "T23:59:59").getTime() : null,
+  }));
 
   const filtered = (customers ?? []).filter((c: any) => {
     if (existingCustomerIds.has(c.id)) return false;
@@ -455,15 +456,14 @@ function CampaignDialog({
     }
     if (typeFilters.size > 0 && !typeFilters.has(getClientType(c.orders_count))) return false;
     if (statusFilters.size > 0) { const s = getClientStatus(c.last_order_at); if (!s || !statusFilters.has(s)) return false; }
-    if (lStart) {
+    if (letterRangesNorm.length > 0) {
       const fl = normalizeLetter(c.name || "");
-      if (!fl || fl < lStart || fl > lEnd) return false;
+      if (!fl || !letterRangesNorm.some(r => fl >= r.start && fl <= r.end)) return false;
     }
-    if (dFrom !== null || dTo !== null) {
+    if (dateRangesNorm.length > 0) {
       if (!c.last_order_at) return false;
       const t = new Date(c.last_order_at).getTime();
-      if (dFrom !== null && t < dFrom) return false;
-      if (dTo !== null && t > dTo) return false;
+      if (!dateRangesNorm.some(r => (r.from === null || t >= r.from) && (r.to === null || t <= r.to))) return false;
     }
     return true;
   });
