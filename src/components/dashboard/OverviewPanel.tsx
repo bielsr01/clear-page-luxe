@@ -331,7 +331,7 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const purchaseFreq = phonesCur.size ? cur.length / phonesCur.size : 0;
 
   // active 30d (all orders, ignoring filter)
-  const last30 = subDays(new Date(), 30);
+  const last30 = brasiliaAddDaysUTC(new Date(), -30);
   const active30 = new Set(all.filter((o) => new Date(o.created_at) >= last30).map((o) => o.customer_phone).filter(Boolean)).size;
 
   // top customers
