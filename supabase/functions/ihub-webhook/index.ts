@@ -112,8 +112,13 @@ function buildItemsForOrderItems(od: any) {
     const groupName = s?.groupName ?? parentGroup ?? "Itens";
     // price unitário do complemento (preferir addition/unitPrice, fallback price/qty)
     const unit = Number(s?.addition ?? s?.unitPrice ?? (Number(s?.price ?? 0) / Math.max(qty, 1))) || 0;
-    const name = s?.name ? `${qty > 1 ? `${qty}× ` : ""}${s.name}` : "";
-    if (name) acc.push({ group_name: groupName, item_name: name, extra_price: unit });
+    const name = s?.name ? String(s.name) : "";
+    if (name) {
+      // Push uma linha por unidade — a UI agrega como "Nx Nome"
+      for (let i = 0; i < qty; i++) {
+        acc.push({ group_name: groupName, item_name: name, extra_price: unit });
+      }
+    }
     if (Array.isArray(s?.customizations)) s.customizations.forEach((c: any) => collectOpts(c, groupName, acc));
     if (Array.isArray(s?.options)) s.options.forEach((c: any) => collectOpts(c, groupName, acc));
   };
