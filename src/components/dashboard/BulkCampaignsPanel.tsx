@@ -355,6 +355,9 @@ export function BulkCampaignsPanel({
           )}
         </CardContent>
       </Card>
+      </div>
+
+
 
       {createOpen && (
         <CampaignDialog
