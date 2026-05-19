@@ -29,7 +29,7 @@ export default function Landing() {
             ) : (
               <>
                 <Button asChild variant="ghost"><Link to="/auth">Entrar</Link></Button>
-                <Button asChild><Link to="/auth?mode=signup">Criar conta</Link></Button>
+                <Button asChild><Link to="/auth">Entrar</Link></Button>
               </>
             )}
           </nav>
@@ -49,7 +49,7 @@ export default function Landing() {
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg" className="text-base">
-              <Link to="/auth?mode=signup">Começar grátis</Link>
+              <Link to="/auth">Começar grátis</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="text-base">
               <Link to="/auth">Já tenho conta</Link>
