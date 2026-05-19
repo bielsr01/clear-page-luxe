@@ -542,6 +542,7 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
       change_for: payment === "cash" && changeFor ? Number(changeFor) : null,
       subtotal,
       delivery_fee: fee,
+      discount: discount > 0 ? discount : null,
       total,
       coupon_code: coupon?.code ?? null,
       loyalty_opt_in: loyaltyEnabled && loyaltyOptIn,
