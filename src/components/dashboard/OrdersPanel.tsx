@@ -1078,7 +1078,18 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       />
 
       <PdvDialog open={pdvOpen} onOpenChange={setPdvOpen} restaurantId={restaurantId} />
-      <OrderHistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} restaurantId={restaurantId} />
+      <OrderHistoryDialog
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        restaurantId={restaurantId}
+        onAdvance={(o) => advance(o as Order)}
+        onCancel={(o) => setCancelTarget(o as Order)}
+        onDelete={(o) => setDeleteTarget(o as Order)}
+        onPrint={(o) => setPrintTarget(o as Order)}
+        pendingAction={pendingAction}
+        canChangeStatus={canChangeStatus}
+        canEditOrders={canEditOrders}
+      />
 
       <Dialog open={!!ifoodCodeTarget} onOpenChange={(o) => { if (!o) { setIfoodCodeTarget(null); setIfoodCodeValue(""); } }}>
         <DialogContent className="max-w-sm">
