@@ -173,12 +173,37 @@ export function BulkCampaignsPanel({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 relative">
       {scope === "admin" && (
-        <Card><CardContent className="p-4">
+        <Card><CardContent className="p-4 space-y-3">
           <RestaurantMultiSelect all={allRest} selected={adminFilter} onChange={setAdminFilter} />
+          {singleAdminTarget && (
+            <div className="flex items-center justify-between gap-3 border-t pt-3">
+              <div className="text-sm">
+                <div className="font-medium">Envio em massa para este restaurante</div>
+                <div className="text-xs text-muted-foreground">Quando desativado, o restaurante vê a aba borrada com aviso. O admin continua podendo criar campanhas em nome dele.</div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs text-muted-foreground">{adminTargetEnabled === false ? "Desativado" : "Ativado"}</span>
+                <Switch checked={adminTargetEnabled !== false} onCheckedChange={toggleRestaurantBulk} />
+              </div>
+            </div>
+          )}
         </CardContent></Card>
       )}
+
+      {bulkDisabled && (
+        <Alert className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950/40 dark:border-yellow-900">
+          <Lock className="w-4 h-4" />
+          <AlertTitle>Função desativada</AlertTitle>
+          <AlertDescription>
+            O admin do sistema desativou o envio em massa para o seu restaurante. Caso deseje utilizá-la, solicite a ativação pelo admin.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className={bulkDisabled ? "blur-sm pointer-events-none select-none opacity-70" : ""} aria-disabled={bulkDisabled || undefined}>
+
 
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
