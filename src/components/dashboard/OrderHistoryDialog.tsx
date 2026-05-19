@@ -53,25 +53,43 @@ const STATUS_FILTERS = [
   { value: "cancelled", label: "Cancelados" },
 ];
 
+/** Resolve YYYY-MM-DD components of a Date in Brasília (GMT-3, sem DST). */
+function brasiliaYMD(date: Date): { y: number; m: number; d: number } {
+  const [y, m, d] = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(date).split("-").map(Number);
+  return { y, m, d };
+}
+
+/** Início (00:00) e fim (23:59:59.999) de um dia em Brasília, em UTC. */
+function brasiliaDayBounds(date: Date): { from: Date; to: Date } {
+  const { y, m, d } = brasiliaYMD(date);
+  // Brasília = UTC-3 fixo ⇒ 00:00 BRT = 03:00 UTC
+  const from = new Date(Date.UTC(y, m - 1, d, 3, 0, 0, 0));
+  const to = new Date(Date.UTC(y, m - 1, d + 1, 2, 59, 59, 999));
+  return { from, to };
+}
+
 function rangeFor(kind: DateRange, customFrom?: Date, customTo?: Date): { from: Date; to: Date } {
-  const now = new Date();
-  const to = new Date(now); to.setHours(23, 59, 59, 999);
+  const todayBounds = brasiliaDayBounds(new Date());
   if (kind === "7d") {
-    const from = new Date(now); from.setDate(from.getDate() - 6); from.setHours(0, 0, 0, 0);
-    return { from, to };
+    const start = brasiliaDayBounds(new Date(Date.now() - 6 * 86400000));
+    return { from: start.from, to: todayBounds.to };
   }
   if (kind === "30d") {
-    const from = new Date(now); from.setDate(from.getDate() - 29); from.setHours(0, 0, 0, 0);
-    return { from, to };
+    const start = brasiliaDayBounds(new Date(Date.now() - 29 * 86400000));
+    return { from: start.from, to: todayBounds.to };
   }
   if (kind === "month") {
-    const from = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    return { from, to };
+    const { y, m } = brasiliaYMD(new Date());
+    const from = new Date(Date.UTC(y, m - 1, 1, 3, 0, 0, 0));
+    return { from, to: todayBounds.to };
   }
-  return {
-    from: customFrom ?? new Date(now.getFullYear(), now.getMonth(), 1),
-    to: customTo ?? to,
-  };
+  const from = customFrom ? brasiliaDayBounds(customFrom).from
+    : new Date(Date.UTC(brasiliaYMD(new Date()).y, brasiliaYMD(new Date()).m - 1, 1, 3, 0, 0, 0));
+  const to = customTo ? brasiliaDayBounds(customTo).to : todayBounds.to;
+  return { from, to };
 }
 
 export function OrderHistoryDialog({
