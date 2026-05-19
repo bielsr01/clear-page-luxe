@@ -260,6 +260,8 @@ export function buildTicketHtml(
     <div class="sep"></div>
     <div class="center">${dateStr}</div>
     <div class="center" style="font-weight:800;margin-top:2px">${orderTypeLabel[order.order_type]} #${order.order_number}</div>
+    ${order.external_source === "ifood" ? `<div class="center" style="font-weight:900;margin-top:2px">IFOOD</div>` : ""}
+    ${order.external_source === "quero" ? `<div class="center" style="font-weight:900;margin-top:2px">QUERO DELIVERY</div>` : ""}
   ` : ""}
   ${(() => {
     const showAddr = ps.customer_address && order.order_type === "delivery" && !!fullCustAddress;
