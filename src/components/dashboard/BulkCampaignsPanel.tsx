@@ -348,6 +348,10 @@ function CampaignDialog({
   const [typeFilters, setTypeFilters] = useState<Set<ClientType>>(new Set());
   const [statusFilters, setStatusFilters] = useState<Set<ClientStatus>>(new Set());
   const [restaurantFilters, setRestaurantFilters] = useState<Set<string>>(new Set());
+  const [letterStart, setLetterStart] = useState<string>("");
+  const [letterEnd, setLetterEnd] = useState<string>("");
+  const [orderDateFrom, setOrderDateFrom] = useState<string>("");
+  const [orderDateTo, setOrderDateTo] = useState<string>("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [removedRecipientIds, setRemovedRecipientIds] = useState<Set<string>>(new Set());
   // Sender mode in admin scope: "admin" uses admin's own integration; "restaurant" uses a specific store's integration
