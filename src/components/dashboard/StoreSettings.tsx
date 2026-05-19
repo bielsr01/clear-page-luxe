@@ -46,11 +46,13 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [geocoding, setGeocoding] = useState(false);
 
-  // Cropper de capa
+  // Cropper de capa — suporta múltiplas fotos
+  type CoverItem = { id: string; saved?: string; blob?: Blob; preview: string };
+  const [covers, setCovers] = useState<CoverItem[]>([]);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
-  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  // null = novo item; string = id de item existente sendo recortado
+  const [cropperTargetId, setCropperTargetId] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   const onCoverFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,8 +60,8 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
     if (!file) return;
     const url = URL.createObjectURL(file);
     setCropperSrc(url);
+    setCropperTargetId(null);
     setCropperOpen(true);
-    // Permite reescolher o mesmo arquivo depois
     e.target.value = "";
   };
 
