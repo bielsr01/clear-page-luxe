@@ -383,28 +383,32 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   cur.forEach((o) => { payAgg.set(o.payment_method, (payAgg.get(o.payment_method) ?? 0) + 1); });
   const payLabel: Record<string, string> = { pix: "PIX", cash: "Dinheiro", card_on_delivery: "Cartão" };
 
-  // daily series
-  const days = eachDayOfInterval({ start: range.from, end: range.to });
+  // daily series (em Brasília)
+  const dayMs = 86_400_000;
+  const firstDay = brasiliaStartOfDayUTC(range.from);
+  const lastDay = brasiliaStartOfDayUTC(range.to);
+  const dayCount = Math.round((lastDay.getTime() - firstDay.getTime()) / dayMs) + 1;
+  const days = Array.from({ length: Math.max(1, dayCount) }, (_, i) => new Date(firstDay.getTime() + i * dayMs));
   const series = days.map((d) => {
-    const key = format(d, "yyyy-MM-dd");
-    const dayCur = cur.filter((o) => format(new Date(o.created_at), "yyyy-MM-dd") === key);
-    const prevDate = subDays(d, days.length);
-    const prevKey = format(prevDate, "yyyy-MM-dd");
-    const dayPrev = prev.filter((o) => format(new Date(o.created_at), "yyyy-MM-dd") === prevKey);
+    const key = brasiliaDayKey(d);
+    const dayCur = cur.filter((o) => brasiliaDayKey(o.created_at) === key);
+    const prevDate = new Date(d.getTime() - days.length * dayMs);
+    const prevKey = brasiliaDayKey(prevDate);
+    const dayPrev = prev.filter((o) => brasiliaDayKey(o.created_at) === prevKey);
     return {
-      date: format(d, "dd/MM", { locale: ptBR }),
+      date: d.toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE, day: "2-digit", month: "2-digit" }),
       atual: dayCur.length,
       anterior: dayPrev.length,
       faturamento: sum(dayCur, "total"),
     };
   });
 
-  // hours / weekday
+  // hours / weekday (em Brasília)
   const hourBuckets = Array.from({ length: 12 }, (_, i) => ({ label: `${String(i * 2).padStart(2, "0")}-${String(i * 2 + 2).padStart(2, "0")}h`, count: 0 }));
-  cur.forEach((o) => { const h = new Date(o.created_at).getHours(); hourBuckets[Math.floor(h / 2)].count++; });
+  cur.forEach((o) => { const h = brasiliaHour(o.created_at); hourBuckets[Math.floor(h / 2)].count++; });
   const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   const wdBuckets = weekdays.map((label) => ({ label, count: 0 }));
-  cur.forEach((o) => { wdBuckets[new Date(o.created_at).getDay()].count++; });
+  cur.forEach((o) => { wdBuckets[brasiliaWeekday(o.created_at)].count++; });
   const bestHour = [...hourBuckets].sort((a, b) => b.count - a.count)[0];
   const bestDay = [...wdBuckets].sort((a, b) => b.count - a.count)[0];
 
@@ -413,18 +417,20 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const compareFiltered = source === "all"
     ? compareAll
     : compareAll.filter((o) => classifySource(o) === source);
-  const today = startOfDay(new Date());
-  const yesterday = startOfDay(subDays(new Date(), 1));
-  const lastWeekSame = startOfDay(subDays(new Date(), 7));
-  const dayOrders = (d: Date) => compareFiltered.filter((o) => format(new Date(o.created_at), "yyyy-MM-dd") === format(d, "yyyy-MM-dd"));
+  const nowRef = new Date();
+  const todayKey = brasiliaDayKey(nowRef);
+  const yesterdayKey = brasiliaDayKey(brasiliaAddDaysUTC(nowRef, -1));
+  const lastWeekKey = brasiliaDayKey(brasiliaAddDaysUTC(nowRef, -7));
+  const dayOrdersByKey = (key: string) => compareFiltered.filter((o) => brasiliaDayKey(o.created_at) === key);
   const sumDayGross = (arr: any[]) => arr.reduce((s, o) => s + Number(o.subtotal || 0) + Number(o.delivery_fee || 0), 0);
-  const todayRev = sumDayGross(dayOrders(today));
-  const yRev = sumDayGross(dayOrders(yesterday));
-  const lwRev = sumDayGross(dayOrders(lastWeekSame));
-  const monthStart = startOfMonth(new Date());
+  const todayRev = sumDayGross(dayOrdersByKey(todayKey));
+  const yRev = sumDayGross(dayOrdersByKey(yesterdayKey));
+  const lwRev = sumDayGross(dayOrdersByKey(lastWeekKey));
+  const monthStart = brasiliaMonthStartUTC(nowRef);
   const monthCur = sumDayGross(compareFiltered.filter((o) => new Date(o.created_at) >= monthStart));
-  const monthPrevStart = startOfMonth(subDays(monthStart, 1));
-  const monthPrevEnd = endOfMonth(monthPrevStart);
+  const monthPrevAnchor = new Date(monthStart.getTime() - 1);
+  const monthPrevStart = brasiliaMonthStartUTC(monthPrevAnchor);
+  const monthPrevEnd = brasiliaMonthEndUTC(monthPrevAnchor);
   const monthPrev = sumDayGross(compareFiltered.filter((o) => { const d = new Date(o.created_at); return d >= monthPrevStart && d <= monthPrevEnd; }));
 
   return (
