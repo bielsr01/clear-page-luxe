@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, Plus, MapPin, Loader2, Crop } from "lucide-react";
+import { Trash2, Plus, MapPin, Loader2, Crop, X } from "lucide-react";
 import { toast } from "sonner";
 import { DAY_LABELS, defaultHours, OpeningHours } from "@/lib/hours";
 import { DeliveryZone, geocodeAddress } from "@/lib/delivery";
