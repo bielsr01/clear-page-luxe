@@ -74,12 +74,19 @@ export function TicketItemsBlock({
         const baseUnit = Number(it.unit_price) - extrasPerUnit;
         const baseTotal = baseUnit * it.quantity;
 
-        const groups: { name: string; items: OptRow[] }[] = [];
+        type Agg = { key: string; name: string; qty: number; extra: number };
+        const groups: { name: string; items: Agg[] }[] = [];
         allOpts.forEach((o) => {
           const gName = (o.group_name ?? "Opção").trim() || "Opção";
           let g = groups.find((x) => x.name === gName);
           if (!g) { g = { name: gName, items: [] }; groups.push(g); }
-          g.items.push(o);
+          const key = `${o.item_name}|${Number(o.extra_price ?? 0)}`;
+          let agg = g.items.find((x) => x.key === key);
+          if (!agg) {
+            agg = { key, name: o.item_name ?? "", qty: 0, extra: Number(o.extra_price ?? 0) };
+            g.items.push(agg);
+          }
+          agg.qty += 1;
         });
 
         const isObsOnly = !!it.notes && /^obs\s*:/i.test(it.notes.trim());
@@ -93,13 +100,13 @@ export function TicketItemsBlock({
             {groups.map((g) => (
               <div key={g.name} style={{ fontSize: 13, paddingLeft: 4, marginTop: 2 }}>
                 <div style={{ fontWeight: 700 }}>{g.name}:</div>
-                {g.items.map((opt, i) => {
-                  const extra = Number(opt.extra_price ?? 0) * it.quantity;
+                {g.items.map((opt) => {
+                  const totalExtra = opt.extra * opt.qty * it.quantity;
                   return (
-                    <div key={i} className="row" style={{ fontSize: 13, paddingLeft: 8 }}>
-                      <span>{opt.item_name}</span>
-                      {showPrices && extra > 0 && (
-                        <span className="muted" style={{ fontSize: 13 }}>+ {brl(extra)}</span>
+                    <div key={opt.key} className="row" style={{ fontSize: 13, paddingLeft: 8 }}>
+                      <span>{opt.qty}× {opt.name}</span>
+                      {showPrices && totalExtra > 0 && (
+                        <span className="muted" style={{ fontSize: 13 }}>+ {brl(totalExtra)}</span>
                       )}
                     </div>
                   );
