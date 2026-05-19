@@ -22,7 +22,7 @@ interface Cat { id: string; name: string; sort_order: number; is_active: boolean
 interface Prod { id: string; category_id: string | null; name: string; description: string | null; price: number; image_url: string | null; is_active: boolean; sort_order: number }
 interface Grp { id: string; name: string; min_select: number; max_select: number; sort_order: number; is_active: boolean }
 interface Item { id: string; group_id: string; name: string; extra_price: number; sort_order: number; is_active: boolean }
-interface POG { product_id: string; group_id: string; sort_order: number }
+interface POG { product_id: string; group_id: string; sort_order: number; min_select_override: number | null; max_select_override: number | null }
 interface PSC { product_id: string; group_id: string; quantity_per_unit: number }
 
 export function AdminMenuClonerDialog({ destRestaurantId, open, onOpenChange }: { destRestaurantId: string; open: boolean; onOpenChange: (v: boolean) => void }) {
