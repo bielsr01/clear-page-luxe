@@ -13,7 +13,7 @@ type Props = {
  * - Suporta arrastar/clicar para trocar (embla).
  * - Mostra bolinhas com a foto atual.
  */
-export function CoverCarousel({ images, alt, intervalMs = 4000 }: Props) {
+export function CoverCarousel({ images, alt, intervalMs = 5000 }: Props) {
   const list = (images || []).filter(Boolean);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, dragFree: false });
   const [selected, setSelected] = useState(0);
