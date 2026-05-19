@@ -348,10 +348,12 @@ function CampaignDialog({
   const [typeFilters, setTypeFilters] = useState<Set<ClientType>>(new Set());
   const [statusFilters, setStatusFilters] = useState<Set<ClientStatus>>(new Set());
   const [restaurantFilters, setRestaurantFilters] = useState<Set<string>>(new Set());
-  const [letterStart, setLetterStart] = useState<string>("");
-  const [letterEnd, setLetterEnd] = useState<string>("");
-  const [orderDateFrom, setOrderDateFrom] = useState<string>("");
-  const [orderDateTo, setOrderDateTo] = useState<string>("");
+  const [letterRanges, setLetterRanges] = useState<Array<{ start: string; end: string }>>([]);
+  const [letterDraftStart, setLetterDraftStart] = useState<string>("");
+  const [letterDraftEnd, setLetterDraftEnd] = useState<string>("");
+  const [dateRanges, setDateRanges] = useState<Array<{ from: string; to: string }>>([]);
+  const [dateDraftFrom, setDateDraftFrom] = useState<string>("");
+  const [dateDraftTo, setDateDraftTo] = useState<string>("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [removedRecipientIds, setRemovedRecipientIds] = useState<Set<string>>(new Set());
   // Sender mode in admin scope: "admin" uses admin's own integration; "restaurant" uses a specific store's integration
@@ -439,10 +441,11 @@ function CampaignDialog({
     const c = (s || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     return c.charAt(0);
   };
-  const lStart = letterStart ? letterStart.toUpperCase() : "";
-  const lEnd = letterEnd ? letterEnd.toUpperCase() : lStart;
-  const dFrom = orderDateFrom ? new Date(orderDateFrom + "T00:00:00").getTime() : null;
-  const dTo = orderDateTo ? new Date(orderDateTo + "T23:59:59").getTime() : null;
+  const letterRangesNorm = letterRanges.map(r => ({ start: r.start.toUpperCase(), end: (r.end || r.start).toUpperCase() }));
+  const dateRangesNorm = dateRanges.map(r => ({
+    from: r.from ? new Date(r.from + "T00:00:00").getTime() : null,
+    to: r.to ? new Date(r.to + "T23:59:59").getTime() : null,
+  }));
 
   const filtered = (customers ?? []).filter((c: any) => {
     if (existingCustomerIds.has(c.id)) return false;
@@ -453,15 +456,14 @@ function CampaignDialog({
     }
     if (typeFilters.size > 0 && !typeFilters.has(getClientType(c.orders_count))) return false;
     if (statusFilters.size > 0) { const s = getClientStatus(c.last_order_at); if (!s || !statusFilters.has(s)) return false; }
-    if (lStart) {
+    if (letterRangesNorm.length > 0) {
       const fl = normalizeLetter(c.name || "");
-      if (!fl || fl < lStart || fl > lEnd) return false;
+      if (!fl || !letterRangesNorm.some(r => fl >= r.start && fl <= r.end)) return false;
     }
-    if (dFrom !== null || dTo !== null) {
+    if (dateRangesNorm.length > 0) {
       if (!c.last_order_at) return false;
       const t = new Date(c.last_order_at).getTime();
-      if (dFrom !== null && t < dFrom) return false;
-      if (dTo !== null && t > dTo) return false;
+      if (!dateRangesNorm.some(r => (r.from === null || t >= r.from) && (r.to === null || t <= r.to))) return false;
     }
     return true;
   });
@@ -708,7 +710,7 @@ function CampaignDialog({
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Filter className="w-4 h-4 mr-1" /> Filtros
-                    {(typeFilters.size + statusFilters.size + restaurantFilters.size + (lStart ? 1 : 0) + (dFrom !== null || dTo !== null ? 1 : 0)) > 0 && <Badge variant="secondary" className="ml-2">{typeFilters.size + statusFilters.size + restaurantFilters.size + (lStart ? 1 : 0) + (dFrom !== null || dTo !== null ? 1 : 0)}</Badge>}
+                    {(() => { const n = typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length; return n > 0 && <Badge variant="secondary" className="ml-2">{n}</Badge>; })()}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 max-h-[70vh] overflow-y-auto" align="start">
@@ -733,41 +735,64 @@ function CampaignDialog({
                     </div>
                     <div>
                       <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Letra inicial do nome</div>
+                      {letterRanges.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {letterRanges.map((r, i) => (
+                            <Badge key={i} variant="secondary" className="gap-1">
+                              {r.start === r.end || !r.end ? r.start : `${r.start}–${r.end}`}
+                              <button onClick={() => setLetterRanges(letterRanges.filter((_, j) => j !== i))}><X className="w-3 h-3" /></button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
-                        <RSelect value={letterStart || "__none__"} onValueChange={(v) => { const nv = v === "__none__" ? "" : v; setLetterStart(nv); if (!nv) setLetterEnd(""); }}>
+                        <RSelect value={letterDraftStart || "__none__"} onValueChange={(v) => { const nv = v === "__none__" ? "" : v; setLetterDraftStart(nv); if (!nv) setLetterDraftEnd(""); }}>
                           <SelectTrigger className="h-8"><SelectValue placeholder="De" /></SelectTrigger>
                           <SelectContent className="max-h-60">
-                            <SelectItem value="__none__">Todas</SelectItem>
+                            <SelectItem value="__none__">—</SelectItem>
                             {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map(l => (
                               <SelectItem key={l} value={l}>{l}</SelectItem>
                             ))}
                           </SelectContent>
                         </RSelect>
                         <span className="text-xs text-muted-foreground">até</span>
-                        <RSelect value={letterEnd || "__none__"} onValueChange={(v) => setLetterEnd(v === "__none__" ? "" : v)} disabled={!letterStart}>
-                          <SelectTrigger className="h-8"><SelectValue placeholder={letterStart || "—"} /></SelectTrigger>
+                        <RSelect value={letterDraftEnd || "__none__"} onValueChange={(v) => setLetterDraftEnd(v === "__none__" ? "" : v)} disabled={!letterDraftStart}>
+                          <SelectTrigger className="h-8"><SelectValue placeholder={letterDraftStart || "—"} /></SelectTrigger>
                           <SelectContent className="max-h-60">
-                            <SelectItem value="__none__">{letterStart || "—"}</SelectItem>
+                            <SelectItem value="__none__">{letterDraftStart || "—"}</SelectItem>
                             {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
-                              .filter(l => !letterStart || l >= letterStart)
+                              .filter(l => !letterDraftStart || l >= letterDraftStart)
                               .map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
                           </SelectContent>
                         </RSelect>
+                        <Button type="button" variant="outline" size="sm" className="h-8" disabled={!letterDraftStart} onClick={() => { setLetterRanges([...letterRanges, { start: letterDraftStart, end: letterDraftEnd || letterDraftStart }]); setLetterDraftStart(""); setLetterDraftEnd(""); }}>+</Button>
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">Ex.: A (apenas A) ou A–C (de A até C)</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Adicione vários intervalos (ex.: A–C e M–P).</div>
                     </div>
                     <div>
                       <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Data do último pedido</div>
+                      {dateRanges.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {dateRanges.map((r, i) => (
+                            <Badge key={i} variant="secondary" className="gap-1">
+                              {r.from || "…"} → {r.to || "…"}
+                              <button onClick={() => setDateRanges(dateRanges.filter((_, j) => j !== i))}><X className="w-3 h-3" /></button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <Label className="text-xs w-8">De</Label>
-                          <Input type="date" className="h-8" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
+                          <Input type="date" className="h-8" value={dateDraftFrom} onChange={(e) => setDateDraftFrom(e.target.value)} />
                         </div>
                         <div className="flex items-center gap-2">
                           <Label className="text-xs w-8">Até</Label>
-                          <Input type="date" className="h-8" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
+                          <Input type="date" className="h-8" value={dateDraftTo} onChange={(e) => setDateDraftTo(e.target.value)} />
                         </div>
+                        <Button type="button" variant="outline" size="sm" className="h-8" disabled={!dateDraftFrom && !dateDraftTo} onClick={() => { setDateRanges([...dateRanges, { from: dateDraftFrom, to: dateDraftTo }]); setDateDraftFrom(""); setDateDraftTo(""); }}>+ Adicionar intervalo</Button>
                       </div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Adicione vários intervalos de datas.</div>
                     </div>
                     {scope === "admin" && restaurantIds.length > 1 && (
                       <div>
@@ -782,8 +807,8 @@ function CampaignDialog({
                         </div>
                       </div>
                     )}
-                    {(typeFilters.size + statusFilters.size + restaurantFilters.size > 0 || lStart || orderDateFrom || orderDateTo) && (
-                      <Button variant="ghost" size="sm" className="w-full" onClick={() => { setTypeFilters(new Set()); setStatusFilters(new Set()); setRestaurantFilters(new Set()); setLetterStart(""); setLetterEnd(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
+                    {(typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length) > 0 && (
+                      <Button variant="ghost" size="sm" className="w-full" onClick={() => { setTypeFilters(new Set()); setStatusFilters(new Set()); setRestaurantFilters(new Set()); setLetterRanges([]); setDateRanges([]); setLetterDraftStart(""); setLetterDraftEnd(""); setDateDraftFrom(""); setDateDraftTo(""); }}>
                         <X className="w-4 h-4 mr-1" /> Limpar filtros
                       </Button>
                     )}
