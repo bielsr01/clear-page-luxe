@@ -171,7 +171,7 @@ export function buildTicketHtml(
     const baseUnit = Number(it.unit_price) - extrasPerUnit;
     const baseTotal = baseUnit * it.quantity;
 
-    // Group options by group_name preserving order of first appearance
+    // Group preserving order; each option row prints on its own line (no aggregation).
     const groups: { name: string; items: TicketOrderOption[] }[] = [];
     opts.forEach((o) => {
       const gName = (o.group_name ?? "Opção").trim() || "Opção";
@@ -183,8 +183,8 @@ export function buildTicketHtml(
     const groupsHtml = groups.map((g) => {
       const itemsHtmlInner = g.items.map((opt) => {
         const extra = Number(opt.extra_price ?? 0) * it.quantity;
-        const right = ps.prices && extra > 0 ? `<span class="muted" style="font-size:13px">+ ${brl(extra)}</span>` : "";
-        return `<div class="row" style="font-size:13px;padding-left:8px"><span>${esc(opt.item_name ?? "")}</span>${right}</div>`;
+        const right = ps.prices && extra > 0 ? `<span style="font-size:13px">+ ${brl(extra)}</span>` : "";
+        return `<div class="row" style="font-size:13px;padding-left:8px"><span>1× ${esc(opt.item_name ?? "")}</span>${right}</div>`;
       }).join("");
       return `
         <div style="font-size:13px;padding-left:4px;margin-top:2px">
@@ -193,17 +193,20 @@ export function buildTicketHtml(
         </div>`;
     }).join("");
 
-    // Pick up obs/free-text lines from notes (e.g., "obs: sem cebola")
+    // Free-text obs lines (only when starts with "obs:")
     const notesLines = (it.notes ?? "")
       .split("\n")
       .map((l) => l.trim())
-      .filter((l) => l && (/^obs\s*:/i.test(l) || (l.includes(":") && !groups.some((g) => l.toLowerCase().startsWith(g.name.toLowerCase() + ":")))));
+      .filter((l) => l && /^obs\s*:/i.test(l));
     const notesHtml = notesLines.map((l) => `<div class="muted" style="font-size:13px;padding-left:4px">${esc(l)}</div>`).join("");
 
-    const priceCell = ps.prices ? `<span>${brl(baseTotal)}</span>` : "";
+    const priceLine = ps.prices
+      ? `<div style="font-size:13px">${brl(baseTotal)}</div>`
+      : "";
     return `
-      <div style="margin-bottom:6px">
-        <div class="row"><span class="item-name">${it.quantity}× ${esc(it.product_name)}</span>${priceCell}</div>
+      <div style="margin-bottom:8px">
+        <div class="item-name">${it.quantity}× ${esc(it.product_name)}</div>
+        ${priceLine}
         ${groupsHtml}
         ${notesHtml}
       </div>`;
