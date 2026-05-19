@@ -46,6 +46,55 @@ export const ymdBR = (v: Date = new Date()): { y: number; m: number; d: number }
   return { y, m, d };
 };
 
+/** Brasília = UTC-3 fixo. Início do dia em UTC (00:00 BRT = 03:00 UTC). */
+export const brasiliaStartOfDayUTC = (v: Date = new Date()): Date => {
+  const { y, m, d } = ymdBR(v);
+  return new Date(Date.UTC(y, m - 1, d, 3, 0, 0, 0));
+};
+
+/** Fim do dia (23:59:59.999 BRT) em UTC. */
+export const brasiliaEndOfDayUTC = (v: Date = new Date()): Date =>
+  new Date(brasiliaStartOfDayUTC(v).getTime() + 86_400_000 - 1);
+
+/** Início do mês em Brasília, em UTC. */
+export const brasiliaMonthStartUTC = (v: Date = new Date()): Date => {
+  const { y, m } = ymdBR(v);
+  return new Date(Date.UTC(y, m - 1, 1, 3, 0, 0, 0));
+};
+
+/** Fim do mês em Brasília, em UTC. */
+export const brasiliaMonthEndUTC = (v: Date = new Date()): Date => {
+  const { y, m } = ymdBR(v);
+  const lastDay = new Date(y, m, 0).getDate();
+  return new Date(Date.UTC(y, m - 1, lastDay, 3, 0, 0, 0) + 86_400_000 - 1);
+};
+
+/** Adiciona N dias de calendário (Brasília) a uma data, retorna início do dia em UTC. */
+export const brasiliaAddDaysUTC = (v: Date, days: number): Date => {
+  const base = brasiliaStartOfDayUTC(v);
+  return new Date(base.getTime() + days * 86_400_000);
+};
+
+/** Chave YYYY-MM-DD de uma data no fuso de Brasília. */
+export const brasiliaDayKey = (v: Date | string | number): string => {
+  const d = v instanceof Date ? v : new Date(v);
+  return isoDateBR(d);
+};
+
+/** Hora (0-23) no fuso de Brasília. */
+export const brasiliaHour = (v: Date | string | number): number => {
+  const d = v instanceof Date ? v : new Date(v);
+  const wall = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  return wall.getUTCHours();
+};
+
+/** Dia da semana (0=Dom..6=Sáb) no fuso de Brasília. */
+export const brasiliaWeekday = (v: Date | string | number): number => {
+  const d = v instanceof Date ? v : new Date(v);
+  const wall = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  return wall.getUTCDay();
+};
+
 /** Primeiro dia do mês de `v` (default: hoje), em Brasília, como YYYY-MM-DD. */
 export const monthStartISOBR = (v: Date = new Date()): string => {
   const { y, m } = ymdBR(v);
