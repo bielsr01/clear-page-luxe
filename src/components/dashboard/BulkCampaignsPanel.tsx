@@ -708,10 +708,10 @@ function CampaignDialog({
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Filter className="w-4 h-4 mr-1" /> Filtros
-                    {(typeFilters.size + statusFilters.size + restaurantFilters.size) > 0 && <Badge variant="secondary" className="ml-2">{typeFilters.size + statusFilters.size + restaurantFilters.size}</Badge>}
+                    {(typeFilters.size + statusFilters.size + restaurantFilters.size + (lStart ? 1 : 0) + (dFrom !== null || dTo !== null ? 1 : 0)) > 0 && <Badge variant="secondary" className="ml-2">{typeFilters.size + statusFilters.size + restaurantFilters.size + (lStart ? 1 : 0) + (dFrom !== null || dTo !== null ? 1 : 0)}</Badge>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72" align="start">
+                <PopoverContent className="w-80 max-h-[70vh] overflow-y-auto" align="start">
                   <div className="space-y-3">
                     <div>
                       <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Tipo</div>
@@ -731,6 +731,44 @@ function CampaignDialog({
                         </label>
                       ))}
                     </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Letra inicial do nome</div>
+                      <div className="flex items-center gap-2">
+                        <RSelect value={letterStart || "__none__"} onValueChange={(v) => { const nv = v === "__none__" ? "" : v; setLetterStart(nv); if (!nv) setLetterEnd(""); }}>
+                          <SelectTrigger className="h-8"><SelectValue placeholder="De" /></SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            <SelectItem value="__none__">Todas</SelectItem>
+                            {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map(l => (
+                              <SelectItem key={l} value={l}>{l}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </RSelect>
+                        <span className="text-xs text-muted-foreground">até</span>
+                        <RSelect value={letterEnd || "__none__"} onValueChange={(v) => setLetterEnd(v === "__none__" ? "" : v)} disabled={!letterStart}>
+                          <SelectTrigger className="h-8"><SelectValue placeholder={letterStart || "—"} /></SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            <SelectItem value="__none__">{letterStart || "—"}</SelectItem>
+                            {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
+                              .filter(l => !letterStart || l >= letterStart)
+                              .map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
+                          </SelectContent>
+                        </RSelect>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Ex.: A (apenas A) ou A–C (de A até C)</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Data do último pedido</div>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs w-8">De</Label>
+                          <Input type="date" className="h-8" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs w-8">Até</Label>
+                          <Input type="date" className="h-8" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
                     {scope === "admin" && restaurantIds.length > 1 && (
                       <div>
                         <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Restaurante</div>
@@ -744,8 +782,8 @@ function CampaignDialog({
                         </div>
                       </div>
                     )}
-                    {(typeFilters.size + statusFilters.size + restaurantFilters.size > 0) && (
-                      <Button variant="ghost" size="sm" className="w-full" onClick={() => { setTypeFilters(new Set()); setStatusFilters(new Set()); setRestaurantFilters(new Set()); }}>
+                    {(typeFilters.size + statusFilters.size + restaurantFilters.size > 0 || lStart || orderDateFrom || orderDateTo) && (
+                      <Button variant="ghost" size="sm" className="w-full" onClick={() => { setTypeFilters(new Set()); setStatusFilters(new Set()); setRestaurantFilters(new Set()); setLetterStart(""); setLetterEnd(""); setOrderDateFrom(""); setOrderDateTo(""); }}>
                         <X className="w-4 h-4 mr-1" /> Limpar filtros
                       </Button>
                     )}
