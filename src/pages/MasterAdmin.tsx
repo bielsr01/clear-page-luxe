@@ -207,7 +207,7 @@ export default function MasterAdmin() {
                 <SidebarTrigger />
                 <div className="flex items-center gap-2 font-bold min-w-0">
                   <img src={logoIcon} alt="Logo" className="w-9 h-9 rounded-lg object-cover shrink-0" />
-                  <span className="hidden sm:inline">MesaPro</span>
+                  <span className="hidden sm:inline">CS Pro</span>
                   <Badge variant="secondary" className="ml-0 sm:ml-2">Admin</Badge>
                 </div>
               </div>

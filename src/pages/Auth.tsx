@@ -46,7 +46,7 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-6 font-bold text-xl">
           <img src={logoIcon} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
-          MesaPro
+          CS Pro
         </Link>
         <Card className="shadow-elegant">
           <CardHeader>

@@ -13,7 +13,7 @@ export default function Landing() {
         <div className="container flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg">
             <img src={logoIcon} alt="Logo" className="w-9 h-9 rounded-lg object-cover" />
-            <span>MesaPro</span>
+            <span>CS Pro</span>
           </Link>
           <nav className="flex items-center gap-2">
             {user ? (
@@ -77,7 +77,7 @@ export default function Landing() {
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        MesaPro — sistema de gestão para redes de restaurantes
+        CS Pro — sistema de gestão para redes de restaurantes
       </footer>
     </div>
   );
