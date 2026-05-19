@@ -172,15 +172,23 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
       return toast.error("Envie a logo da loja");
     }
 
-    let cover_url: string | null | undefined;
-    if (coverBlob) {
-      try {
-        cover_url = await uploadToR2(coverBlob, `menu-images/${restaurant.id}`, `cover-${Date.now()}.jpg`);
-      } catch (e: any) { setBusy(false); return toast.error(e.message || "Falha no upload da capa"); }
-    }
-    if (!cover_url && !full.cover_url) {
+    if (covers.length === 0) {
       setBusy(false);
-      return toast.error("Envie a foto de capa da loja");
+      return toast.error("Envie ao menos uma foto de capa da loja");
+    }
+    let finalCoverUrls: string[] = [];
+    try {
+      finalCoverUrls = await Promise.all(
+        covers.map(async (c) => {
+          if (c.blob) {
+            return await uploadToR2(c.blob, `menu-images/${restaurant.id}`, `cover-${Date.now()}-${Math.random().toString(36).slice(2,8)}.jpg`);
+          }
+          return c.saved!;
+        })
+      );
+    } catch (e: any) {
+      setBusy(false);
+      return toast.error(e.message || "Falha no upload da capa");
     }
 
     const update: any = {
@@ -202,21 +210,24 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
       facebook_url: full.facebook_url || null,
       service_delivery: full.service_delivery ?? true,
       service_pickup: full.service_pickup ?? false,
+      cover_urls: finalCoverUrls,
+      cover_url: finalCoverUrls[0] || null,
     };
     if (logo_url !== undefined) update.logo_url = logo_url;
-    if (cover_url !== undefined) update.cover_url = cover_url;
 
     const { error } = await supabase.from("restaurants").update(update).eq("id", restaurant.id);
     setBusy(false);
     if (error) return toast.error(error.message);
-    if (cover_url) {
-      setFull((p) => ({ ...p, cover_url }));
-      setCoverBlob(null);
-      if (coverPreview) { URL.revokeObjectURL(coverPreview); setCoverPreview(null); }
-    }
+    // Atualiza estado local liberando blobs
+    setCovers((prev) => {
+      prev.forEach((c) => { if (c.blob && c.preview.startsWith("blob:")) URL.revokeObjectURL(c.preview); });
+      return finalCoverUrls.map((u) => ({ id: crypto.randomUUID(), saved: u, preview: u }));
+    });
+    setFull((p) => ({ ...p, cover_url: finalCoverUrls[0] || null, cover_urls: finalCoverUrls }));
     toast.success("Configurações salvas");
     onUpdated();
   };
+
 
   if (!loaded) {
     return (
