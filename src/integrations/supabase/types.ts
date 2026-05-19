@@ -1978,6 +1978,7 @@ export type Database = {
           address_number: string | null
           address_state: string | null
           address_street: string | null
+          bulk_campaigns_enabled: boolean
           cover_url: string | null
           cover_urls: Json
           created_at: string
@@ -2017,6 +2018,7 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           address_street?: string | null
+          bulk_campaigns_enabled?: boolean
           cover_url?: string | null
           cover_urls?: Json
           created_at?: string
@@ -2056,6 +2058,7 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           address_street?: string | null
+          bulk_campaigns_enabled?: boolean
           cover_url?: string | null
           cover_urls?: Json
           created_at?: string

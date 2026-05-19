@@ -1,0 +1,1 @@
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS bulk_campaigns_enabled boolean NOT NULL DEFAULT true;
