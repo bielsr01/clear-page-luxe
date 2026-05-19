@@ -735,41 +735,64 @@ function CampaignDialog({
                     </div>
                     <div>
                       <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Letra inicial do nome</div>
+                      {letterRanges.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {letterRanges.map((r, i) => (
+                            <Badge key={i} variant="secondary" className="gap-1">
+                              {r.start === r.end || !r.end ? r.start : `${r.start}–${r.end}`}
+                              <button onClick={() => setLetterRanges(letterRanges.filter((_, j) => j !== i))}><X className="w-3 h-3" /></button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
-                        <RSelect value={letterStart || "__none__"} onValueChange={(v) => { const nv = v === "__none__" ? "" : v; setLetterStart(nv); if (!nv) setLetterEnd(""); }}>
+                        <RSelect value={letterDraftStart || "__none__"} onValueChange={(v) => { const nv = v === "__none__" ? "" : v; setLetterDraftStart(nv); if (!nv) setLetterDraftEnd(""); }}>
                           <SelectTrigger className="h-8"><SelectValue placeholder="De" /></SelectTrigger>
                           <SelectContent className="max-h-60">
-                            <SelectItem value="__none__">Todas</SelectItem>
+                            <SelectItem value="__none__">—</SelectItem>
                             {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map(l => (
                               <SelectItem key={l} value={l}>{l}</SelectItem>
                             ))}
                           </SelectContent>
                         </RSelect>
                         <span className="text-xs text-muted-foreground">até</span>
-                        <RSelect value={letterEnd || "__none__"} onValueChange={(v) => setLetterEnd(v === "__none__" ? "" : v)} disabled={!letterStart}>
-                          <SelectTrigger className="h-8"><SelectValue placeholder={letterStart || "—"} /></SelectTrigger>
+                        <RSelect value={letterDraftEnd || "__none__"} onValueChange={(v) => setLetterDraftEnd(v === "__none__" ? "" : v)} disabled={!letterDraftStart}>
+                          <SelectTrigger className="h-8"><SelectValue placeholder={letterDraftStart || "—"} /></SelectTrigger>
                           <SelectContent className="max-h-60">
-                            <SelectItem value="__none__">{letterStart || "—"}</SelectItem>
+                            <SelectItem value="__none__">{letterDraftStart || "—"}</SelectItem>
                             {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))
-                              .filter(l => !letterStart || l >= letterStart)
+                              .filter(l => !letterDraftStart || l >= letterDraftStart)
                               .map(l => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
                           </SelectContent>
                         </RSelect>
+                        <Button type="button" variant="outline" size="sm" className="h-8" disabled={!letterDraftStart} onClick={() => { setLetterRanges([...letterRanges, { start: letterDraftStart, end: letterDraftEnd || letterDraftStart }]); setLetterDraftStart(""); setLetterDraftEnd(""); }}>+</Button>
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">Ex.: A (apenas A) ou A–C (de A até C)</div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Adicione vários intervalos (ex.: A–C e M–P).</div>
                     </div>
                     <div>
                       <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Data do último pedido</div>
+                      {dateRanges.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {dateRanges.map((r, i) => (
+                            <Badge key={i} variant="secondary" className="gap-1">
+                              {r.from || "…"} → {r.to || "…"}
+                              <button onClick={() => setDateRanges(dateRanges.filter((_, j) => j !== i))}><X className="w-3 h-3" /></button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                           <Label className="text-xs w-8">De</Label>
-                          <Input type="date" className="h-8" value={orderDateFrom} onChange={(e) => setOrderDateFrom(e.target.value)} />
+                          <Input type="date" className="h-8" value={dateDraftFrom} onChange={(e) => setDateDraftFrom(e.target.value)} />
                         </div>
                         <div className="flex items-center gap-2">
                           <Label className="text-xs w-8">Até</Label>
-                          <Input type="date" className="h-8" value={orderDateTo} onChange={(e) => setOrderDateTo(e.target.value)} />
+                          <Input type="date" className="h-8" value={dateDraftTo} onChange={(e) => setDateDraftTo(e.target.value)} />
                         </div>
+                        <Button type="button" variant="outline" size="sm" className="h-8" disabled={!dateDraftFrom && !dateDraftTo} onClick={() => { setDateRanges([...dateRanges, { from: dateDraftFrom, to: dateDraftTo }]); setDateDraftFrom(""); setDateDraftTo(""); }}>+ Adicionar intervalo</Button>
                       </div>
+                      <div className="text-[10px] text-muted-foreground mt-1">Adicione vários intervalos de datas.</div>
                     </div>
                     {scope === "admin" && restaurantIds.length > 1 && (
                       <div>
