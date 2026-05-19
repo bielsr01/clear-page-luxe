@@ -143,6 +143,15 @@ export default function KitchenTicketPublic() {
             {order.order_type === "delivery" && (
               <div className="row"><span>Taxa de entrega</span><span>{brl(order.delivery_fee)}</span></div>
             )}
+            {Number(order.service_fee ?? 0) > 0 && (
+              <div className="row"><span>Taxa de serviço</span><span>{brl(Number(order.service_fee))}</span></div>
+            )}
+            {Number(order.discount ?? 0) > 0 && (
+              <div className="row">
+                <span>Desconto{order.coupon_code ? ` (${order.coupon_code})` : ""}</span>
+                <span>- {brl(Number(order.discount))}</span>
+              </div>
+            )}
             <div className="row total" style={{ marginTop: 4 }}>
               <span>TOTAL</span><span>{brl(order.total)}</span>
             </div>
