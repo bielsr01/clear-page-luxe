@@ -330,24 +330,34 @@ export function OrderDetailsDialog({
                       </div>
                       
                       {(() => {
-                        const groups: { name: string; items: typeof allOpts }[] = [];
+                        type Agg = { key: string; name: string; qty: number; extra: number };
+                        const groups: { name: string; items: Agg[] }[] = [];
                         allOpts.forEach((o) => {
-                          const gName = o.group_name ?? "Opção";
+                          const gName = (o.group_name ?? "Opção") || "Opção";
                           let g = groups.find((x) => x.name === gName);
                           if (!g) { g = { name: gName, items: [] }; groups.push(g); }
-                          g.items.push(o);
+                          const key = `${o.item_name}|${Number(o.extra_price ?? 0)}`;
+                          let agg = g.items.find((x) => x.key === key);
+                          if (!agg) {
+                            agg = { key, name: opt_safe(o.item_name), qty: 0, extra: Number(o.extra_price ?? 0) };
+                            g.items.push(agg);
+                          }
+                          agg.qty += 1;
                         });
                         return groups.map((g) => (
-                          <div key={g.name} className="text-xs pl-3 mt-1">
+                          <div key={g.name} className="text-xs pl-3 mt-1 space-y-0.5">
                             <div className="font-semibold">{g.name}:</div>
-                            {g.items.map((opt) => (
-                              <div key={opt.id} className="flex justify-between gap-2 pl-3">
-                                <span>{opt.item_name}</span>
-                                <span className="tabular-nums text-muted-foreground">
-                                  {Number(opt.extra_price) > 0 ? `+ ${brl(Number(opt.extra_price) * it.quantity)}` : ""}
-                                </span>
-                              </div>
-                            ))}
+                            {g.items.map((opt) => {
+                              const totalExtra = opt.extra * opt.qty * it.quantity;
+                              return (
+                                <div key={opt.key} className="flex justify-between gap-2 pl-3">
+                                  <span>{opt.qty}× {opt.name}</span>
+                                  <span className="tabular-nums text-muted-foreground">
+                                    {totalExtra > 0 ? `+ ${brl(totalExtra)}` : ""}
+                                  </span>
+                                </div>
+                              );
+                            })}
                           </div>
                         ));
                       })()}
