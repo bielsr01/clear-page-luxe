@@ -270,7 +270,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
     }).select("id").single();
     if (error || !data) return toast.error(error?.message || "Erro");
     qc.invalidateQueries({ queryKey: optionKeys.groups(restaurantId) });
-    setSelectedGroups((prev) => [...prev, data.id]);
+    setSelectedGroups((prev) => [...prev, { group_id: data.id, min_override: null, max_override: null }]);
     setQuickGroupOpen(false);
     toast.success("Grupo criado. Adicione itens depois em 'Grupos de opções'.");
   };
