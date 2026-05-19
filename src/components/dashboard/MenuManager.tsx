@@ -121,7 +121,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
   // Reset extra fields when opening dialog for a NEW product
   useEffect(() => {
     if (prodOpen && !editingProd) {
-      setSelectedGroupIds([]);
+      setSelectedGroups([]);
       setStockConsumption([]);
     }
   }, [prodOpen, editingProd]);
@@ -129,11 +129,11 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
   const openProductEdit = async (p: Product) => {
     setLoadingProdId(p.id);
     try {
-      const [groupIds, consumption] = await Promise.all([
-        fetchProductGroupIds(p.id),
+      const [groupLinks, consumption] = await Promise.all([
+        fetchProductGroupLinks(p.id),
         fetchStockConsumption(p.id),
       ]);
-      setSelectedGroupIds(groupIds);
+      setSelectedGroups(groupLinks);
       setStockConsumption(consumption);
       setEditingProd(p);
       setProdOpen(true);
