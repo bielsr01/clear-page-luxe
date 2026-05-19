@@ -308,8 +308,8 @@ export function OrderHistoryDialog({
                     <div key={o.id} className="grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 items-center text-sm hover:bg-accent/30">
                       <div className="font-mono">#{o.order_number}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString("pt-BR")}<br />
-                        {new Date(o.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(o.created_at).toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })}<br />
+                        {new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit" })}
                       </div>
                       <div className="min-w-0">
                         <div className="font-medium truncate">{o.customer_name}</div>
