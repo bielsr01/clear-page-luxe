@@ -37,9 +37,20 @@ export async function fetchProducts(restaurantId: string): Promise<Product[]> {
   const { data } = await supabase.from("products").select("*").eq("restaurant_id", restaurantId).order("sort_order").order("created_at");
   return (data ?? []) as Product[];
 }
-async function fetchProductGroupIds(productId: string): Promise<string[]> {
-  const { data } = await supabase.from("product_option_groups").select("group_id, sort_order").eq("product_id", productId).order("sort_order");
-  return (data ?? []).map((r: any) => r.group_id);
+export interface ProductGroupLink {
+  group_id: string;
+  min_override: number | null;
+  max_override: number | null;
+}
+async function fetchProductGroupLinks(productId: string): Promise<ProductGroupLink[]> {
+  const { data } = await supabase.from("product_option_groups")
+    .select("group_id, sort_order, min_select_override, max_select_override")
+    .eq("product_id", productId).order("sort_order");
+  return (data ?? []).map((r: any) => ({
+    group_id: r.group_id,
+    min_override: r.min_select_override,
+    max_override: r.max_select_override,
+  }));
 }
 
 type StockGroup = { id: string; name: string };
@@ -93,7 +104,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [editingProd, setEditingProd] = useState<Product | null>(null);
   const [defaultCat, setDefaultCat] = useState<string | null>(null);
-  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<ProductGroupLink[]>([]);
   const [stockConsumption, setStockConsumption] = useState<StockConsumption[]>([]);
   const [loadingProdId, setLoadingProdId] = useState<string | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
@@ -110,7 +121,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
   // Reset extra fields when opening dialog for a NEW product
   useEffect(() => {
     if (prodOpen && !editingProd) {
-      setSelectedGroupIds([]);
+      setSelectedGroups([]);
       setStockConsumption([]);
     }
   }, [prodOpen, editingProd]);
@@ -118,11 +129,11 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
   const openProductEdit = async (p: Product) => {
     setLoadingProdId(p.id);
     try {
-      const [groupIds, consumption] = await Promise.all([
-        fetchProductGroupIds(p.id),
+      const [groupLinks, consumption] = await Promise.all([
+        fetchProductGroupLinks(p.id),
         fetchStockConsumption(p.id),
       ]);
-      setSelectedGroupIds(groupIds);
+      setSelectedGroups(groupLinks);
       setStockConsumption(consumption);
       setEditingProd(p);
       setProdOpen(true);
@@ -201,9 +212,15 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
 
       // Sync product_option_groups (preserve order)
       await supabase.from("product_option_groups").delete().eq("product_id", productId);
-      if (selectedGroupIds.length) {
+      if (selectedGroups.length) {
         await supabase.from("product_option_groups").insert(
-          selectedGroupIds.map((gid, idx) => ({ product_id: productId, group_id: gid, sort_order: idx }))
+          selectedGroups.map((g, idx) => ({
+            product_id: productId,
+            group_id: g.group_id,
+            sort_order: idx,
+            min_select_override: g.min_override,
+            max_select_override: g.max_override,
+          }))
         );
       }
 
@@ -217,7 +234,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
       }
 
       toast.success("Produto salvo");
-      setProdOpen(false); setEditingProd(null); setSelectedGroupIds([]); setStockConsumption([]); reload();
+      setProdOpen(false); setEditingProd(null); setSelectedGroups([]); setStockConsumption([]); reload();
     } finally {
       setSavingProduct(false);
     }
@@ -253,7 +270,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
     }).select("id").single();
     if (error || !data) return toast.error(error?.message || "Erro");
     qc.invalidateQueries({ queryKey: optionKeys.groups(restaurantId) });
-    setSelectedGroupIds((prev) => [...prev, data.id]);
+    setSelectedGroups((prev) => [...prev, { group_id: data.id, min_override: null, max_override: null }]);
     setQuickGroupOpen(false);
     toast.success("Grupo criado. Adicione itens depois em 'Grupos de opções'.");
   };
@@ -274,7 +291,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
               </form>
             </DialogContent>
           </Dialog>}
-          {canEdit && <Dialog open={prodOpen} onOpenChange={(o) => { setProdOpen(o); if (!o) { setEditingProd(null); setSelectedGroupIds([]); setStockConsumption([]); } }}>
+          {canEdit && <Dialog open={prodOpen} onOpenChange={(o) => { setProdOpen(o); if (!o) { setEditingProd(null); setSelectedGroups([]); setStockConsumption([]); } }}>
             <DialogTrigger asChild><Button onClick={() => setDefaultCat(categories[0]?.id ?? null)} disabled={categories.length === 0}><Plus className="w-4 h-4 mr-1" />Produto</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>{editingProd ? "Editar" : "Novo"} produto</DialogTitle></DialogHeader>
@@ -305,10 +322,9 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
                   ) : (
                     <SelectedGroupsSorter
                       allGroups={groups}
-                      selectedIds={selectedGroupIds}
-                      onChange={setSelectedGroupIds}
-                    />
-                  )}
+                      selected={selectedGroups}
+                      onChange={setSelectedGroups}
+                    />)}
                 </div>
 
                 <div className="space-y-2 border-t pt-3">
@@ -570,15 +586,16 @@ function SortableProductCard({
 }
 
 function SelectedGroupsSorter({
-  allGroups, selectedIds, onChange,
+  allGroups, selected, onChange,
 }: {
   allGroups: OptionGroup[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
+  selected: ProductGroupLink[];
+  onChange: (links: ProductGroupLink[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const groupById = new Map(allGroups.map((g) => [g.id, g]));
-  const selected = selectedIds.map((id) => groupById.get(id)).filter(Boolean) as OptionGroup[];
+  const selectedIds = selected.map((s) => s.group_id);
+  const visible = selected.filter((s) => groupById.has(s.group_id));
   const unselected = allGroups.filter((g) => !selectedIds.includes(g.id));
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -587,26 +604,35 @@ function SelectedGroupsSorter({
     const oldIdx = selectedIds.indexOf(String(active.id));
     const newIdx = selectedIds.indexOf(String(over.id));
     if (oldIdx < 0 || newIdx < 0) return;
-    onChange(arrayMove(selectedIds, oldIdx, newIdx));
+    onChange(arrayMove(selected, oldIdx, newIdx));
   };
 
-  const toggle = (id: string, checked: boolean) => {
-    if (checked) onChange([...selectedIds, id]);
-    else onChange(selectedIds.filter((x) => x !== id));
-  };
+  const add = (id: string) => onChange([...selected, { group_id: id, min_override: null, max_override: null }]);
+  const remove = (id: string) => onChange(selected.filter((s) => s.group_id !== id));
+  const updateOverride = (id: string, field: "min_override" | "max_override", value: number | null) =>
+    onChange(selected.map((s) => (s.group_id === id ? { ...s, [field]: value } : s)));
 
   return (
-    <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-2">
-      {selected.length > 0 && (
+    <div className="space-y-2 max-h-80 overflow-y-auto border rounded-md p-2">
+      {visible.length > 0 && (
         <div className="space-y-1">
           <div className="text-[10px] uppercase font-semibold text-muted-foreground px-1">
-            Selecionados (arraste para ordenar)
+            Selecionados (arraste para ordenar · ajuste mín/máx por produto)
           </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={selectedIds} strategy={verticalListSortingStrategy}>
-              {selected.map((g) => (
-                <SortableSelectedGroup key={g.id} group={g} onRemove={() => toggle(g.id, false)} />
-              ))}
+              {visible.map((link) => {
+                const g = groupById.get(link.group_id)!;
+                return (
+                  <SortableSelectedGroup
+                    key={link.group_id}
+                    group={g}
+                    link={link}
+                    onRemove={() => remove(link.group_id)}
+                    onOverride={(field, value) => updateOverride(link.group_id, field, value)}
+                  />
+                );
+              })}
             </SortableContext>
           </DndContext>
         </div>
@@ -616,7 +642,7 @@ function SelectedGroupsSorter({
           <div className="text-[10px] uppercase font-semibold text-muted-foreground px-1">Disponíveis</div>
           {unselected.map((g) => (
             <label key={g.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted px-2 py-1 rounded">
-              <input type="checkbox" checked={false} onChange={(e) => toggle(g.id, e.target.checked)} />
+              <input type="checkbox" checked={false} onChange={(e) => e.target.checked && add(g.id)} />
               <span className="flex-1">{g.name}</span>
               <span className="text-xs text-muted-foreground">mín {g.min_select} · máx {g.max_select}</span>
             </label>
@@ -627,11 +653,24 @@ function SelectedGroupsSorter({
   );
 }
 
-function SortableSelectedGroup({ group: g, onRemove }: { group: OptionGroup; onRemove: () => void }) {
+function SortableSelectedGroup({
+  group: g, link, onRemove, onOverride,
+}: {
+  group: OptionGroup;
+  link: ProductGroupLink;
+  onRemove: () => void;
+  onOverride: (field: "min_override" | "max_override", value: number | null) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: g.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const parse = (v: string): number | null => {
+    const t = v.trim();
+    if (t === "") return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 text-sm bg-muted/50 px-2 py-1 rounded">
+    <div ref={setNodeRef} style={style} className="flex flex-wrap items-center gap-2 text-sm bg-muted/50 px-2 py-1.5 rounded">
       <button
         type="button"
         className="touch-none cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
@@ -641,8 +680,23 @@ function SortableSelectedGroup({ group: g, onRemove }: { group: OptionGroup; onR
       >
         <GripVertical className="w-4 h-4" />
       </button>
-      <span className="flex-1">{g.name}</span>
-      <span className="text-xs text-muted-foreground">mín {g.min_select} · máx {g.max_select}</span>
+      <span className="flex-1 min-w-[120px]">{g.name}</span>
+      <div className="flex items-center gap-1">
+        <Label className="text-[10px] text-muted-foreground">Mín</Label>
+        <Input
+          type="number" min="0" className="h-7 w-16 text-xs"
+          placeholder={String(g.min_select)}
+          value={link.min_override ?? ""}
+          onChange={(e) => onOverride("min_override", parse(e.target.value))}
+        />
+        <Label className="text-[10px] text-muted-foreground">Máx</Label>
+        <Input
+          type="number" min="1" className="h-7 w-16 text-xs"
+          placeholder={String(g.max_select)}
+          value={link.max_override ?? ""}
+          onChange={(e) => onOverride("max_override", parse(e.target.value))}
+        />
+      </div>
       <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={onRemove}>
         <Trash2 className="w-3.5 h-3.5" />
       </Button>

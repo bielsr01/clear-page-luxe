@@ -49,7 +49,7 @@ export default function RestaurantPublic() {
     const [catsRes, prodsRes, linksRes, groupsRes, itemsRes, suggRes] = await Promise.all([
       supabase.from("categories").select("*").eq("restaurant_id", rid).eq("is_active", true).order("sort_order"),
       supabase.from("products").select("*").eq("restaurant_id", rid).eq("is_active", true).order("sort_order").order("created_at"),
-      supabase.from("product_option_groups").select("product_id, group_id, sort_order"),
+      supabase.from("product_option_groups").select("product_id, group_id, sort_order, min_select_override, max_select_override"),
       supabase.from("option_groups").select("id, name, min_select, max_select, sort_order, is_active, allow_repeat, restaurant_id").eq("restaurant_id", rid).eq("is_active", true),
       supabase.from("option_items").select("id, group_id, name, extra_price, sort_order, is_active, image_url, option_groups!inner(restaurant_id)").eq("option_groups.restaurant_id", rid).eq("is_active", true).order("sort_order"),
       supabase.from("order_suggestions").select("product_id, sort_order").eq("restaurant_id", rid).order("sort_order"),
@@ -70,7 +70,10 @@ export default function RestaurantPublic() {
       const g = groupById.get(l.group_id);
       if (!g) return; // group inactive or not in this restaurant
       const og: OptionGroup = {
-        id: g.id, name: g.name, min_select: g.min_select, max_select: g.max_select, sort_order: l.sort_order ?? 0,
+        id: g.id, name: g.name,
+        min_select: l.min_select_override ?? g.min_select,
+        max_select: l.max_select_override ?? g.max_select,
+        sort_order: l.sort_order ?? 0,
         allow_repeat: Boolean(g.allow_repeat),
         items: (itemsByGroup.get(g.id) ?? []).map((it) => ({ id: it.id, name: it.name, extra_price: Number(it.extra_price), image_url: it.image_url ?? null })),
       };

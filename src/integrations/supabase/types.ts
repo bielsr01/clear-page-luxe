@@ -1631,16 +1631,22 @@ export type Database = {
       product_option_groups: {
         Row: {
           group_id: string
+          max_select_override: number | null
+          min_select_override: number | null
           product_id: string
           sort_order: number
         }
         Insert: {
           group_id: string
+          max_select_override?: number | null
+          min_select_override?: number | null
           product_id: string
           sort_order?: number
         }
         Update: {
           group_id?: string
+          max_select_override?: number | null
+          min_select_override?: number | null
           product_id?: string
           sort_order?: number
         }

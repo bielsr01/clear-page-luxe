@@ -39,7 +39,7 @@ const STORAGE_KEY = (rid: string) => `pdv_draft_v2_${rid}`;
 
 async function fetchPdvOptions(restaurantId: string): Promise<Record<string, OptGroup[]>> {
   const [linksRes, groupsRes, itemsRes] = await Promise.all([
-    supabase.from("product_option_groups").select("product_id, group_id, sort_order"),
+    supabase.from("product_option_groups").select("product_id, group_id, sort_order, min_select_override, max_select_override"),
     supabase.from("option_groups").select("id, name, min_select, max_select, sort_order, is_active, allow_repeat, restaurant_id").eq("restaurant_id", restaurantId).eq("is_active", true),
     supabase.from("option_items").select("id, group_id, name, extra_price, sort_order, is_active, option_groups!inner(restaurant_id)").eq("option_groups.restaurant_id", restaurantId).eq("is_active", true).order("sort_order"),
   ]);
@@ -56,7 +56,9 @@ async function fetchPdvOptions(restaurantId: string): Promise<Record<string, Opt
     const g = groupById.get(l.group_id);
     if (!g) return;
     const og: OptGroup = {
-      id: g.id, name: g.name, min_select: g.min_select, max_select: g.max_select,
+      id: g.id, name: g.name,
+      min_select: l.min_select_override ?? g.min_select,
+      max_select: l.max_select_override ?? g.max_select,
       allow_repeat: Boolean(g.allow_repeat),
       items: itemsByGroup.get(g.id) ?? [],
     };
