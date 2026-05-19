@@ -29,7 +29,7 @@ export default function Landing() {
             ) : (
               <>
                 <Button asChild variant="ghost"><Link to="/auth">Entrar</Link></Button>
-                <Button asChild><Link to="/auth?mode=signup">Criar conta</Link></Button>
+                <Button asChild><Link to="/auth">Entrar</Link></Button>
               </>
             )}
           </nav>
