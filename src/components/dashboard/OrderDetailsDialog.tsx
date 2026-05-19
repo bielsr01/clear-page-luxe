@@ -321,13 +321,18 @@ export function OrderDetailsDialog({
                   const allOpts: { id?: string; group_name: string | null; item_name: string | null; extra_price: number }[] =
                     opts.length ? opts : parsedFromNotes;
 
-                  // Group preserving first-seen order; each option row stays its own line (no aggregation)
-                  const groups: { name: string; items: typeof allOpts }[] = [];
+                  // Group preserving first-seen order; aggregate duplicate option rows (qty per unit)
+                  type AggOpt = { name: string; extra_price: number; qty: number };
+                  const groups: { name: string; items: AggOpt[] }[] = [];
                   allOpts.forEach((o) => {
                     const gName = (o.group_name ?? "Opção") || "Opção";
                     let g = groups.find((x) => x.name === gName);
                     if (!g) { g = { name: gName, items: [] }; groups.push(g); }
-                    g.items.push(o);
+                    const name = (o.item_name ?? "").trim();
+                    const price = Number(o.extra_price ?? 0);
+                    const existing = g.items.find((x) => x.name === name && x.extra_price === price);
+                    if (existing) existing.qty += 1;
+                    else g.items.push({ name, extra_price: price, qty: 1 });
                   });
 
                   const isObsOnly = !!it.notes && /^obs\s*:/i.test(it.notes.trim());
@@ -341,10 +346,11 @@ export function OrderDetailsDialog({
                         <div key={`${g.name}-${gi}`} className="text-xs pl-3 mt-1 space-y-0.5">
                           <div className="font-semibold">{g.name}:</div>
                           {g.items.map((opt, oi) => {
-                            const extra = Number(opt.extra_price ?? 0) * it.quantity;
+                            const totalQty = opt.qty * it.quantity;
+                            const extra = opt.extra_price * totalQty;
                             return (
                               <div key={oi} className="flex justify-between gap-2 pl-3">
-                                <span>1× {opt.item_name}</span>
+                                <span>{totalQty}× {opt.name}</span>
                                 <span className="tabular-nums text-muted-foreground">
                                   {extra > 0 ? `+ ${brl(extra)}` : ""}
                                 </span>
