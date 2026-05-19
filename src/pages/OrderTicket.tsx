@@ -3,6 +3,7 @@ import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel } from "@/lib/format";
 import { DEFAULT_PRINT_SETTINGS, PrintSettings, normalizePrintSettings } from "@/components/dashboard/PrintSettings";
+import { TicketItemsBlock } from "@/components/TicketItemsBlock";
 
 interface OrderRow {
   id: string;
