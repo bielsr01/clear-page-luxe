@@ -8,7 +8,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { brl } from "@/lib/format";
+import {
+  brl,
+  APP_TIMEZONE,
+  brasiliaStartOfDayUTC,
+  brasiliaEndOfDayUTC,
+  brasiliaMonthStartUTC,
+  brasiliaMonthEndUTC,
+  brasiliaAddDaysUTC,
+  brasiliaDayKey,
+  brasiliaHour,
+  brasiliaWeekday,
+} from "@/lib/format";
 import {
   CalendarIcon,
   TrendingUp,
@@ -43,8 +54,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { format, subDays, startOfDay, endOfDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, differenceInCalendarDays, addDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
 const sb = supabase as any;
@@ -65,15 +75,21 @@ const presets: { id: Preset; label: string }[] = [
 function rangeFor(preset: Preset, custom?: DateRange): { from: Date; to: Date } {
   const now = new Date();
   switch (preset) {
-    case "today": return { from: startOfDay(now), to: endOfDay(now) };
-    case "yesterday": { const y = subDays(now, 1); return { from: startOfDay(y), to: endOfDay(y) }; }
-    case "7d": return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
-    case "30d": return { from: startOfDay(subDays(now, 29)), to: endOfDay(now) };
-    case "month": return { from: startOfMonth(now), to: endOfMonth(now) };
-    case "lastmonth": { const lm = subDays(startOfMonth(now), 1); return { from: startOfMonth(lm), to: endOfMonth(lm) }; }
+    case "today": return { from: brasiliaStartOfDayUTC(now), to: brasiliaEndOfDayUTC(now) };
+    case "yesterday": {
+      const y = brasiliaAddDaysUTC(now, -1);
+      return { from: y, to: new Date(y.getTime() + 86_400_000 - 1) };
+    }
+    case "7d": return { from: brasiliaAddDaysUTC(now, -6), to: brasiliaEndOfDayUTC(now) };
+    case "30d": return { from: brasiliaAddDaysUTC(now, -29), to: brasiliaEndOfDayUTC(now) };
+    case "month": return { from: brasiliaMonthStartUTC(now), to: brasiliaMonthEndUTC(now) };
+    case "lastmonth": {
+      const lm = new Date(brasiliaMonthStartUTC(now).getTime() - 1);
+      return { from: brasiliaMonthStartUTC(lm), to: brasiliaMonthEndUTC(lm) };
+    }
     case "custom":
-      if (custom?.from && custom?.to) return { from: startOfDay(custom.from), to: endOfDay(custom.to) };
-      return { from: startOfDay(now), to: endOfDay(now) };
+      if (custom?.from && custom?.to) return { from: brasiliaStartOfDayUTC(custom.from), to: brasiliaEndOfDayUTC(custom.to) };
+      return { from: brasiliaStartOfDayUTC(now), to: brasiliaEndOfDayUTC(now) };
   }
 }
 
@@ -98,8 +114,10 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
 
   const range = useMemo(() => rangeFor(preset, custom), [preset, custom]);
   const prevRange = useMemo(() => {
-    const days = differenceInCalendarDays(range.to, range.from) + 1;
-    return { from: startOfDay(subDays(range.from, days)), to: endOfDay(subDays(range.to, days)) };
+    const days = Math.round((range.to.getTime() - range.from.getTime()) / 86_400_000);
+    const from = new Date(range.from.getTime() - days * 86_400_000);
+    const to = new Date(range.to.getTime() - days * 86_400_000);
+    return { from, to };
   }, [range]);
 
   const ordersQ = useQuery({
@@ -172,8 +190,9 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   // independent of the selected preset.
   const compareWindow = useMemo(() => {
     const now = new Date();
-    const from = startOfMonth(subDays(startOfMonth(now), 1));
-    return { from, to: endOfDay(now) };
+    const monthStart = brasiliaMonthStartUTC(now);
+    const prevMonthAnchor = new Date(monthStart.getTime() - 1);
+    return { from: brasiliaMonthStartUTC(prevMonthAnchor), to: brasiliaEndOfDayUTC(now) };
   }, []);
   const compareOrdersQ = useQuery({
     queryKey: ["overview-compare", idsKey, compareWindow.from.toISOString()],
@@ -311,7 +330,7 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const purchaseFreq = phonesCur.size ? cur.length / phonesCur.size : 0;
 
   // active 30d (all orders, ignoring filter)
-  const last30 = subDays(new Date(), 30);
+  const last30 = brasiliaAddDaysUTC(new Date(), -30);
   const active30 = new Set(all.filter((o) => new Date(o.created_at) >= last30).map((o) => o.customer_phone).filter(Boolean)).size;
 
   // top customers
@@ -363,28 +382,32 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   cur.forEach((o) => { payAgg.set(o.payment_method, (payAgg.get(o.payment_method) ?? 0) + 1); });
   const payLabel: Record<string, string> = { pix: "PIX", cash: "Dinheiro", card_on_delivery: "Cartão" };
 
-  // daily series
-  const days = eachDayOfInterval({ start: range.from, end: range.to });
+  // daily series (em Brasília)
+  const dayMs = 86_400_000;
+  const firstDay = brasiliaStartOfDayUTC(range.from);
+  const lastDay = brasiliaStartOfDayUTC(range.to);
+  const dayCount = Math.round((lastDay.getTime() - firstDay.getTime()) / dayMs) + 1;
+  const days = Array.from({ length: Math.max(1, dayCount) }, (_, i) => new Date(firstDay.getTime() + i * dayMs));
   const series = days.map((d) => {
-    const key = format(d, "yyyy-MM-dd");
-    const dayCur = cur.filter((o) => format(new Date(o.created_at), "yyyy-MM-dd") === key);
-    const prevDate = subDays(d, days.length);
-    const prevKey = format(prevDate, "yyyy-MM-dd");
-    const dayPrev = prev.filter((o) => format(new Date(o.created_at), "yyyy-MM-dd") === prevKey);
+    const key = brasiliaDayKey(d);
+    const dayCur = cur.filter((o) => brasiliaDayKey(o.created_at) === key);
+    const prevDate = new Date(d.getTime() - days.length * dayMs);
+    const prevKey = brasiliaDayKey(prevDate);
+    const dayPrev = prev.filter((o) => brasiliaDayKey(o.created_at) === prevKey);
     return {
-      date: format(d, "dd/MM", { locale: ptBR }),
+      date: d.toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE, day: "2-digit", month: "2-digit" }),
       atual: dayCur.length,
       anterior: dayPrev.length,
       faturamento: sum(dayCur, "total"),
     };
   });
 
-  // hours / weekday
+  // hours / weekday (em Brasília)
   const hourBuckets = Array.from({ length: 12 }, (_, i) => ({ label: `${String(i * 2).padStart(2, "0")}-${String(i * 2 + 2).padStart(2, "0")}h`, count: 0 }));
-  cur.forEach((o) => { const h = new Date(o.created_at).getHours(); hourBuckets[Math.floor(h / 2)].count++; });
+  cur.forEach((o) => { const h = brasiliaHour(o.created_at); hourBuckets[Math.floor(h / 2)].count++; });
   const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   const wdBuckets = weekdays.map((label) => ({ label, count: 0 }));
-  cur.forEach((o) => { wdBuckets[new Date(o.created_at).getDay()].count++; });
+  cur.forEach((o) => { wdBuckets[brasiliaWeekday(o.created_at)].count++; });
   const bestHour = [...hourBuckets].sort((a, b) => b.count - a.count)[0];
   const bestDay = [...wdBuckets].sort((a, b) => b.count - a.count)[0];
 
@@ -393,18 +416,20 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const compareFiltered = source === "all"
     ? compareAll
     : compareAll.filter((o) => classifySource(o) === source);
-  const today = startOfDay(new Date());
-  const yesterday = startOfDay(subDays(new Date(), 1));
-  const lastWeekSame = startOfDay(subDays(new Date(), 7));
-  const dayOrders = (d: Date) => compareFiltered.filter((o) => format(new Date(o.created_at), "yyyy-MM-dd") === format(d, "yyyy-MM-dd"));
+  const nowRef = new Date();
+  const todayKey = brasiliaDayKey(nowRef);
+  const yesterdayKey = brasiliaDayKey(brasiliaAddDaysUTC(nowRef, -1));
+  const lastWeekKey = brasiliaDayKey(brasiliaAddDaysUTC(nowRef, -7));
+  const dayOrdersByKey = (key: string) => compareFiltered.filter((o) => brasiliaDayKey(o.created_at) === key);
   const sumDayGross = (arr: any[]) => arr.reduce((s, o) => s + Number(o.subtotal || 0) + Number(o.delivery_fee || 0), 0);
-  const todayRev = sumDayGross(dayOrders(today));
-  const yRev = sumDayGross(dayOrders(yesterday));
-  const lwRev = sumDayGross(dayOrders(lastWeekSame));
-  const monthStart = startOfMonth(new Date());
+  const todayRev = sumDayGross(dayOrdersByKey(todayKey));
+  const yRev = sumDayGross(dayOrdersByKey(yesterdayKey));
+  const lwRev = sumDayGross(dayOrdersByKey(lastWeekKey));
+  const monthStart = brasiliaMonthStartUTC(nowRef);
   const monthCur = sumDayGross(compareFiltered.filter((o) => new Date(o.created_at) >= monthStart));
-  const monthPrevStart = startOfMonth(subDays(monthStart, 1));
-  const monthPrevEnd = endOfMonth(monthPrevStart);
+  const monthPrevAnchor = new Date(monthStart.getTime() - 1);
+  const monthPrevStart = brasiliaMonthStartUTC(monthPrevAnchor);
+  const monthPrevEnd = brasiliaMonthEndUTC(monthPrevAnchor);
   const monthPrev = sumDayGross(compareFiltered.filter((o) => { const d = new Date(o.created_at); return d >= monthPrevStart && d <= monthPrevEnd; }));
 
   return (

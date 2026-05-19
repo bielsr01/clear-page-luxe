@@ -847,7 +847,7 @@ function RedeemHistoryDialog({
             <TableBody>
               {list.map((t: any) => (
                 <TableRow key={t.id}>
-                  <TableCell className="text-xs whitespace-nowrap">{new Date(t.created_at).toLocaleString("pt-BR")}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{new Date(t.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</TableCell>
                   <TableCell>
                     <div className="font-medium">{t.loyalty_members?.name ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">{t.loyalty_members?.phone ?? ""}</div>
@@ -876,7 +876,7 @@ function RedeemHistoryDialog({
                 </div>
                 <Badge variant="outline" className="shrink-0">{modeLabel(t.order?.order_type)}</Badge>
               </div>
-              <div className="text-[11px] text-muted-foreground">{new Date(t.created_at).toLocaleString("pt-BR")}</div>
+              <div className="text-[11px] text-muted-foreground">{new Date(t.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</div>
               <div className="grid grid-cols-3 gap-2 text-center text-xs border-t pt-2">
                 <div><div className="font-mono">{t.order?.order_number ? `#${t.order.order_number}` : "—"}</div><div className="text-muted-foreground text-[10px]">Pedido</div></div>
                 <div><div className="font-bold text-destructive">{t.points}</div><div className="text-muted-foreground text-[10px]">Pontos</div></div>

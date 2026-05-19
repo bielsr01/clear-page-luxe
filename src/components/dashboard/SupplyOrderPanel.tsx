@@ -394,7 +394,7 @@ export function SupplyOrderPanel({ restaurantId }: { restaurantId: string }) {
                 <CardContent className="p-5 space-y-3">
                   <div className="flex justify-between items-start gap-2 flex-wrap">
                     <div>
-                      <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("pt-BR")}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</div>
                       <div className="font-bold text-xl">{brl(Number(o.total))}</div>
                     </div>
                     <Badge className={statusColor[o.status]}>{statusLabel[o.status]}</Badge>

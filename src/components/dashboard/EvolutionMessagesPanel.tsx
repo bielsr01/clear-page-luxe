@@ -299,10 +299,10 @@ function DispatchHistoryDialog({
               <div className="break-words">{r.message}</div>
               {r.error && <div className="text-destructive break-words">Erro: {r.error}</div>}
               <div className="text-muted-foreground pt-1 border-t mt-1">
-                Agendado: {r.scheduled_at ? new Date(r.scheduled_at).toLocaleString("pt-BR") : "-"}
+                Agendado: {r.scheduled_at ? new Date(r.scheduled_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "-"}
               </div>
               <div className="text-muted-foreground">
-                Enviado: {r.sent_at ? new Date(r.sent_at).toLocaleString("pt-BR") : "-"}
+                Enviado: {r.sent_at ? new Date(r.sent_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "-"}
               </div>
               {r.attempts > 0 && <div className="text-muted-foreground">Tentativas: {r.attempts}</div>}
             </div>
@@ -341,8 +341,8 @@ function DispatchHistoryDialog({
                     {statusBadge(r.status)}
                     {r.attempts > 0 && <div className="text-[11px] text-muted-foreground mt-1">Tent.: {r.attempts}</div>}
                   </TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">{r.scheduled_at ? new Date(r.scheduled_at).toLocaleString("pt-BR") : "-"}</TableCell>
-                  <TableCell className="text-xs whitespace-nowrap">{r.sent_at ? new Date(r.sent_at).toLocaleString("pt-BR") : "-"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{r.scheduled_at ? new Date(r.scheduled_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "-"}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{r.sent_at ? new Date(r.sent_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "-"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

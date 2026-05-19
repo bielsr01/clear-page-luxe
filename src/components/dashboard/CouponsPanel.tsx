@@ -207,7 +207,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
                         <TableCell>{formatDiscount(c)}</TableCell>
                         <TableCell>{c.apply_to === "order" ? "Pedido todo" : `Itens (${c.product_ids?.length ?? 0})`}</TableCell>
                         <TableCell className="text-xs">
-                          {c.ends_at ? new Date(c.ends_at).toLocaleDateString() : "Sem fim"}
+                          {c.ends_at ? new Date(c.ends_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "Sem fim"}
                         </TableCell>
                         <TableCell>
                           {c.is_active ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="secondary">Inativo</Badge>}
@@ -241,7 +241,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
                       {c.is_active ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="secondary">Inativo</Badge>}
                     </div>
                     <div className="text-xs text-muted-foreground border-t pt-2">
-                      Validade: {c.ends_at ? new Date(c.ends_at).toLocaleDateString() : "Sem fim"}
+                      Validade: {c.ends_at ? new Date(c.ends_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "Sem fim"}
                     </div>
                   </div>
                 ))}
