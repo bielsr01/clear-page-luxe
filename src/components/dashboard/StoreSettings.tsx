@@ -413,21 +413,33 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
       aspect={16 / 6}
       onCancel={() => {
         setCropperOpen(false);
-        if (cropperSrc && cropperSrc.startsWith("blob:") && cropperSrc !== coverPreview && cropperSrc !== full.cover_url) {
+        const isExistingPreview = covers.some((c) => c.preview === cropperSrc);
+        if (cropperSrc && cropperSrc.startsWith("blob:") && !isExistingPreview) {
           URL.revokeObjectURL(cropperSrc);
         }
         setCropperSrc(null);
+        setCropperTargetId(null);
       }}
       onConfirm={(blob, url) => {
-        if (coverPreview) URL.revokeObjectURL(coverPreview);
-        setCoverBlob(blob);
-        setCoverPreview(url);
+        if (cropperTargetId) {
+          // Recortando uma capa existente — substitui
+          setCovers((prev) => prev.map((c) => {
+            if (c.id !== cropperTargetId) return c;
+            if (c.blob && c.preview.startsWith("blob:")) URL.revokeObjectURL(c.preview);
+            return { id: c.id, blob, preview: url };
+          }));
+        } else {
+          // Nova foto
+          setCovers((prev) => [...prev, { id: crypto.randomUUID(), blob, preview: url }]);
+        }
         setCropperOpen(false);
-        if (cropperSrc && cropperSrc.startsWith("blob:") && cropperSrc !== url) {
+        const isExistingPreview = covers.some((c) => c.preview === cropperSrc && c.id !== cropperTargetId);
+        if (cropperSrc && cropperSrc.startsWith("blob:") && !isExistingPreview && cropperSrc !== url) {
           URL.revokeObjectURL(cropperSrc);
         }
         setCropperSrc(null);
-        toast.success("Enquadramento aplicado — clique em Salvar tudo.");
+        setCropperTargetId(null);
+        toast.success("Foto adicionada — clique em Salvar tudo para aplicar.");
       }}
     />
     </>
