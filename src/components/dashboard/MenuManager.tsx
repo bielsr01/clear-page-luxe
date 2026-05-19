@@ -104,7 +104,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [editingProd, setEditingProd] = useState<Product | null>(null);
   const [defaultCat, setDefaultCat] = useState<string | null>(null);
-  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<ProductGroupLink[]>([]);
   const [stockConsumption, setStockConsumption] = useState<StockConsumption[]>([]);
   const [loadingProdId, setLoadingProdId] = useState<string | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
