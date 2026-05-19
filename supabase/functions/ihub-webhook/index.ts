@@ -223,6 +223,7 @@ async function handlePlaced(integration: any, ev: IHubEvent) {
       external_display_id: od.displayId ?? null,
       ifood_subsidy: ifoodSubsidy,
       merchant_subsidy: merchantSubsidy,
+      ...(orderNumberFromIfood ? { order_number: orderNumberFromIfood } : {}),
     })
     .select("id")
     .single();
