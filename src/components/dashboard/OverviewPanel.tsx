@@ -8,7 +8,18 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { brl } from "@/lib/format";
+import {
+  brl,
+  APP_TIMEZONE,
+  brasiliaStartOfDayUTC,
+  brasiliaEndOfDayUTC,
+  brasiliaMonthStartUTC,
+  brasiliaMonthEndUTC,
+  brasiliaAddDaysUTC,
+  brasiliaDayKey,
+  brasiliaHour,
+  brasiliaWeekday,
+} from "@/lib/format";
 import {
   CalendarIcon,
   TrendingUp,
