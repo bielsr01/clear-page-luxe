@@ -378,7 +378,7 @@ function CampaignDialog({
           if (phonePattern) orParts.push(`phone.ilike.${phonePattern}`);
           q = q.or(orParts.join(","));
         }
-        return q.order("created_at", { ascending: false }).order("id", { ascending: true });
+        return q.order("last_order_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).order("id", { ascending: true });
       };
       const CHUNK = 1000;
       const all: any[] = [];
