@@ -264,13 +264,39 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
             <p className="text-xs text-muted-foreground">{full.logo_url ? "Envie um arquivo para substituir." : "Obrigatório."}</p>
           </div>
           <div className="space-y-2">
-            <Label>Foto de capa *</Label>
-            {(coverPreview || full.cover_url) && (
-              <div className="relative w-full aspect-[16/6] rounded-lg overflow-hidden border bg-muted">
-                <img src={coverPreview || full.cover_url!} alt="Capa atual" className="w-full h-full object-cover" />
-                {coverPreview && (
-                  <span className="absolute top-2 left-2 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Pré-visualização (salve para aplicar)</span>
-                )}
+            <Label>Fotos de capa *</Label>
+            {covers.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {covers.map((c, idx) => (
+                  <div key={c.id} className="relative w-full aspect-[16/6] rounded-lg overflow-hidden border bg-muted group">
+                    <img src={c.preview} alt={`Capa ${idx + 1}`} className="w-full h-full object-cover" />
+                    {!c.saved && (
+                      <span className="absolute top-2 left-2 text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Não salvo</span>
+                    )}
+                    <span className="absolute top-2 right-10 text-[10px] bg-background/80 text-foreground px-2 py-0.5 rounded-full border">{idx + 1}/{covers.length}</span>
+                    <button
+                      type="button"
+                      aria-label="Remover"
+                      onClick={() => {
+                        setCovers((prev) => {
+                          const rem = prev.find((x) => x.id === c.id);
+                          if (rem?.blob && rem.preview.startsWith("blob:")) URL.revokeObjectURL(rem.preview);
+                          return prev.filter((x) => x.id !== c.id);
+                        });
+                      }}
+                      className="absolute top-2 right-2 bg-background/90 hover:bg-destructive hover:text-destructive-foreground rounded-full w-7 h-7 grid place-items-center border shadow"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCropperSrc(c.preview); setCropperTargetId(c.id); setCropperOpen(true); }}
+                      className="absolute bottom-2 right-2 bg-background/90 hover:bg-primary hover:text-primary-foreground rounded-full px-2 py-1 text-xs border shadow flex items-center gap-1"
+                    >
+                      <Crop className="w-3.5 h-3.5" /> Recortar
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
             <input
@@ -280,26 +306,10 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
               className="hidden"
               onChange={onCoverFileChosen}
             />
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="button" variant="outline" onClick={() => coverInputRef.current?.click()} className="w-full sm:w-auto">
-                {full.cover_url || coverPreview ? "Trocar foto de capa" : "Enviar foto de capa"}
-              </Button>
-              {(coverPreview || full.cover_url) && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    const src = coverPreview || full.cover_url!;
-                    setCropperSrc(src);
-                    setCropperOpen(true);
-                  }}
-                  className="w-full sm:w-auto"
-                >
-                  <Crop className="w-4 h-4 mr-1" /> Ajustar enquadramento
-                </Button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Aparece como fundo do cabeçalho do site do cliente. Ao escolher uma imagem, abre o editor para arrastar, dar zoom e cortar exatamente como deve aparecer.</p>
+            <Button type="button" variant="outline" onClick={() => coverInputRef.current?.click()} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-1" /> Adicionar foto de capa
+            </Button>
+            <p className="text-xs text-muted-foreground">Você pode enviar uma ou mais fotos. Quando houver mais de uma, elas trocam automaticamente a cada 4s no site do cliente (também é possível arrastar). Ao adicionar uma imagem, abre o editor para arrastar, dar zoom e cortar.</p>
           </div>
           <div className="space-y-2"><Label>URL pública</Label><Input value={`/r/${restaurant.slug}`} readOnly /></div>
         </CardContent>
