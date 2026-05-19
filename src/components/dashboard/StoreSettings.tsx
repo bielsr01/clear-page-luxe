@@ -309,7 +309,7 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
             <Button type="button" variant="outline" onClick={() => coverInputRef.current?.click()} className="w-full sm:w-auto">
               <Plus className="w-4 h-4 mr-1" /> Adicionar foto de capa
             </Button>
-            <p className="text-xs text-muted-foreground">Você pode enviar uma ou mais fotos. Quando houver mais de uma, elas trocam automaticamente a cada 4s no site do cliente (também é possível arrastar). Ao adicionar uma imagem, abre o editor para arrastar, dar zoom e cortar.</p>
+            <p className="text-xs text-muted-foreground">Você pode enviar uma ou mais fotos. Quando houver mais de uma, elas trocam automaticamente a cada 5s no site do cliente (também é possível arrastar). Ao adicionar uma imagem, abre o editor para arrastar, dar zoom e cortar.</p>
           </div>
           <div className="space-y-2"><Label>URL pública</Label><Input value={`/r/${restaurant.slug}`} readOnly /></div>
         </CardContent>
