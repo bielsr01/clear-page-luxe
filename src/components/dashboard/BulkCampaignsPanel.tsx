@@ -78,6 +78,36 @@ export function BulkCampaignsPanel({
   const filterIds = scope === "admin" ? adminFilter : [restaurantId!];
   const filterKey = filterIds.slice().sort().join(",");
 
+  // Per-restaurant bulk_campaigns_enabled flag
+  const { data: restEnabled } = useQuery({
+    queryKey: ["bulk-enabled", restaurantId],
+    enabled: scope === "restaurant" && !!restaurantId,
+    queryFn: async () => {
+      const { data } = await sb.from("restaurants").select("bulk_campaigns_enabled").eq("id", restaurantId).maybeSingle();
+      return (data?.bulk_campaigns_enabled ?? true) as boolean;
+    },
+  });
+  const bulkDisabled = scope === "restaurant" && restEnabled === false;
+
+  const singleAdminTarget = scope === "admin" && adminFilter.length === 1 ? adminFilter[0] : null;
+  const { data: adminTargetEnabled } = useQuery({
+    queryKey: ["bulk-enabled-admin", singleAdminTarget],
+    enabled: !!singleAdminTarget,
+    queryFn: async () => {
+      const { data } = await sb.from("restaurants").select("bulk_campaigns_enabled").eq("id", singleAdminTarget).maybeSingle();
+      return (data?.bulk_campaigns_enabled ?? true) as boolean;
+    },
+  });
+
+  const toggleRestaurantBulk = async (next: boolean) => {
+    if (!singleAdminTarget) return;
+    const { error } = await sb.from("restaurants").update({ bulk_campaigns_enabled: next }).eq("id", singleAdminTarget);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Envio em massa habilitado para o restaurante" : "Envio em massa desabilitado para o restaurante");
+    qc.invalidateQueries({ queryKey: ["bulk-enabled-admin", singleAdminTarget] });
+    qc.invalidateQueries({ queryKey: ["bulk-enabled", singleAdminTarget] });
+  };
+
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["bulk-campaigns", scope, filterKey],
     enabled: scope === "restaurant" ? !!restaurantId : true,
