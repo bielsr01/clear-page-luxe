@@ -172,20 +172,26 @@ export function buildTicketHtml(
     const baseUnit = Number(it.unit_price) - extrasPerUnit;
     const baseTotal = baseUnit * it.quantity;
 
-    // Group preserving order; each option row prints on its own line (no aggregation).
-    const groups: { name: string; items: TicketOrderOption[] }[] = [];
+    // Group preserving order; aggregate duplicate option rows as Nx
+    type AggOpt = { name: string; extra_price: number; qty: number };
+    const groups: { name: string; items: AggOpt[] }[] = [];
     opts.forEach((o) => {
       const gName = (o.group_name ?? "Opção").trim() || "Opção";
       let g = groups.find((x) => x.name === gName);
       if (!g) { g = { name: gName, items: [] }; groups.push(g); }
-      g.items.push(o);
+      const name = (o.item_name ?? "").trim();
+      const price = Number(o.extra_price ?? 0);
+      const existing = g.items.find((x) => x.name === name && x.extra_price === price);
+      if (existing) existing.qty += 1;
+      else g.items.push({ name, extra_price: price, qty: 1 });
     });
 
     const groupsHtml = groups.map((g) => {
       const itemsHtmlInner = g.items.map((opt) => {
-        const extra = Number(opt.extra_price ?? 0) * it.quantity;
+        const totalQty = opt.qty * it.quantity;
+        const extra = opt.extra_price * totalQty;
         const right = ps.prices && extra > 0 ? `<span style="font-size:13px">+ ${brl(extra)}</span>` : "";
-        return `<div class="row" style="font-size:13px;padding-left:8px"><span>1× ${esc(opt.item_name ?? "")}</span>${right}</div>`;
+        return `<div class="row" style="font-size:13px;padding-left:8px"><span>${totalQty}× ${esc(opt.name)}</span>${right}</div>`;
       }).join("");
       return `
         <div style="font-size:13px;padding-left:4px;margin-top:2px">

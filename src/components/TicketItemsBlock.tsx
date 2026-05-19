@@ -78,13 +78,18 @@ export function TicketItemsBlock({
         const extrasPerUnit = allOpts.reduce((s, o) => s + Number(o.extra_price ?? 0), 0);
         const baseUnit = Number(it.unit_price) - extrasPerUnit;
 
-        // Group preserving first-seen order. Each option row = its own line (no aggregation).
-        const groups: { name: string; items: OptRow[] }[] = [];
+        // Group preserving first-seen order; aggregate duplicates as Nx
+        type AggOpt = { name: string; extra_price: number; qty: number };
+        const groups: { name: string; items: AggOpt[] }[] = [];
         allOpts.forEach((o) => {
           const gName = (o.group_name ?? "Opção").trim() || "Opção";
           let g = groups.find((x) => x.name === gName);
           if (!g) { g = { name: gName, items: [] }; groups.push(g); }
-          g.items.push(o);
+          const name = (o.item_name ?? "").trim();
+          const price = Number(o.extra_price ?? 0);
+          const existing = g.items.find((x) => x.name === name && x.extra_price === price);
+          if (existing) existing.qty += 1;
+          else g.items.push({ name, extra_price: price, qty: 1 });
         });
 
         const isObsOnly = !!it.notes && /^obs\s*:/i.test(it.notes.trim());
@@ -99,10 +104,11 @@ export function TicketItemsBlock({
               <div key={`${g.name}-${gi}`} style={{ fontSize: 13, paddingLeft: 4, marginTop: 2 }}>
                 <div style={{ fontWeight: 700 }}>{g.name}:</div>
                 {g.items.map((opt, oi) => {
-                  const extra = Number(opt.extra_price ?? 0) * it.quantity;
+                  const totalQty = opt.qty * it.quantity;
+                  const extra = opt.extra_price * totalQty;
                   return (
                     <div key={oi} className="row" style={{ fontSize: 13, paddingLeft: 8 }}>
-                      <span>1× {opt.item_name}</span>
+                      <span>{totalQty}× {opt.name}</span>
                       {showPrices && extra > 0 && <span>+ {brl(extra)}</span>}
                     </div>
                   );

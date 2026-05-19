@@ -26,6 +26,7 @@ export default function OrderTracking() {
   const { token } = useParams<{ token: string }>();
   const [order, setOrder] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
   const [restaurant, setRestaurant] = useState<any | null>(null);
 
   const load = async () => {
@@ -36,8 +37,18 @@ export default function OrderTracking() {
       supabase.from("order_items").select("*").eq("order_id", o.id),
       supabase.from("restaurants").select("name,slug,logo_url,address_street,address_number,address_complement,address_neighborhood,address_city,address_state,address_cep,phone").eq("id", o.restaurant_id).maybeSingle(),
     ]);
-    setItems(its ?? []);
+    const itemList = its ?? [];
+    setItems(itemList);
     setRestaurant(r);
+    if (itemList.length) {
+      const { data: opts } = await supabase
+        .from("order_item_options")
+        .select("order_item_id,group_name,item_name,extra_price")
+        .in("order_item_id", itemList.map((i: any) => i.id));
+      setOptions(opts ?? []);
+    } else {
+      setOptions([]);
+    }
   };
 
   useEffect(() => {
@@ -133,13 +144,70 @@ export default function OrderTracking() {
 
         <Card>
           <CardContent className="pt-6 space-y-3">
-            <h3 className="font-semibold">Itens</h3>
-            {items.map((i) => (
-              <div key={i.id} className="flex justify-between text-sm">
-                <span>{i.quantity}× {i.product_name}{i.notes && <em className="text-xs text-muted-foreground"> ({i.notes})</em>}</span>
-                <span>{brl(Number(i.unit_price) * i.quantity)}</span>
-              </div>
-            ))}
+            <h3 className="font-semibold">Itens do pedido</h3>
+            <div className="space-y-3 text-sm">
+              {items.map((it: any) => {
+                const opts = options.filter((o) => o.order_item_id === it.id);
+                const extrasPerUnit = opts.reduce((s, o) => s + Number(o.extra_price ?? 0), 0);
+                const baseUnit = Number(it.unit_price) - extrasPerUnit;
+                const baseTotal = baseUnit * it.quantity;
+
+                // Fallback parse notes when no structured options
+                let parsed: { group_name: string; item_name: string; extra_price: number }[] = [];
+                if (opts.length === 0 && it.notes && !/^obs\s*:/i.test(String(it.notes).trim())) {
+                  String(it.notes).split(/\n|\s+•\s+/).forEach((raw: string) => {
+                    const clean = raw.replace(/^[+↳-]\s*/, "").trim();
+                    if (!clean || /^obs\s*:/i.test(clean)) return;
+                    parsed.push({ group_name: "Adicionais", item_name: clean, extra_price: 0 });
+                  });
+                }
+                const allOpts = opts.length ? opts : parsed;
+
+                type AggOpt = { name: string; extra_price: number; qty: number };
+                const groups: { name: string; items: AggOpt[] }[] = [];
+                allOpts.forEach((o: any) => {
+                  const gName = (o.group_name ?? "Opção") || "Opção";
+                  let g = groups.find((x) => x.name === gName);
+                  if (!g) { g = { name: gName, items: [] }; groups.push(g); }
+                  const name = String(o.item_name ?? "").trim();
+                  const price = Number(o.extra_price ?? 0);
+                  const ex = g.items.find((x) => x.name === name && x.extra_price === price);
+                  if (ex) ex.qty += 1;
+                  else g.items.push({ name, extra_price: price, qty: 1 });
+                });
+
+                const isObsOnly = !!it.notes && /^obs\s*:/i.test(String(it.notes).trim());
+
+                return (
+                  <div key={it.id} className="border-b last:border-b-0 pb-2 last:pb-0">
+                    <div className="flex justify-between gap-2">
+                      <span className="font-medium">{it.quantity}× {it.product_name}</span>
+                      <span className="tabular-nums">{brl(baseTotal)}</span>
+                    </div>
+                    {groups.map((g, gi) => (
+                      <div key={gi} className="text-xs pl-3 mt-1 space-y-0.5">
+                        <div className="font-semibold">{g.name}:</div>
+                        {g.items.map((opt, oi) => {
+                          const totalQty = opt.qty * it.quantity;
+                          const extra = opt.extra_price * totalQty;
+                          return (
+                            <div key={oi} className="flex justify-between gap-2 pl-3">
+                              <span>{totalQty}× {opt.name}</span>
+                              <span className="tabular-nums text-muted-foreground">
+                                {extra > 0 ? `+ ${brl(extra)}` : ""}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                    {isObsOnly && (
+                      <div className="text-xs pl-3 mt-1 italic text-muted-foreground">{it.notes}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
             <div className="border-t pt-3 flex justify-between font-bold"><span>Total</span><span>{brl(order.total)}</span></div>
             <div className="text-xs text-muted-foreground">{paymentLabel[order.payment_method]}{order.change_for ? ` • troco p/ ${brl(order.change_for)}` : ""}</div>
           </CardContent>
