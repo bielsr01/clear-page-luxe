@@ -27,6 +27,7 @@ interface OrderLike {
   delivery_fee: number;
   discount?: number | null;
   service_fee?: number | null;
+  coupon_code?: string | null;
   total: number;
   status: string;
   order_type: string;
@@ -303,64 +304,59 @@ export function OrderDetailsDialog({
                   // Fallback: parse notes string when no structured options exist (legacy iFood orders)
                   type ParsedOpt = { id: string; group_name: string; item_name: string; extra_price: number };
                   let parsedFromNotes: ParsedOpt[] = [];
-                  if (opts.length === 0 && it.notes) {
-                    const parts = String(it.notes).split(/\s+•\s+/);
-                    let currentGroup = "Adicionais";
+                  if (opts.length === 0 && it.notes && !/^obs\s*:/i.test(it.notes.trim())) {
+                    const parts = String(it.notes).split(/\n|\s+•\s+/);
                     parts.forEach((raw, i) => {
-                      const isSub = /^↳\s*/.test(raw);
-                      const clean = raw.replace(/^↳\s*/, "").trim();
-                      if (!clean) return;
+                      const clean = raw.replace(/^[+↳-]\s*/, "").trim();
+                      if (!clean || /^obs\s*:/i.test(clean)) return;
                       parsedFromNotes.push({
                         id: `${it.id}-n-${i}`,
-                        group_name: isSub ? "Customizações" : currentGroup,
+                        group_name: "Adicionais",
                         item_name: clean,
                         extra_price: 0,
                       });
                     });
                   }
 
-                  const allOpts: { id: string; group_name: string | null; item_name: string | null; extra_price: number }[] =
+                  const allOpts: { id?: string; group_name: string | null; item_name: string | null; extra_price: number }[] =
                     opts.length ? opts : parsedFromNotes;
+
+                  // Group preserving first-seen order; each option row stays its own line (no aggregation)
+                  const groups: { name: string; items: typeof allOpts }[] = [];
+                  allOpts.forEach((o) => {
+                    const gName = (o.group_name ?? "Opção") || "Opção";
+                    let g = groups.find((x) => x.name === gName);
+                    if (!g) { g = { name: gName, items: [] }; groups.push(g); }
+                    g.items.push(o);
+                  });
+
+                  const isObsOnly = !!it.notes && /^obs\s*:/i.test(it.notes.trim());
 
                   return (
                     <div key={it.id} className="border-b last:border-b-0 pb-2 last:pb-0">
-                      <div className="flex justify-between gap-2">
-                        <span className="font-medium">{it.quantity}× {it.product_name}</span>
-                        <span className="tabular-nums">{brl(baseTotal)}</span>
-                      </div>
-                      
-                      {(() => {
-                        type Agg = { key: string; name: string; qty: number; extra: number };
-                        const groups: { name: string; items: Agg[] }[] = [];
-                        allOpts.forEach((o) => {
-                          const gName = (o.group_name ?? "Opção") || "Opção";
-                          let g = groups.find((x) => x.name === gName);
-                          if (!g) { g = { name: gName, items: [] }; groups.push(g); }
-                          const key = `${o.item_name}|${Number(o.extra_price ?? 0)}`;
-                          let agg = g.items.find((x) => x.key === key);
-                          if (!agg) {
-                            agg = { key, name: o.item_name ?? "", qty: 0, extra: Number(o.extra_price ?? 0) };
-                            g.items.push(agg);
-                          }
-                          agg.qty += 1;
-                        });
-                        return groups.map((g) => (
-                          <div key={g.name} className="text-xs pl-3 mt-1 space-y-0.5">
-                            <div className="font-semibold">{g.name}:</div>
-                            {g.items.map((opt) => {
-                              const totalExtra = opt.extra * opt.qty * it.quantity;
-                              return (
-                                <div key={opt.key} className="flex justify-between gap-2 pl-3">
-                                  <span>{opt.qty}× {opt.name}</span>
-                                  <span className="tabular-nums text-muted-foreground">
-                                    {totalExtra > 0 ? `+ ${brl(totalExtra)}` : ""}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ));
-                      })()}
+                      <div className="font-medium">{it.quantity}× {it.product_name}</div>
+                      <div className="text-xs tabular-nums text-muted-foreground">{brl(baseTotal)}</div>
+
+                      {groups.map((g, gi) => (
+                        <div key={`${g.name}-${gi}`} className="text-xs pl-3 mt-1 space-y-0.5">
+                          <div className="font-semibold">{g.name}:</div>
+                          {g.items.map((opt, oi) => {
+                            const extra = Number(opt.extra_price ?? 0) * it.quantity;
+                            return (
+                              <div key={oi} className="flex justify-between gap-2 pl-3">
+                                <span>1× {opt.item_name}</span>
+                                <span className="tabular-nums text-muted-foreground">
+                                  {extra > 0 ? `+ ${brl(extra)}` : ""}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+
+                      {isObsOnly && (
+                        <div className="text-xs pl-3 mt-1 italic text-muted-foreground">{it.notes}</div>
+                      )}
                     </div>
                   );
                 })}
