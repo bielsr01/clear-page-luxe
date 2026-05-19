@@ -75,6 +75,10 @@ export function StoreSettings({ restaurant, onUpdated }: { restaurant: Restauran
         const oh = data.opening_hours as unknown as OpeningHours | null;
         setHours(oh && Object.keys(oh).length ? oh : defaultHours());
         setZones(((data.delivery_zones as unknown) ?? []) as DeliveryZone[]);
+        const arr = Array.isArray((data as any).cover_urls) ? ((data as any).cover_urls as string[]) : [];
+        const initial = (arr.length ? arr : (data.cover_url ? [data.cover_url as string] : []))
+          .filter((u) => typeof u === "string" && u);
+        setCovers(initial.map((u) => ({ id: crypto.randomUUID(), saved: u, preview: u })));
       }
       setLoaded(true);
     })();
