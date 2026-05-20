@@ -139,8 +139,11 @@ export function CustomersPanel({ restaurantId }: { restaurantId: string }) {
 
   const filtered = useMemo(() => (data ?? []).filter((c) => {
     if (search.trim()) {
-      const q = search.toLowerCase();
-      if (!(c.name.toLowerCase().includes(q) || unmaskPhone(c.phone).includes(unmaskPhone(search)))) return false;
+      const q = search.trim().toLowerCase();
+      const qDigits = unmaskPhone(search);
+      const nameMatch = (c.name || "").toLowerCase().includes(q);
+      const phoneMatch = qDigits.length > 0 && unmaskPhone(c.phone || "").includes(qDigits);
+      if (!nameMatch && !phoneMatch) return false;
     }
     if (typeFilters.size > 0) {
       const t = getClientType(c.orders_count);
