@@ -160,18 +160,98 @@ export function BulkCampaignsPanel({
     qc.invalidateQueries({ queryKey: ["bulk-campaigns"] });
   };
 
+  const prefetchCustomers = async (ids: string[]) => {
+    const key = ids.slice().sort().join(",");
+    await qc.fetchQuery({
+      queryKey: ["bulk-pick-customers", key, ""],
+      staleTime: 30_000,
+      queryFn: async () => {
+        const CHUNK = 1000;
+        const all: any[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await sb.from("customers")
+            .select("id, restaurant_id, name, phone, orders_count, last_order_at")
+            .in("restaurant_id", ids)
+            .order("last_order_at", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, from + CHUNK - 1);
+          if (error) throw error;
+          const rows = data ?? [];
+          all.push(...rows);
+          if (rows.length < CHUNK) break;
+          from += CHUNK;
+        }
+        return all;
+      },
+    });
+  };
+
+  const prefetchRecipients = async (campaignId: string) => {
+    await qc.fetchQuery({
+      queryKey: ["bulk-recipients", campaignId],
+      staleTime: 30_000,
+      queryFn: async () => {
+        const CHUNK = 1000;
+        const all: any[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await sb.from("bulk_campaign_recipients")
+            .select("id, customer_id, name, phone, status, error, sent_at")
+            .eq("campaign_id", campaignId)
+            .order("created_at", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, from + CHUNK - 1);
+          if (error) throw error;
+          const rows = data ?? [];
+          all.push(...rows);
+          if (rows.length < CHUNK) break;
+          from += CHUNK;
+        }
+        return all;
+      },
+    });
+  };
+
+  const openCreate = async () => {
+    if (!canEdit) return;
+    if (scope === "admin" && adminFilter.length === 0) return;
+    const ids = scope === "admin" ? adminFilter : [restaurantId!];
+    setPreparing("new");
+    try {
+      await prefetchCustomers(ids);
+      setCreateOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao carregar contatos");
+    } finally {
+      setPreparing(null);
+    }
+  };
+
   const handleEdit = async (c: any) => {
     if (!canEdit) return toast.error("Sem permissão para editar campanha");
+    if (preparing) return;
     if (c.status === "running") {
       if (!confirm("A campanha está em execução. Ela será pausada para edição. Continuar?")) return;
       const { error } = await sb.from("bulk_campaigns").update({ status: "paused" }).eq("id", c.id);
       if (error) return toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["bulk-campaigns"] });
-      setEditing({ ...c, status: "paused" });
-    } else {
-      setEditing(c);
+    }
+    setPreparing(c.id);
+    try {
+      const ids = scope === "admin" && c.is_admin
+        ? (filterIds.length > 0 ? filterIds : allRest.map((r) => r.id))
+        : [c.restaurant_id];
+      await Promise.all([prefetchCustomers(ids), prefetchRecipients(c.id)]);
+      setEditing(c.status === "running" ? { ...c, status: "paused" } : c);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao carregar contatos");
+    } finally {
+      setPreparing(null);
     }
   };
+
 
   return (
     <div className="space-y-4 relative">
