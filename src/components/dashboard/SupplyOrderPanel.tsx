@@ -370,7 +370,7 @@ export function SupplyOrderPanel({ restaurantId }: { restaurantId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="text-2xl font-bold text-red-600">Meus pedidos</h2>
+        <h2 className="text-2xl font-bold">Meus pedidos</h2>
         {canEdit && (
         <Button
           size="lg"

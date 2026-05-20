@@ -238,15 +238,15 @@ export default function MasterAdmin() {
                 <div className="grid gap-4 md:grid-cols-3">
                   <Card><CardContent className="pt-6 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-accent text-accent-foreground grid place-items-center"><Store className="w-6 h-6" /></div>
-                    <div><div className="text-2xl font-bold text-red-600">{restaurants.length}</div><div className="text-sm text-muted-foreground">Restaurantes</div></div>
+                    <div><div className="text-2xl font-bold">{restaurants.length}</div><div className="text-sm text-muted-foreground">Restaurantes</div></div>
                   </CardContent></Card>
                   <Card><CardContent className="pt-6 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-accent text-accent-foreground grid place-items-center"><ShoppingBag className="w-6 h-6" /></div>
-                    <div><div className="text-2xl font-bold text-red-600">{stats.orders}</div><div className="text-sm text-muted-foreground">Pedidos hoje</div></div>
+                    <div><div className="text-2xl font-bold">{stats.orders}</div><div className="text-sm text-muted-foreground">Pedidos hoje</div></div>
                   </CardContent></Card>
                   <Card><CardContent className="pt-6 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-accent text-accent-foreground grid place-items-center"><DollarSign className="w-6 h-6" /></div>
-                    <div><div className="text-2xl font-bold text-red-600">{brl(stats.revenue)}</div><div className="text-sm text-muted-foreground">Faturamento hoje</div></div>
+                    <div><div className="text-2xl font-bold">{brl(stats.revenue)}</div><div className="text-sm text-muted-foreground">Faturamento hoje</div></div>
                   </CardContent></Card>
                 </div>
 

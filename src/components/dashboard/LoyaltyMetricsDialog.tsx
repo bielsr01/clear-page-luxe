@@ -195,7 +195,7 @@ function KpiCard({ icon, label, value, sub, highlight }: { icon?: React.ReactNod
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div>
-        <div className={`text-2xl font-bold text-red-600 mt-1 ${highlight === "good" ? "text-green-600" : highlight === "bad" ? "text-red-600" : ""}`}>{value}</div>
+        <div className={`text-2xl font-bold mt-1 ${highlight === "good" ? "text-green-600" : highlight === "bad" ? "text-red-600" : ""}`}>{value}</div>
         {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
       </CardContent>
     </Card>

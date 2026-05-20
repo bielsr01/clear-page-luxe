@@ -205,7 +205,7 @@ function StatCard({ label, value, negative }: { label: string; value: string; ne
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className={`text-2xl font-bold text-red-600 ${negative ? "text-red-600" : ""}`}>{value}</div>
+        <div className={`text-2xl font-bold ${negative ? "text-red-600" : ""}`}>{value}</div>
         <div className="text-sm text-muted-foreground">{label}</div>
       </CardContent>
     </Card>
