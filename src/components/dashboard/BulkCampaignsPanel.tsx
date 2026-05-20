@@ -293,8 +293,9 @@ export function BulkCampaignsPanel({
             <CardDescription>Crie campanhas, selecione contatos e envie via Evolution API.</CardDescription>
           </div>
           {canEdit && (
-          <Button onClick={() => setCreateOpen(true)} disabled={scope === "admin" && adminFilter.length === 0} className="w-full sm:w-auto">
-            <Plus className="w-4 h-4 mr-1" /> Nova campanha
+          <Button onClick={openCreate} disabled={(scope === "admin" && adminFilter.length === 0) || preparing !== null} className="w-full sm:w-auto">
+            {preparing === "new" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+            {preparing === "new" ? "Carregando contatos..." : "Nova campanha"}
           </Button>
           )}
         </CardHeader>
