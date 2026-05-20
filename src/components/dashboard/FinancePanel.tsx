@@ -161,7 +161,7 @@ export function FinancePanel({ restaurantIds }: { restaurantIds: string[] }) {
 
           <div className="grid gap-4 md:grid-cols-3">
             <StatCard icon={Wallet} label="Receita total" value={brl(totals.revenue)} accent="text-success" />
-            <StatCard icon={Receipt} label="Despesas totais" value={brl(totals.expenses)} accent="text-destructive" />
+            <StatCard icon={Receipt} label="Despesas totais" value={brl(totals.expenses)} accent="text-destructive" valueClass="text-destructive" />
             <Card className={positive ? "border-success" : "border-destructive"}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -185,7 +185,7 @@ export function FinancePanel({ restaurantIds }: { restaurantIds: string[] }) {
   );
 }
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent?: string }) {
+function StatCard({ icon: Icon, label, value, accent, valueClass }: { icon: any; label: string; value: string; accent?: string; valueClass?: string }) {
   return (
     <Card>
       <CardContent className="pt-6 flex items-center gap-4">
@@ -193,7 +193,7 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: stri
           <Icon className="w-6 h-6" />
         </div>
         <div>
-          <div className="text-2xl font-bold">{value}</div>
+          <div className={`text-2xl font-bold ${valueClass ?? ""}`}>{value}</div>
           <div className="text-sm text-muted-foreground">{label}</div>
         </div>
       </CardContent>
