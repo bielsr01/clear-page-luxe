@@ -74,6 +74,7 @@ export function BulkCampaignsPanel({
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [preparing, setPreparing] = useState<string | null>(null); // "new" | campaign.id
 
   const filterIds = scope === "admin" ? adminFilter : [restaurantId!];
   const filterKey = filterIds.slice().sort().join(",");
