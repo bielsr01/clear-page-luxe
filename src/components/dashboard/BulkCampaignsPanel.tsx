@@ -419,8 +419,8 @@ export function BulkCampaignsPanel({
                           </Button>
                         )}
                         {canEdit && c.status !== "completed" && (
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(c)}>
-                            <Pencil className="w-3.5 h-3.5" />
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(c)} disabled={preparing !== null}>
+                            {preparing === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
                           </Button>
                         )}
                         {canEdit && (
