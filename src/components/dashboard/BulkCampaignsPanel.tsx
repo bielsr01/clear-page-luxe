@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Send, Play, Pause, Plus, Search, Filter, X, Trash2, Users, Pencil, RotateCcw } from "lucide-react";
+import { Send, Play, Pause, Plus, Search, Filter, X, Trash2, Users, Pencil, RotateCcw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { unmaskPhone } from "@/lib/format";
 import { RestaurantMultiSelect, useRestaurants } from "@/components/admin/RestaurantMultiSelect";
@@ -74,6 +74,7 @@ export function BulkCampaignsPanel({
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [preparing, setPreparing] = useState<string | null>(null); // "new" | campaign.id
 
   const filterIds = scope === "admin" ? adminFilter : [restaurantId!];
   const filterKey = filterIds.slice().sort().join(",");
@@ -159,18 +160,98 @@ export function BulkCampaignsPanel({
     qc.invalidateQueries({ queryKey: ["bulk-campaigns"] });
   };
 
+  const prefetchCustomers = async (ids: string[]) => {
+    const key = ids.slice().sort().join(",");
+    await qc.fetchQuery({
+      queryKey: ["bulk-pick-customers", key, ""],
+      staleTime: 30_000,
+      queryFn: async () => {
+        const CHUNK = 1000;
+        const all: any[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await sb.from("customers")
+            .select("id, restaurant_id, name, phone, orders_count, last_order_at")
+            .in("restaurant_id", ids)
+            .order("last_order_at", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, from + CHUNK - 1);
+          if (error) throw error;
+          const rows = data ?? [];
+          all.push(...rows);
+          if (rows.length < CHUNK) break;
+          from += CHUNK;
+        }
+        return all;
+      },
+    });
+  };
+
+  const prefetchRecipients = async (campaignId: string) => {
+    await qc.fetchQuery({
+      queryKey: ["bulk-recipients", campaignId],
+      staleTime: 30_000,
+      queryFn: async () => {
+        const CHUNK = 1000;
+        const all: any[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await sb.from("bulk_campaign_recipients")
+            .select("id, customer_id, name, phone, status, error, sent_at")
+            .eq("campaign_id", campaignId)
+            .order("created_at", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, from + CHUNK - 1);
+          if (error) throw error;
+          const rows = data ?? [];
+          all.push(...rows);
+          if (rows.length < CHUNK) break;
+          from += CHUNK;
+        }
+        return all;
+      },
+    });
+  };
+
+  const openCreate = async () => {
+    if (!canEdit) return;
+    if (scope === "admin" && adminFilter.length === 0) return;
+    const ids = scope === "admin" ? adminFilter : [restaurantId!];
+    setPreparing("new");
+    try {
+      await prefetchCustomers(ids);
+      setCreateOpen(true);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao carregar contatos");
+    } finally {
+      setPreparing(null);
+    }
+  };
+
   const handleEdit = async (c: any) => {
     if (!canEdit) return toast.error("Sem permissão para editar campanha");
+    if (preparing) return;
     if (c.status === "running") {
       if (!confirm("A campanha está em execução. Ela será pausada para edição. Continuar?")) return;
       const { error } = await sb.from("bulk_campaigns").update({ status: "paused" }).eq("id", c.id);
       if (error) return toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["bulk-campaigns"] });
-      setEditing({ ...c, status: "paused" });
-    } else {
-      setEditing(c);
+    }
+    setPreparing(c.id);
+    try {
+      const ids = scope === "admin" && c.is_admin
+        ? (filterIds.length > 0 ? filterIds : allRest.map((r) => r.id))
+        : [c.restaurant_id];
+      await Promise.all([prefetchCustomers(ids), prefetchRecipients(c.id)]);
+      setEditing(c.status === "running" ? { ...c, status: "paused" } : c);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao carregar contatos");
+    } finally {
+      setPreparing(null);
     }
   };
+
 
   return (
     <div className="space-y-4 relative">
@@ -212,8 +293,9 @@ export function BulkCampaignsPanel({
             <CardDescription>Crie campanhas, selecione contatos e envie via Evolution API.</CardDescription>
           </div>
           {canEdit && (
-          <Button onClick={() => setCreateOpen(true)} disabled={scope === "admin" && adminFilter.length === 0} className="w-full sm:w-auto">
-            <Plus className="w-4 h-4 mr-1" /> Nova campanha
+          <Button onClick={openCreate} disabled={(scope === "admin" && adminFilter.length === 0) || preparing !== null} className="w-full sm:w-auto">
+            {preparing === "new" ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+            {preparing === "new" ? "Carregando contatos..." : "Nova campanha"}
           </Button>
           )}
         </CardHeader>
@@ -277,8 +359,8 @@ export function BulkCampaignsPanel({
                                 </Button>
                               )}
                               {canEdit && c.status !== "completed" && (
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(c)} title="Editar">
-                                  <Pencil className="w-3.5 h-3.5" />
+                                <Button size="sm" variant="outline" onClick={() => handleEdit(c)} title="Editar" disabled={preparing !== null}>
+                                  {preparing === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
                                 </Button>
                               )}
                               {canEdit && (
@@ -337,8 +419,8 @@ export function BulkCampaignsPanel({
                           </Button>
                         )}
                         {canEdit && c.status !== "completed" && (
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(c)}>
-                            <Pencil className="w-3.5 h-3.5" />
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(c)} disabled={preparing !== null}>
+                            {preparing === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
                           </Button>
                         )}
                         {canEdit && (
