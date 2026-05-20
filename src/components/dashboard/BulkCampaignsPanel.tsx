@@ -73,6 +73,7 @@ export function BulkCampaignsPanel({
   const allRest = restaurantsQ.data ?? [];
   const [adminFilter, setAdminFilter] = useState<string[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [preparing, setPreparing] = useState<string | null>(null); // "new" | campaign.id
 
