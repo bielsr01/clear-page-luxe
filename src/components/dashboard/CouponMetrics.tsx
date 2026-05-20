@@ -299,7 +299,7 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-2xl font-bold mt-1 ${color}`}>{value}</div>
+      <div className={`text-2xl font-bold text-red-600 mt-1 ${color}`}>{value}</div>
     </div>
   );
 }

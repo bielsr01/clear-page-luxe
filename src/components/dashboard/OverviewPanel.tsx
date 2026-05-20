@@ -770,7 +770,7 @@ function Kpi({ icon: Icon, label, value, sub, delta, disabled, negative }: { ico
             </span>
           )}
         </div>
-        <div className={`text-lg sm:text-2xl font-bold mt-1 break-words ${negative ? "text-red-600" : ""}`}>{disabled ? "—" : value}</div>
+        <div className={`text-lg sm:text-2xl font-bold text-red-600 mt-1 break-words ${negative ? "text-red-600" : ""}`}>{disabled ? "—" : value}</div>
         {sub && !disabled && <div className="text-xs text-muted-foreground mt-0.5 break-words">{sub}</div>}
         {disabled && <div className="text-xs text-muted-foreground mt-0.5">Indisponível para iFood</div>}
       </CardContent>
