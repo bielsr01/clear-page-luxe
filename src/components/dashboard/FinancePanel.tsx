@@ -193,7 +193,7 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: stri
           <Icon className="w-6 h-6" />
         </div>
         <div>
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-2xl font-bold text-red-600">{value}</div>
           <div className="text-sm text-muted-foreground">{label}</div>
         </div>
       </CardContent>
