@@ -507,6 +507,7 @@ function CampaignDialog({
     campaign?.restaurant_id ?? (scope === "restaurant" ? restaurantIds[0] : "")
   );
   const [saving, setSaving] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const idsKey = restaurantIds.slice().sort().join(",");
@@ -849,14 +850,15 @@ function CampaignDialog({
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input className="pl-9" placeholder="Buscar nome ou telefone..." value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-1" /> Filtros
-                    {(() => { const n = typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length; return n > 0 && <Badge variant="secondary" className="ml-2">{n}</Badge>; })()}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 max-h-[70vh] overflow-y-auto" align="start">
+              <Dialog open={filtersOpen} onOpenChange={setFiltersOpen}>
+                <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)}>
+                  <Filter className="w-4 h-4 mr-1" /> Filtros
+                  {(() => { const n = typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length; return n > 0 && <Badge variant="secondary" className="ml-2">{n}</Badge>; })()}
+                </Button>
+                <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto overscroll-contain">
+                  <DialogHeader>
+                    <DialogTitle>Filtros</DialogTitle>
+                  </DialogHeader>
                   <div className="space-y-3">
                     <div>
                       <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Tipo</div>
@@ -956,8 +958,11 @@ function CampaignDialog({
                       </Button>
                     )}
                   </div>
-                </PopoverContent>
-              </Popover>
+                  <DialogFooter>
+                    <Button onClick={() => setFiltersOpen(false)}>Aplicar</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="border rounded-lg max-h-72 overflow-auto">
               {isLoading ? (
