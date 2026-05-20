@@ -507,6 +507,7 @@ function CampaignDialog({
     campaign?.restaurant_id ?? (scope === "restaurant" ? restaurantIds[0] : "")
   );
   const [saving, setSaving] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const idsKey = restaurantIds.slice().sort().join(",");
