@@ -282,7 +282,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
         <div className="flex gap-2">
           {canEdit && <Dialog open={catOpen} onOpenChange={(o) => { setCatOpen(o); if (!o) setEditingCat(null); }}>
             <DialogTrigger asChild><Button variant="outline"><Plus className="w-4 h-4 mr-1" />Categoria</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
               <DialogHeader><DialogTitle>{editingCat ? "Editar" : "Nova"} categoria</DialogTitle></DialogHeader>
               <form onSubmit={saveCategory} className="space-y-4">
                 <div className="space-y-2"><Label>Nome</Label><Input name="name" defaultValue={editingCat?.name} required /></div>
@@ -293,7 +293,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
           </Dialog>}
           {canEdit && <Dialog open={prodOpen} onOpenChange={(o) => { setProdOpen(o); if (!o) { setEditingProd(null); setSelectedGroups([]); setStockConsumption([]); } }}>
             <DialogTrigger asChild><Button onClick={() => setDefaultCat(categories[0]?.id ?? null)} disabled={categories.length === 0}><Plus className="w-4 h-4 mr-1" />Produto</Button></DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-h-[90vh] overflow-y-auto" onCloseAutoFocus={(e) => e.preventDefault()}>
               <DialogHeader><DialogTitle>{editingProd ? "Editar" : "Novo"} produto</DialogTitle></DialogHeader>
               <form onSubmit={saveProduct} className="space-y-4">
                 <div className="space-y-2"><Label>Nome</Label><Input name="name" defaultValue={editingProd?.name} required /></div>
