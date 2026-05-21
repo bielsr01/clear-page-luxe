@@ -282,7 +282,7 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
         <div className="flex gap-2">
           {canEdit && <Dialog open={catOpen} onOpenChange={(o) => { setCatOpen(o); if (!o) setEditingCat(null); }}>
             <DialogTrigger asChild><Button variant="outline"><Plus className="w-4 h-4 mr-1" />Categoria</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
               <DialogHeader><DialogTitle>{editingCat ? "Editar" : "Nova"} categoria</DialogTitle></DialogHeader>
               <form onSubmit={saveCategory} className="space-y-4">
                 <div className="space-y-2"><Label>Nome</Label><Input name="name" defaultValue={editingCat?.name} required /></div>
