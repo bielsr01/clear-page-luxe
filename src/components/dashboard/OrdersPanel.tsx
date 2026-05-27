@@ -810,6 +810,12 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)} className="gap-2 flex-1 md:flex-none text-xs md:text-sm">
             <History className="w-4 h-4" /> <span className="truncate">Histórico</span>
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setFinalizedOpen(true)} className="gap-2 flex-1 md:flex-none text-xs md:text-sm">
+            <CheckCircle2 className="w-4 h-4" /> <span className="truncate">Finalizados</span>
+            {finalizedOrders.length > 0 && (
+              <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">{finalizedOrders.length}</Badge>
+            )}
+          </Button>
           {canCreatePdv && (
             <Button size="sm" onClick={() => setPdvOpen(true)} className="gap-2 flex-1 md:flex-none text-xs md:text-sm">
               <Plus className="w-4 h-4" /> <span className="truncate">Novo PDV</span>
