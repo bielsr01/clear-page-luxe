@@ -904,8 +904,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           </Sheet>
         </>
       )}
-        </>
-      )}
+
 
       <AlertDialog
         open={!!cancelTarget}
