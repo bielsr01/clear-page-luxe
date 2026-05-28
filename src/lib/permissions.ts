@@ -22,6 +22,7 @@ export type Permissions = {
     edit: boolean;
     change_status: boolean;
     create_pdv_order: boolean;
+    apply_pdv_discount: boolean;
   };
   menu: { view: boolean; edit: boolean };
   customers: { view: boolean; create: boolean; edit: boolean; delete: boolean };
