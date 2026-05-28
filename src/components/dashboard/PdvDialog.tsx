@@ -13,11 +13,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { brl, formatPhone, unmaskPhone } from "@/lib/format";
-import { Plus, Minus, Search, Trash2, ShoppingCart, X, UserPlus, UserCheck, Tag, Percent, Printer, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { Plus, Minus, Search, Trash2, ShoppingCart, X, UserPlus, UserCheck, Percent, Printer, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { fetchCategories, fetchProducts, menuKeys } from "./MenuManager";
 import { ordersKey } from "./OrdersPanel";
 import { buildTicketHtml, TicketOptionCatalog, TicketRestaurant } from "@/lib/ticket";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type PaymentMethod = "cash" | "pix" | "card_on_delivery";
 
@@ -120,17 +121,17 @@ export function PdvDialog({
   const [tmpPhone, setTmpPhone] = useState("");
   const [tmpLoyalty, setTmpLoyalty] = useState(false);
 
-  // Discount / service fee
+  // Discount
   const [discountType, setDiscountType] = useState<"value" | "percent">("value");
   const [discountValue, setDiscountValue] = useState<number>(0);
-  const [serviceFeeType, setServiceFeeType] = useState<"value" | "percent">("percent");
-  const [serviceFeeValue, setServiceFeeValue] = useState<number>(0);
   const [discountOpen, setDiscountOpen] = useState(false);
-  const [feeOpen, setFeeOpen] = useState(false);
   const [tmpDiscType, setTmpDiscType] = useState<"value" | "percent">("value");
   const [tmpDiscInput, setTmpDiscInput] = useState("");
-  const [tmpFeeType, setTmpFeeType] = useState<"value" | "percent">("percent");
-  const [tmpFeeInput, setTmpFeeInput] = useState("10");
+
+  const { can } = usePermissions(restaurantId);
+  const canApplyDiscount = can("orders.apply_pdv_discount");
+
+
 
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [paymentShake, setPaymentShake] = useState(false);
@@ -163,8 +164,6 @@ export function PdvDialog({
         setLoyaltyOptIn(!!d.loyaltyOptIn);
         setDiscountType(d.discountType ?? "value");
         setDiscountValue(Number(d.discountValue) || 0);
-        setServiceFeeType(d.serviceFeeType ?? "percent");
-        setServiceFeeValue(Number(d.serviceFeeValue) || 0);
         setPayment(d.payment ?? null);
         setChangeForInput(d.changeForInput ?? "");
       }
@@ -174,9 +173,9 @@ export function PdvDialog({
   useEffect(() => {
     if (!open) return;
     try { localStorage.setItem(STORAGE_KEY(restaurantId), JSON.stringify({
-      cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, serviceFeeType, serviceFeeValue, payment, changeForInput,
+      cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, payment, changeForInput,
     })); } catch { /* noop */ }
-  }, [open, restaurantId, cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, serviceFeeType, serviceFeeValue, payment, changeForInput]);
+  }, [open, restaurantId, cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, payment, changeForInput]);
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -274,14 +273,12 @@ export function PdvDialog({
     return Math.min(subtotal, discountValue);
   })();
   const baseAfterDiscount = Math.max(0, subtotal - discountApplied);
-  const serviceFeeApplied = serviceFeeType === "percent"
-    ? baseAfterDiscount * (serviceFeeValue / 100)
-    : serviceFeeValue;
-  const total = baseAfterDiscount + serviceFeeApplied;
+  const serviceFeeApplied = 0;
+  const total = baseAfterDiscount;
 
   const reset = () => {
     setCart([]); setCustomerName(""); setCustomerPhone(""); setLoyaltyOptIn(false);
-    setDiscountValue(0); setServiceFeeValue(0); setServiceFeeType("percent"); setPayment(null); setChangeForInput("");
+    setDiscountValue(0); setPayment(null); setChangeForInput("");
     setSearch("");
     try { localStorage.removeItem(STORAGE_KEY(restaurantId)); } catch { /* noop */ }
   };
@@ -562,16 +559,13 @@ export function PdvDialog({
               </Button>
             )}
             <div className="flex-1" />
-            <Button variant={discountValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
-              onClick={() => { setTmpDiscType(discountType); setTmpDiscInput(discountValue ? String(discountValue) : ""); setDiscountOpen(true); }}>
-              <Percent className="w-4 h-4" />
-              Desconto{discountValue > 0 ? `: ${discountType === "percent" ? `${discountValue}%` : brl(discountValue)}` : ""}
-            </Button>
-            <Button variant={serviceFeeValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
-              onClick={() => { setTmpFeeType(serviceFeeType); setTmpFeeInput(serviceFeeValue ? String(serviceFeeValue) : "10"); setFeeOpen(true); }}>
-              <Tag className="w-4 h-4" />
-              Taxa de serviço{serviceFeeValue > 0 ? `: ${serviceFeeType === "percent" ? `${serviceFeeValue}%` : brl(serviceFeeValue)}` : ""}
-            </Button>
+            {canApplyDiscount && (
+              <Button variant={discountValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
+                onClick={() => { setTmpDiscType(discountType); setTmpDiscInput(discountValue ? String(discountValue) : ""); setDiscountOpen(true); }}>
+                <Percent className="w-4 h-4" />
+                Desconto{discountValue > 0 ? `: ${discountType === "percent" ? `${discountValue}%` : brl(discountValue)}` : ""}
+              </Button>
+            )}
           </div>
 
           <div className="flex-1 grid grid-cols-[200px_1fr_380px] min-h-0">
@@ -741,7 +735,7 @@ export function PdvDialog({
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{brl(subtotal)}</span></div>
                   {discountApplied > 0 && (<div className="flex justify-between text-destructive"><span>Desconto</span><span>- {brl(discountApplied)}</span></div>)}
-                  {serviceFeeApplied > 0 && (<div className="flex justify-between"><span className="text-muted-foreground">Taxa de serviço{serviceFeeType === "percent" ? ` (${serviceFeeValue}%)` : ""}</span><span>+ {brl(serviceFeeApplied)}</span></div>)}
+                  
                   <div className="flex justify-between text-lg font-bold pt-1 border-t"><span>Total</span><span>{brl(total)}</span></div>
                 </div>
 
@@ -821,29 +815,8 @@ export function PdvDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Service fee dialog */}
-      <Dialog open={feeOpen} onOpenChange={setFeeOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Taxa de serviço</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <Button type="button" variant={tmpFeeType === "percent" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setTmpFeeType("percent")}>%</Button>
-              <Button type="button" variant={tmpFeeType === "value" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setTmpFeeType("value")}>R$</Button>
-            </div>
-            <Input value={tmpFeeInput} onChange={(e) => setTmpFeeInput(e.target.value)} placeholder={tmpFeeType === "percent" ? "10" : "0,00"} inputMode="decimal" autoFocus />
-            {tmpFeeType === "percent" && (
-              <p className="text-xs text-muted-foreground">Sugerido: 10% sobre o subtotal (já preenchido). Clique em Aplicar para confirmar.</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setServiceFeeValue(0); setFeeOpen(false); }}>Remover</Button>
-            <Button onClick={() => {
-              const n = Number(String(tmpFeeInput).replace(",", ".")) || 0;
-              setServiceFeeType(tmpFeeType); setServiceFeeValue(n); setFeeOpen(false);
-            }}>Aplicar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* Product option picker */}
       <Dialog open={!!pickProduct} onOpenChange={(o) => !o && setPickProduct(null)}>
