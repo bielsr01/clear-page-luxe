@@ -131,6 +131,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
   const canEditOrders = can("orders.edit");
   const canViewFeeBreakdown = can("finance.view_fee_breakdown");
   const canCreatePdv = can("orders.create_pdv_order");
+  const canCancelFinalized = can("orders.cancel_finalized");
   type Channel = "all" | "delivery" | "pdv" | "ifood" | "quero";
   const initialChannel: Channel = "all";
   const [channel, setChannel] = useState<Channel>(initialChannel);
