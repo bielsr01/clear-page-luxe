@@ -164,8 +164,6 @@ export function PdvDialog({
         setLoyaltyOptIn(!!d.loyaltyOptIn);
         setDiscountType(d.discountType ?? "value");
         setDiscountValue(Number(d.discountValue) || 0);
-        setServiceFeeType(d.serviceFeeType ?? "percent");
-        setServiceFeeValue(Number(d.serviceFeeValue) || 0);
         setPayment(d.payment ?? null);
         setChangeForInput(d.changeForInput ?? "");
       }
@@ -175,9 +173,9 @@ export function PdvDialog({
   useEffect(() => {
     if (!open) return;
     try { localStorage.setItem(STORAGE_KEY(restaurantId), JSON.stringify({
-      cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, serviceFeeType, serviceFeeValue, payment, changeForInput,
+      cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, payment, changeForInput,
     })); } catch { /* noop */ }
-  }, [open, restaurantId, cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, serviceFeeType, serviceFeeValue, payment, changeForInput]);
+  }, [open, restaurantId, cart, customerName, customerPhone, loyaltyOptIn, discountType, discountValue, payment, changeForInput]);
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
