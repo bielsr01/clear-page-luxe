@@ -636,8 +636,8 @@ export function PdvDialog({
                                   <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
                                 )}
                               </div>
-                              <div className="p-2 flex flex-col gap-1 flex-1">
-                                <div className="font-medium text-sm line-clamp-2">{p.name}</div>
+                              <div className="p-2 flex flex-col gap-1 flex-1 min-w-0">
+                                <div className="font-medium text-sm leading-snug whitespace-normal break-words">{p.name}</div>
                                 <div className="flex items-center justify-between mt-auto">
                                   <div className="text-primary font-bold text-sm">{brl(Number(p.price))}</div>
                                   {hasOpts && <Badge variant="outline" className="text-[10px]">opções</Badge>}
@@ -664,13 +664,13 @@ export function PdvDialog({
                   {cart.length === 0 ? (
                     <div className="text-sm text-muted-foreground text-center py-8">Clique nos produtos para adicionar.</div>
                   ) : cart.map((l) => (
-                    <div key={l.key} className="bg-background rounded-md border p-2">
+                    <div key={l.key} className="bg-background rounded-md border p-2 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{l.name}</div>
+                          <div className="text-sm font-medium leading-snug whitespace-normal break-words">{l.name}</div>
                           <div className="text-xs text-muted-foreground">{brl(l.unit_price)} un.</div>
                           {l.options?.map((o, i) => (
-                            <div key={i} className="text-[11px] text-muted-foreground">+ {o.itemName}{o.extraPrice ? ` (${brl(o.extraPrice)})` : ""}</div>
+                            <div key={i} className="text-[11px] leading-snug text-muted-foreground whitespace-normal break-words">+ {o.itemName}{o.extraPrice ? ` (${brl(o.extraPrice)})` : ""}</div>
                           ))}
                         </div>
                         <button type="button" onClick={() => updateQty(l.key, 0)} className="text-muted-foreground hover:text-destructive" aria-label="Remover">
