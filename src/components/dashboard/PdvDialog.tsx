@@ -910,7 +910,7 @@ export function PdvDialog({
               </div>
             </div>
           </ScrollArea>
-          <DialogFooter className="flex-row items-center sm:justify-between gap-2">
+          <DialogFooter className="flex-row items-center sm:justify-between gap-2 shrink-0">
             <div className="flex items-center gap-1">
               <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setPickQty((q) => Math.max(1, q - 1))}><Minus className="w-3 h-3" /></Button>
               <span className="w-8 text-center text-sm tabular-nums">{pickQty}</span>
