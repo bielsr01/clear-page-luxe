@@ -614,15 +614,32 @@ function SortableGroupCard({
 }
 
 function SortableItemRow({ item, canEdit = true }: { item: OptionItem; canEdit?: boolean }) {
+  const qc = useQueryClient();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
   const [busy, setBusy] = useState(false);
   const toggleItem = async () => {
+    const next = !item.is_active;
     setBusy(true);
-    const { error } = await supabase.from("option_items").update({ is_active: !item.is_active }).eq("id", item.id);
+    // Optimistic update across all cached option_items queries
+    const queries = qc.getQueriesData<OptionItem[]>({ queryKey: ["options"] });
+    queries.forEach(([key, data]) => {
+      if (!Array.isArray(data)) return;
+      if (!data.some((i) => i.id === item.id)) return;
+      qc.setQueryData<OptionItem[]>(key, data.map((i) => i.id === item.id ? { ...i, is_active: next } : i));
+    });
+    const { error } = await supabase.from("option_items").update({ is_active: next }).eq("id", item.id);
     setBusy(false);
-    if (error) toast.error(error.message);
-    else toast.success(item.is_active ? "Item pausado" : "Item ativado");
+    if (error) {
+      // Revert
+      queries.forEach(([key, data]) => {
+        if (!Array.isArray(data)) return;
+        qc.setQueryData<OptionItem[]>(key, (data as OptionItem[]).map((i) => i.id === item.id ? { ...i, is_active: item.is_active } : i));
+      });
+      toast.error(error.message);
+    } else {
+      toast.success(next ? "Item ativado" : "Item pausado");
+    }
   };
   return (
     <div ref={setNodeRef} style={style} className={`flex items-center gap-2 text-xs px-2 py-1 bg-muted rounded ${!item.is_active ? "opacity-60" : ""}`}>
