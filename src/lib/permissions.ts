@@ -177,6 +177,7 @@ const LEGACY_INHERIT_FROM_PARENT: string[] = [
   ...QUERO_STATUSES.map((s) => `orders.statuses.quero.${s}`),
   "orders.channels.quero",
   "finance.view_fee_breakdown",
+  "orders.apply_pdv_discount",
 ];
 
 // Para chaves legadas onde queremos herdar de outro nó (não o "parent" das dependências).
