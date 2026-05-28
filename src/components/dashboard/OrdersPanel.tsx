@@ -1108,6 +1108,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         pending={detailsTarget ? !!pendingAction[detailsTarget.id] : false}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
+        canCancelFinalized={canCancelFinalized}
         canViewFeeBreakdown={canViewFeeBreakdown}
       />
 
