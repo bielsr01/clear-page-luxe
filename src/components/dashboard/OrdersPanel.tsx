@@ -1124,6 +1124,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         pendingAction={pendingAction}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
+        canCancelFinalized={canCancelFinalized}
       />
 
       <Dialog open={!!ifoodCodeTarget} onOpenChange={(o) => { if (!o) { setIfoodCodeTarget(null); setIfoodCodeValue(""); } }}>
