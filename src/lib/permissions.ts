@@ -23,6 +23,7 @@ export type Permissions = {
     change_status: boolean;
     create_pdv_order: boolean;
     apply_pdv_discount: boolean;
+    cancel_finalized: boolean;
   };
   menu: { view: boolean; edit: boolean };
   customers: { view: boolean; create: boolean; edit: boolean; delete: boolean };
@@ -68,6 +69,7 @@ export const FULL_PERMISSIONS: Permissions = {
     change_status: true,
     create_pdv_order: true,
     apply_pdv_discount: true,
+    cancel_finalized: true,
   },
   menu: { view: true, edit: true },
   customers: { view: true, create: true, edit: true, delete: true },
@@ -106,6 +108,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
     change_status: false,
     create_pdv_order: false,
     apply_pdv_discount: false,
+    cancel_finalized: false,
   },
   menu: { view: false, edit: false },
   customers: { view: false, create: false, edit: false, delete: false },
@@ -139,6 +142,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "orders.edit": "orders.view",
   "orders.create_pdv_order": "orders.channels.pdv",
   "orders.apply_pdv_discount": "orders.create_pdv_order",
+  "orders.cancel_finalized": "orders.change_status",
   ...Object.fromEntries(PDV_STATUSES.map((s) => [`orders.statuses.pdv.${s}`, "orders.channels.pdv"])),
   ...Object.fromEntries(DELIVERY_STATUSES.map((s) => [`orders.statuses.delivery.${s}`, "orders.channels.delivery"])),
   ...Object.fromEntries(IFOOD_STATUSES.map((s) => [`orders.statuses.ifood.${s}`, "orders.channels.ifood"])),

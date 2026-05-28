@@ -131,6 +131,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
   const canEditOrders = can("orders.edit");
   const canViewFeeBreakdown = can("finance.view_fee_breakdown");
   const canCreatePdv = can("orders.create_pdv_order");
+  const canCancelFinalized = can("orders.cancel_finalized");
   type Channel = "all" | "delivery" | "pdv" | "ifood" | "quero";
   const initialChannel: Channel = "all";
   const [channel, setChannel] = useState<Channel>(initialChannel);
@@ -705,6 +706,18 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
                 <Badge className="bg-destructive text-destructive-foreground">Cancelado</Badge>
               </div>
             )}
+            {o.status === "delivered" && canCancelFinalized && canChangeStatus && o.external_source !== "ifood" && o.external_source !== "quero" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-2 gap-1 text-destructive border-destructive/40 hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setCancelTarget(o)}
+                disabled={!!pendingAction[o.id]}
+                title="Cancelar pedido já finalizado (estoque é devolvido)"
+              >
+                <X className="w-3.5 h-3.5" /> Cancelar finalizado
+              </Button>
+            )}
             {!["delivered", "cancelled"].includes(o.status) && canChangeStatus && (
               <>
                 {next && !(o.external_source === "ifood" && next === "delivered") ? (
@@ -1095,6 +1108,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         pending={detailsTarget ? !!pendingAction[detailsTarget.id] : false}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
+        canCancelFinalized={canCancelFinalized}
         canViewFeeBreakdown={canViewFeeBreakdown}
       />
 
@@ -1110,6 +1124,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         pendingAction={pendingAction}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
+        canCancelFinalized={canCancelFinalized}
       />
 
       <Dialog open={!!ifoodCodeTarget} onOpenChange={(o) => { if (!o) { setIfoodCodeTarget(null); setIfoodCodeValue(""); } }}>

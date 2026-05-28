@@ -100,12 +100,13 @@ interface Props {
   pending?: boolean;
   canChangeStatus: boolean;
   canEditOrders: boolean;
+  canCancelFinalized?: boolean;
   canViewFeeBreakdown?: boolean;
 }
 
 export function OrderDetailsDialog({
   order, items, onClose, onAdvance, onCancel, onDelete, onPrint,
-  pending, canChangeStatus, canEditOrders, canViewFeeBreakdown = true,
+  pending, canChangeStatus, canEditOrders, canCancelFinalized = false, canViewFeeBreakdown = true,
 }: Props) {
   const optionsQuery = useQuery({
     queryKey: ["order-item-options", order?.id],
@@ -575,6 +576,12 @@ export function OrderDetailsDialog({
             {!["delivered", "cancelled"].includes(order.status) && canChangeStatus && (
               <Button size="sm" variant="outline" onClick={handleCancel} disabled={pending} className="gap-1">
                 <X className="w-4 h-4" /> Cancelar
+              </Button>
+            )}
+            {order.status === "delivered" && canChangeStatus && canCancelFinalized && order.external_source !== "ifood" && order.external_source !== "quero" && (
+              <Button size="sm" variant="outline" onClick={handleCancel} disabled={pending}
+                className="gap-1 text-destructive border-destructive/40 hover:bg-destructive hover:text-destructive-foreground">
+                <X className="w-4 h-4" /> Cancelar pedido finalizado
               </Button>
             )}
             {canEditOrders && order.status === "pending" && (

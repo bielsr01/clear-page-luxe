@@ -95,7 +95,7 @@ function rangeFor(kind: DateRange, customFrom?: Date, customTo?: Date): { from: 
 export function OrderHistoryDialog({
   open, onOpenChange, restaurantId,
   onAdvance, onCancel, onDelete, onPrint,
-  pendingAction, canChangeStatus = false, canEditOrders = false,
+  pendingAction, canChangeStatus = false, canEditOrders = false, canCancelFinalized = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -107,6 +107,7 @@ export function OrderHistoryDialog({
   pendingAction?: Record<string, boolean>;
   canChangeStatus?: boolean;
   canEditOrders?: boolean;
+  canCancelFinalized?: boolean;
 }) {
   const [channel, setChannel] = useState<Channel>("all");
   const [status, setStatus] = useState<string>("all");
@@ -352,6 +353,7 @@ export function OrderHistoryDialog({
         pending={detailsTarget ? !!pendingAction?.[detailsTarget.id] : false}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
+        canCancelFinalized={canCancelFinalized}
         canViewFeeBreakdown={canViewFeeBreakdown}
       />
 
