@@ -616,8 +616,16 @@ function SortableGroupCard({
 function SortableItemRow({ item, canEdit = true }: { item: OptionItem; canEdit?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const [busy, setBusy] = useState(false);
+  const toggleItem = async () => {
+    setBusy(true);
+    const { error } = await supabase.from("option_items").update({ is_active: !item.is_active }).eq("id", item.id);
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success(item.is_active ? "Item pausado" : "Item ativado");
+  };
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 text-xs px-2 py-1 bg-muted rounded">
+    <div ref={setNodeRef} style={style} className={`flex items-center gap-2 text-xs px-2 py-1 bg-muted rounded ${!item.is_active ? "opacity-60" : ""}`}>
       {canEdit && <button
         type="button"
         className="touch-none cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
@@ -627,8 +635,17 @@ function SortableItemRow({ item, canEdit = true }: { item: OptionItem; canEdit?:
       >
         <GripVertical className="w-3.5 h-3.5" />
       </button>}
-      <span className="flex-1">{item.name}</span>
+      <span className="flex-1">{item.name}{!item.is_active && <span className="ml-2 text-[10px] uppercase text-muted-foreground">(pausado)</span>}</span>
       {Number(item.extra_price) > 0 && <span className="text-muted-foreground">+{brl(Number(item.extra_price))}</span>}
+      {canEdit && (
+        <Switch
+          checked={item.is_active}
+          disabled={busy}
+          onCheckedChange={toggleItem}
+          title={item.is_active ? "Pausar item" : "Ativar item"}
+          className="scale-75"
+        />
+      )}
     </div>
   );
 }
