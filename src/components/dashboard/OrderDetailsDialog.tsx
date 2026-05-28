@@ -100,12 +100,13 @@ interface Props {
   pending?: boolean;
   canChangeStatus: boolean;
   canEditOrders: boolean;
+  canCancelFinalized?: boolean;
   canViewFeeBreakdown?: boolean;
 }
 
 export function OrderDetailsDialog({
   order, items, onClose, onAdvance, onCancel, onDelete, onPrint,
-  pending, canChangeStatus, canEditOrders, canViewFeeBreakdown = true,
+  pending, canChangeStatus, canEditOrders, canCancelFinalized = false, canViewFeeBreakdown = true,
 }: Props) {
   const optionsQuery = useQuery({
     queryKey: ["order-item-options", order?.id],
