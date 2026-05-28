@@ -660,7 +660,7 @@ export function PdvDialog({
             </div>
 
             {/* Right: cart */}
-            <div className="flex flex-col min-h-0 bg-muted/30">
+            <div className="flex flex-col min-h-0 min-w-0 bg-muted/30">
               <div className="p-3 border-b shrink-0 text-sm font-semibold flex items-center justify-between">
                 <span>Itens do pedido</span>
                 <Badge variant="secondary">{cart.reduce((s, l) => s + l.quantity, 0)}</Badge>
