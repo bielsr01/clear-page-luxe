@@ -559,16 +559,13 @@ export function PdvDialog({
               </Button>
             )}
             <div className="flex-1" />
-            <Button variant={discountValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
-              onClick={() => { setTmpDiscType(discountType); setTmpDiscInput(discountValue ? String(discountValue) : ""); setDiscountOpen(true); }}>
-              <Percent className="w-4 h-4" />
-              Desconto{discountValue > 0 ? `: ${discountType === "percent" ? `${discountValue}%` : brl(discountValue)}` : ""}
-            </Button>
-            <Button variant={serviceFeeValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
-              onClick={() => { setTmpFeeType(serviceFeeType); setTmpFeeInput(serviceFeeValue ? String(serviceFeeValue) : "10"); setFeeOpen(true); }}>
-              <Tag className="w-4 h-4" />
-              Taxa de serviço{serviceFeeValue > 0 ? `: ${serviceFeeType === "percent" ? `${serviceFeeValue}%` : brl(serviceFeeValue)}` : ""}
-            </Button>
+            {canApplyDiscount && (
+              <Button variant={discountValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
+                onClick={() => { setTmpDiscType(discountType); setTmpDiscInput(discountValue ? String(discountValue) : ""); setDiscountOpen(true); }}>
+                <Percent className="w-4 h-4" />
+                Desconto{discountValue > 0 ? `: ${discountType === "percent" ? `${discountValue}%` : brl(discountValue)}` : ""}
+              </Button>
+            )}
           </div>
 
           <div className="flex-1 grid grid-cols-[200px_1fr_380px] min-h-0">
