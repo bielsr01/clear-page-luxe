@@ -482,6 +482,86 @@ function RedeemWizard({
   };
 
   const [submitting, setSubmitting] = useState(false);
+
+  // ===== OTP confirmation =====
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpCodeId, setOtpCodeId] = useState<string | null>(null);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((v) => v - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  async function sendOtp(isResend = false) {
+    if (!reward || !selectedMember) return;
+    setOtpSending(true);
+    try {
+      // 1) Gera código no banco
+      const { data: codeRows, error: codeErr } = await sb.rpc("create_loyalty_redeem_code", {
+        _restaurant_id: restaurantId,
+        _member_id: selectedMember.id,
+        _reward_id: reward.id,
+      });
+      if (codeErr) throw codeErr;
+      const row = Array.isArray(codeRows) ? codeRows[0] : codeRows;
+      if (!row?.code || !row?.id) throw new Error("Não foi possível gerar o código");
+
+      // 2) Busca integração Evolution do restaurante
+      const { data: integ } = await sb.from("evolution_integrations")
+        .select("id").eq("restaurant_id", restaurantId).maybeSingle();
+      if (!integ?.id) throw new Error("Integração WhatsApp/Evolution não configurada");
+
+      // 3) Dispara mensagem
+      const { data: sendRes, error: sendErr } = await supabase.functions.invoke("evolution-send", {
+        body: {
+          action: "send",
+          integrationId: integ.id,
+          phone: row.phone,
+          text: `Seu codigo de confirmação de resgate é ${row.code}`,
+        },
+      });
+      if (sendErr) throw new Error(sendErr.message);
+      if (sendRes && sendRes.ok === false) throw new Error(sendRes.error || "Falha ao enviar WhatsApp");
+
+      setOtpCodeId(row.id);
+      setOtpInput("");
+      setOtpOpen(true);
+      setResendCooldown(30);
+      toast.success(isResend ? "Novo código enviado" : "Código enviado por WhatsApp");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao enviar código");
+    } finally {
+      setOtpSending(false);
+    }
+  }
+
+  async function verifyAndConfirm() {
+    if (!otpCodeId || otpInput.length !== 6) return;
+    setOtpVerifying(true);
+    try {
+      const { data: ok, error } = await sb.rpc("verify_loyalty_redeem_code", {
+        _code_id: otpCodeId, _code: otpInput,
+      });
+      if (error) throw error;
+      if (!ok) {
+        toast.error("Código inválido ou expirado");
+        setOtpInput("");
+        return;
+      }
+      await confirm();
+      setOtpOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao validar código");
+    } finally {
+      setOtpVerifying(false);
+    }
+  }
+
   const confirm = async () => {
     if (!reward || !selectedMember) return;
     setSubmitting(true);
