@@ -353,6 +353,7 @@ export function OrderHistoryDialog({
         pending={detailsTarget ? !!pendingAction?.[detailsTarget.id] : false}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
+        canCancelFinalized={canCancelFinalized}
         canViewFeeBreakdown={canViewFeeBreakdown}
       />
 
