@@ -66,6 +66,7 @@ const SECTIONS: Array<{ key: keyof Permissions; label: string; rows: Row[] }> = 
     { path: "marketing.coupons.edit", label: "Editar/criar/excluir cupons" },
     { path: "marketing.bulk.view", label: "Ver Envio em massa" },
     { path: "marketing.bulk.edit", label: "Editar/criar campanhas" },
+    { path: "marketing.manual_send.view", label: "Ver Envio Manual" },
   ]},
   { key: "loyalty", label: "Programa de fidelidade", rows: [
     { path: "loyalty.view", label: "Acessar programa" },
