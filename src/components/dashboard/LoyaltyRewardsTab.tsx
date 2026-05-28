@@ -854,18 +854,58 @@ function RedeemWizard({
         )}
 
         <DialogFooter className="gap-2 flex-col sm:flex-row sm:justify-between">
-          <Button variant="outline" onClick={goBack} disabled={submitting} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={goBack} disabled={submitting || otpSending} className="w-full sm:w-auto">
             <ArrowLeft className="w-4 h-4 mr-1" />{step === 1 ? "Cancelar" : "Voltar"}
           </Button>
           {step < 5 ? (
             <Button onClick={goNext} className="w-full sm:w-auto">Avançar<ArrowRight className="w-4 h-4 ml-1" /></Button>
           ) : (
-            <Button onClick={confirm} disabled={submitting || !enoughPoints} className="w-full sm:w-auto">
-              <Gift className="w-4 h-4 mr-1" />{submitting ? "Processando..." : "Confirmar resgate"}
+            <Button onClick={() => sendOtp(false)} disabled={submitting || otpSending || !enoughPoints} className="w-full sm:w-auto">
+              {otpSending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Gift className="w-4 h-4 mr-1" />}
+              {otpSending ? "Enviando código..." : "Confirmar resgate"}
             </Button>
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* OTP Confirmation Dialog */}
+      <Dialog open={otpOpen} onOpenChange={(o) => { if (!submitting && !otpVerifying) setOtpOpen(o); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><MessageCircle className="w-5 h-5 text-green-600" />Confirmar resgate</DialogTitle>
+            <DialogDescription>
+              Enviamos um código de 6 dígitos para o WhatsApp de <strong>{selectedMember?.name}</strong>
+              {selectedMember?.phone && <> ({formatPhone(selectedMember.phone)})</>}. Digite o código abaixo para finalizar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-2">
+            <InputOTP maxLength={6} value={otpInput} onChange={(v) => setOtpInput(v.replace(/\D/g, ""))} inputMode="numeric">
+              <InputOTPGroup>
+                {[0,1,2,3,4,5].map((i) => <InputOTPSlot key={i} index={i} />)}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => sendOtp(true)}
+              disabled={otpSending || resendCooldown > 0 || submitting || otpVerifying}
+              className="text-sm text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+            >
+              {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : otpSending ? "Reenviando..." : "Reenviar código"}
+            </button>
+          </div>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setOtpOpen(false)} disabled={submitting || otpVerifying} className="w-full sm:w-auto">
+              Cancelar
+            </Button>
+            <Button onClick={verifyAndConfirm} disabled={otpInput.length !== 6 || submitting || otpVerifying} className="w-full sm:w-auto">
+              {(submitting || otpVerifying) ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+              {submitting ? "Finalizando..." : otpVerifying ? "Validando..." : "Validar e finalizar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
