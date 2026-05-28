@@ -835,7 +835,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         <>
           {/* Desktop: 4 colunas fixas (Finalizados em painel lateral) */}
           <div className="hidden md:grid gap-3 grid-cols-2 lg:grid-cols-4 items-stretch flex-1 min-h-0">
-            <Column title="Aguardando aceitação" count={pendingOrders.length} accent="bg-destructive/15 text-destructive">
+            <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined}>
               {pendingOrders.map((o) => renderCard(o, true))}
             </Column>
             <Column title="Em preparo" count={preparingOrders.length}>
@@ -853,14 +853,14 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           <div className="flex md:hidden flex-col gap-3 flex-1 min-h-0">
             <Tabs value={mobileCol} onValueChange={(v) => setMobileCol(v as typeof mobileCol)}>
               <TabsList className="grid grid-cols-2 h-auto w-full gap-1 p-1">
-                <TabsTrigger value="pending" className={`text-xs gap-1 ${pendingOrders.length > 0 ? "text-destructive" : ""}`}>Aguard. aceitação <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="h-4 min-w-4 px-1 text-[10px]">{pendingOrders.length}</Badge></TabsTrigger>
+                <TabsTrigger value="pending" className={`text-xs gap-1 ${pendingOrders.length > 0 ? "text-destructive animate-pulse" : ""}`}>Aguard. aceitação <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="h-4 min-w-4 px-1 text-[10px]">{pendingOrders.length}</Badge></TabsTrigger>
                 <TabsTrigger value="preparing" className="text-xs gap-1">Em preparo <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{preparingOrders.length}</Badge></TabsTrigger>
                 <TabsTrigger value="ready" className="text-xs gap-1">Pronto <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{readyOrders.length}</Badge></TabsTrigger>
                 <TabsTrigger value="out" className="text-xs gap-1">Em entrega <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{outForDeliveryOrders.length}</Badge></TabsTrigger>
               </TabsList>
             </Tabs>
             {mobileCol === "pending" && (
-              <Column title="Aguardando aceitação" count={pendingOrders.length} accent="bg-destructive/15 text-destructive" className="flex-1 min-h-0">
+              <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined} className="flex-1 min-h-0">
                 {pendingOrders.map((o) => renderCard(o, true))}
               </Column>
             )}
