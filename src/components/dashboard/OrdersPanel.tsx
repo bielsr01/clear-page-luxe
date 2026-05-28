@@ -569,10 +569,12 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
 
   const sortRecent = (a: Order, b: Order) =>
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  const pendingOrders = channelOrders.filter((o) => o.status === "pending").sort(sortRecent);
-  const preparingOrders = channelOrders.filter((o) => o.status === "preparing").sort(sortRecent);
-  const readyOrders = channelOrders.filter((o) => o.status === "awaiting_pickup").sort(sortRecent);
-  const outForDeliveryOrders = channelOrders.filter((o) => o.status === "out_for_delivery").sort(sortRecent);
+  const sortOldestStatusChange = (a: Order, b: Order) =>
+    new Date(a.updated_at ?? a.created_at).getTime() - new Date(b.updated_at ?? b.created_at).getTime();
+  const pendingOrders = channelOrders.filter((o) => o.status === "pending").sort(sortOldestStatusChange);
+  const preparingOrders = channelOrders.filter((o) => o.status === "preparing").sort(sortOldestStatusChange);
+  const readyOrders = channelOrders.filter((o) => o.status === "awaiting_pickup").sort(sortOldestStatusChange);
+  const outForDeliveryOrders = channelOrders.filter((o) => o.status === "out_for_delivery").sort(sortOldestStatusChange);
   const finalizedOrders = channelOrders.filter((o) => o.status === "delivered" || o.status === "cancelled").sort(sortRecent);
 
   const renderCard = (o: Order, compact = false) => {
