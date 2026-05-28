@@ -815,29 +815,8 @@ export function PdvDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Service fee dialog */}
-      <Dialog open={feeOpen} onOpenChange={setFeeOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Taxa de serviço</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="flex gap-2">
-              <Button type="button" variant={tmpFeeType === "percent" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setTmpFeeType("percent")}>%</Button>
-              <Button type="button" variant={tmpFeeType === "value" ? "default" : "outline"} size="sm" className="flex-1" onClick={() => setTmpFeeType("value")}>R$</Button>
-            </div>
-            <Input value={tmpFeeInput} onChange={(e) => setTmpFeeInput(e.target.value)} placeholder={tmpFeeType === "percent" ? "10" : "0,00"} inputMode="decimal" autoFocus />
-            {tmpFeeType === "percent" && (
-              <p className="text-xs text-muted-foreground">Sugerido: 10% sobre o subtotal (já preenchido). Clique em Aplicar para confirmar.</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setServiceFeeValue(0); setFeeOpen(false); }}>Remover</Button>
-            <Button onClick={() => {
-              const n = Number(String(tmpFeeInput).replace(",", ".")) || 0;
-              setServiceFeeType(tmpFeeType); setServiceFeeValue(n); setFeeOpen(false);
-            }}>Aplicar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* Product option picker */}
       <Dialog open={!!pickProduct} onOpenChange={(o) => !o && setPickProduct(null)}>
