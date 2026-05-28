@@ -29,6 +29,7 @@ export type Permissions = {
   marketing: {
     coupons: { view: boolean; edit: boolean; metrics: boolean };
     bulk: { view: boolean; edit: boolean };
+    manual_send: { view: boolean };
   };
   loyalty: {
     view: boolean;
