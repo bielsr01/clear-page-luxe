@@ -909,7 +909,7 @@ export function PdvDialog({
                 <Input value={pickNotes} onChange={(e) => setPickNotes(e.target.value)} placeholder="Ex: sem cebola" />
               </div>
             </div>
-          </ScrollArea>
+          </div>
           <DialogFooter className="flex-row items-center sm:justify-between gap-2 shrink-0">
             <div className="flex items-center gap-1">
               <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setPickQty((q) => Math.max(1, q - 1))}><Minus className="w-3 h-3" /></Button>
