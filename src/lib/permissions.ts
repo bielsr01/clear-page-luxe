@@ -29,6 +29,7 @@ export type Permissions = {
   marketing: {
     coupons: { view: boolean; edit: boolean; metrics: boolean };
     bulk: { view: boolean; edit: boolean };
+    manual_send: { view: boolean };
   };
   loyalty: {
     view: boolean;
@@ -70,7 +71,7 @@ export const FULL_PERMISSIONS: Permissions = {
   },
   menu: { view: true, edit: true },
   customers: { view: true, create: true, edit: true, delete: true },
-  marketing: { coupons: { view: true, edit: true, metrics: true }, bulk: { view: true, edit: true } },
+  marketing: { coupons: { view: true, edit: true, metrics: true }, bulk: { view: true, edit: true }, manual_send: { view: true } },
   loyalty: {
     view: true,
     toggle_program: true,
@@ -108,7 +109,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   },
   menu: { view: false, edit: false },
   customers: { view: false, create: false, edit: false, delete: false },
-  marketing: { coupons: { view: false, edit: false, metrics: false }, bulk: { view: false, edit: false } },
+  marketing: { coupons: { view: false, edit: false, metrics: false }, bulk: { view: false, edit: false }, manual_send: { view: false } },
   loyalty: {
     view: false,
     toggle_program: false,
@@ -184,6 +185,7 @@ const LEGACY_INHERIT_FROM_PARENT: string[] = [
 const LEGACY_INHERIT_OVERRIDES: Record<string, string> = {
   "customers.create": "customers.edit",
   "marketing.coupons.metrics": "marketing.coupons.view",
+  "marketing.manual_send.view": "marketing.bulk.view",
 };
 
 function pathDefined(obj: any, path: string): boolean {
