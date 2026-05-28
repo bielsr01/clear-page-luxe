@@ -706,6 +706,18 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
                 <Badge className="bg-destructive text-destructive-foreground">Cancelado</Badge>
               </div>
             )}
+            {o.status === "delivered" && canCancelFinalized && canChangeStatus && o.external_source !== "ifood" && o.external_source !== "quero" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 px-2 gap-1 text-destructive border-destructive/40 hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setCancelTarget(o)}
+                disabled={!!pendingAction[o.id]}
+                title="Cancelar pedido já finalizado (estoque é devolvido)"
+              >
+                <X className="w-3.5 h-3.5" /> Cancelar finalizado
+              </Button>
+            )}
             {!["delivered", "cancelled"].includes(o.status) && canChangeStatus && (
               <>
                 {next && !(o.external_source === "ifood" && next === "delivered") ? (
