@@ -609,7 +609,7 @@ export function PdvDialog({
             </div>
 
             {/* Middle: products — single scroll grouped by category */}
-            <div className="flex flex-col min-h-0 border-r">
+            <div className="flex flex-col min-h-0 min-w-0 border-r">
               <div className="p-3 border-b shrink-0">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
