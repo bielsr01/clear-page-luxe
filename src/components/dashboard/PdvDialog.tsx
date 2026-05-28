@@ -609,7 +609,7 @@ export function PdvDialog({
             </div>
 
             {/* Middle: products — single scroll grouped by category */}
-            <div className="flex flex-col min-h-0 border-r">
+            <div className="flex flex-col min-h-0 min-w-0 border-r">
               <div className="p-3 border-b shrink-0">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -660,7 +660,7 @@ export function PdvDialog({
             </div>
 
             {/* Right: cart */}
-            <div className="flex flex-col min-h-0 bg-muted/30">
+            <div className="flex flex-col min-h-0 min-w-0 bg-muted/30">
               <div className="p-3 border-b shrink-0 text-sm font-semibold flex items-center justify-between">
                 <span>Itens do pedido</span>
                 <Badge variant="secondary">{cart.reduce((s, l) => s + l.quantity, 0)}</Badge>
@@ -848,11 +848,11 @@ export function PdvDialog({
       {/* Product option picker */}
       <Dialog open={!!pickProduct} onOpenChange={(o) => !o && setPickProduct(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle>{pickProduct?.name}</DialogTitle>
             <DialogDescription>Selecione as opções para adicionar ao pedido.</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 -mx-6 px-6">
+          <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
             <div className="space-y-4">
               {pickProduct && (groupsByProduct[pickProduct.id] ?? []).map((g) => {
                 const sel = pickSelected[g.id] ?? [];
@@ -910,7 +910,7 @@ export function PdvDialog({
               </div>
             </div>
           </ScrollArea>
-          <DialogFooter className="flex-row items-center sm:justify-between gap-2">
+          <DialogFooter className="flex-row items-center sm:justify-between gap-2 shrink-0">
             <div className="flex items-center gap-1">
               <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setPickQty((q) => Math.max(1, q - 1))}><Minus className="w-3 h-3" /></Button>
               <span className="w-8 text-center text-sm tabular-nums">{pickQty}</span>
