@@ -273,14 +273,12 @@ export function PdvDialog({
     return Math.min(subtotal, discountValue);
   })();
   const baseAfterDiscount = Math.max(0, subtotal - discountApplied);
-  const serviceFeeApplied = serviceFeeType === "percent"
-    ? baseAfterDiscount * (serviceFeeValue / 100)
-    : serviceFeeValue;
-  const total = baseAfterDiscount + serviceFeeApplied;
+  const serviceFeeApplied = 0;
+  const total = baseAfterDiscount;
 
   const reset = () => {
     setCart([]); setCustomerName(""); setCustomerPhone(""); setLoyaltyOptIn(false);
-    setDiscountValue(0); setServiceFeeValue(0); setServiceFeeType("percent"); setPayment(null); setChangeForInput("");
+    setDiscountValue(0); setPayment(null); setChangeForInput("");
     setSearch("");
     try { localStorage.removeItem(STORAGE_KEY(restaurantId)); } catch { /* noop */ }
   };
