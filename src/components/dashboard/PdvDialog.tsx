@@ -121,17 +121,17 @@ export function PdvDialog({
   const [tmpPhone, setTmpPhone] = useState("");
   const [tmpLoyalty, setTmpLoyalty] = useState(false);
 
-  // Discount / service fee
+  // Discount
   const [discountType, setDiscountType] = useState<"value" | "percent">("value");
   const [discountValue, setDiscountValue] = useState<number>(0);
-  const [serviceFeeType, setServiceFeeType] = useState<"value" | "percent">("percent");
-  const [serviceFeeValue, setServiceFeeValue] = useState<number>(0);
   const [discountOpen, setDiscountOpen] = useState(false);
-  const [feeOpen, setFeeOpen] = useState(false);
   const [tmpDiscType, setTmpDiscType] = useState<"value" | "percent">("value");
   const [tmpDiscInput, setTmpDiscInput] = useState("");
-  const [tmpFeeType, setTmpFeeType] = useState<"value" | "percent">("percent");
-  const [tmpFeeInput, setTmpFeeInput] = useState("10");
+
+  const { can } = usePermissions(restaurantId);
+  const canApplyDiscount = can("orders.apply_pdv_discount");
+
+
 
   const [payment, setPayment] = useState<PaymentMethod | null>(null);
   const [paymentShake, setPaymentShake] = useState(false);
