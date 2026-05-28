@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Gift, Search, ArrowLeft, ArrowRight, Check, Bike, Store, ShoppingBag, History } from "lucide-react";
+import { Plus, Trash2, Pencil, Gift, Search, ArrowLeft, ArrowRight, Check, Bike, Store, ShoppingBag, History, MessageCircle, Loader2 } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { brl, formatPhone } from "@/lib/format";
 import { usePermissions } from "@/hooks/usePermissions";
 import { DeliveryZone, GeoPoint, findDeliveryFee, geocodeAddress, haversineKm } from "@/lib/delivery";
@@ -481,6 +482,86 @@ function RedeemWizard({
   };
 
   const [submitting, setSubmitting] = useState(false);
+
+  // ===== OTP confirmation =====
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpCodeId, setOtpCodeId] = useState<string | null>(null);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown((v) => v - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  async function sendOtp(isResend = false) {
+    if (!reward || !selectedMember) return;
+    setOtpSending(true);
+    try {
+      // 1) Gera código no banco
+      const { data: codeRows, error: codeErr } = await sb.rpc("create_loyalty_redeem_code", {
+        _restaurant_id: restaurantId,
+        _member_id: selectedMember.id,
+        _reward_id: reward.id,
+      });
+      if (codeErr) throw codeErr;
+      const row = Array.isArray(codeRows) ? codeRows[0] : codeRows;
+      if (!row?.code || !row?.id) throw new Error("Não foi possível gerar o código");
+
+      // 2) Busca integração Evolution do restaurante
+      const { data: integ } = await sb.from("evolution_integrations")
+        .select("id").eq("restaurant_id", restaurantId).maybeSingle();
+      if (!integ?.id) throw new Error("Integração WhatsApp/Evolution não configurada");
+
+      // 3) Dispara mensagem
+      const { data: sendRes, error: sendErr } = await supabase.functions.invoke("evolution-send", {
+        body: {
+          action: "send",
+          integrationId: integ.id,
+          phone: row.phone,
+          text: `Seu codigo de confirmação de resgate é ${row.code}`,
+        },
+      });
+      if (sendErr) throw new Error(sendErr.message);
+      if (sendRes && sendRes.ok === false) throw new Error(sendRes.error || "Falha ao enviar WhatsApp");
+
+      setOtpCodeId(row.id);
+      setOtpInput("");
+      setOtpOpen(true);
+      setResendCooldown(30);
+      toast.success(isResend ? "Novo código enviado" : "Código enviado por WhatsApp");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao enviar código");
+    } finally {
+      setOtpSending(false);
+    }
+  }
+
+  async function verifyAndConfirm() {
+    if (!otpCodeId || otpInput.length !== 6) return;
+    setOtpVerifying(true);
+    try {
+      const { data: ok, error } = await sb.rpc("verify_loyalty_redeem_code", {
+        _code_id: otpCodeId, _code: otpInput,
+      });
+      if (error) throw error;
+      if (!ok) {
+        toast.error("Código inválido ou expirado");
+        setOtpInput("");
+        return;
+      }
+      await confirm();
+      setOtpOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao validar código");
+    } finally {
+      setOtpVerifying(false);
+    }
+  }
+
   const confirm = async () => {
     if (!reward || !selectedMember) return;
     setSubmitting(true);
@@ -773,18 +854,58 @@ function RedeemWizard({
         )}
 
         <DialogFooter className="gap-2 flex-col sm:flex-row sm:justify-between">
-          <Button variant="outline" onClick={goBack} disabled={submitting} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={goBack} disabled={submitting || otpSending} className="w-full sm:w-auto">
             <ArrowLeft className="w-4 h-4 mr-1" />{step === 1 ? "Cancelar" : "Voltar"}
           </Button>
           {step < 5 ? (
             <Button onClick={goNext} className="w-full sm:w-auto">Avançar<ArrowRight className="w-4 h-4 ml-1" /></Button>
           ) : (
-            <Button onClick={confirm} disabled={submitting || !enoughPoints} className="w-full sm:w-auto">
-              <Gift className="w-4 h-4 mr-1" />{submitting ? "Processando..." : "Confirmar resgate"}
+            <Button onClick={() => sendOtp(false)} disabled={submitting || otpSending || !enoughPoints} className="w-full sm:w-auto">
+              {otpSending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Gift className="w-4 h-4 mr-1" />}
+              {otpSending ? "Enviando código..." : "Confirmar resgate"}
             </Button>
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* OTP Confirmation Dialog */}
+      <Dialog open={otpOpen} onOpenChange={(o) => { if (!submitting && !otpVerifying) setOtpOpen(o); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><MessageCircle className="w-5 h-5 text-green-600" />Confirmar resgate</DialogTitle>
+            <DialogDescription>
+              Enviamos um código de 6 dígitos para o WhatsApp de <strong>{selectedMember?.name}</strong>
+              {selectedMember?.phone && <> ({formatPhone(selectedMember.phone)})</>}. Digite o código abaixo para finalizar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-2">
+            <InputOTP maxLength={6} value={otpInput} onChange={(v) => setOtpInput(v.replace(/\D/g, ""))} inputMode="numeric">
+              <InputOTPGroup>
+                {[0,1,2,3,4,5].map((i) => <InputOTPSlot key={i} index={i} />)}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => sendOtp(true)}
+              disabled={otpSending || resendCooldown > 0 || submitting || otpVerifying}
+              className="text-sm text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+            >
+              {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : otpSending ? "Reenviando..." : "Reenviar código"}
+            </button>
+          </div>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setOtpOpen(false)} disabled={submitting || otpVerifying} className="w-full sm:w-auto">
+              Cancelar
+            </Button>
+            <Button onClick={verifyAndConfirm} disabled={otpInput.length !== 6 || submitting || otpVerifying} className="w-full sm:w-auto">
+              {(submitting || otpVerifying) ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+              {submitting ? "Finalizando..." : otpVerifying ? "Validando..." : "Validar e finalizar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
