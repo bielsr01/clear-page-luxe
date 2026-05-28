@@ -578,6 +578,12 @@ export function OrderDetailsDialog({
                 <X className="w-4 h-4" /> Cancelar
               </Button>
             )}
+            {order.status === "delivered" && canChangeStatus && canCancelFinalized && order.external_source !== "ifood" && order.external_source !== "quero" && (
+              <Button size="sm" variant="outline" onClick={handleCancel} disabled={pending}
+                className="gap-1 text-destructive border-destructive/40 hover:bg-destructive hover:text-destructive-foreground">
+                <X className="w-4 h-4" /> Cancelar pedido finalizado
+              </Button>
+            )}
             {canEditOrders && order.status === "pending" && (
               <Button size="sm" variant="outline" onClick={handleDelete}
                 className="text-destructive hover:bg-destructive hover:text-destructive-foreground gap-1">
