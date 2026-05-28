@@ -848,11 +848,11 @@ export function PdvDialog({
       {/* Product option picker */}
       <Dialog open={!!pickProduct} onOpenChange={(o) => !o && setPickProduct(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="shrink-0">
             <DialogTitle>{pickProduct?.name}</DialogTitle>
             <DialogDescription>Selecione as opções para adicionar ao pedido.</DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 -mx-6 px-6">
+          <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
             <div className="space-y-4">
               {pickProduct && (groupsByProduct[pickProduct.id] ?? []).map((g) => {
                 const sel = pickSelected[g.id] ?? [];
