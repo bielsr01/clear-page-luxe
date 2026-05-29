@@ -196,7 +196,7 @@ export default function LoyaltyLanding() {
                     Programa de Fidelidade
                   </h1>
                   <p className="text-primary font-bold text-lg">
-                    {restaurant.name}
+                    Coxinha Surprise - {restaurant.name}
                   </p>
                 </div>
               </div>
