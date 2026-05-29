@@ -19,11 +19,18 @@ import {
   Coins,
   Phone,
   ArrowRight,
-  Info
+  Info,
+  ShoppingBag
 } from "lucide-react";
 import { formatPhone, normalizeBrPhone } from "@/lib/format";
 
 type FlowStep = "landing" | "phone" | "otp" | "dashboard";
+
+interface LoyaltySettings {
+  enabled: boolean;
+  loyalty_description: string;
+  loyalty_rules: string;
+}
 
 export default function LoyaltyLanding() {
   const { slug } = useParams();
@@ -61,10 +68,11 @@ export default function LoyaltyLanding() {
     enabled: !!slug,
   });
 
-  const settings = restaurant?.loyalty_settings?.[0] || {
-    enabled: false,
-    loyalty_description: "Acumule pontos em todas as suas compras e troque por benefícios exclusivos.",
-    loyalty_rules: "• A cada R$ 1,00 gasto equivale a 1 ponto.\n• Os pontos só podem ser utilizados na mesma unidade onde foram acumulados.\n• Os pontos só podem ser resgatados presencialmente na loja."
+  const rawSettings = restaurant?.loyalty_settings as any;
+  const settings: LoyaltySettings = {
+    enabled: !!rawSettings?.[0]?.enabled,
+    loyalty_description: rawSettings?.[0]?.loyalty_description || "Acumule pontos em todas as suas compras e troque por benefícios exclusivos.",
+    loyalty_rules: rawSettings?.[0]?.loyalty_rules || "• A cada R$ 1,00 gasto equivale a 1 ponto.\n• Os pontos só podem ser utilizados na mesma unidade onde foram acumulados.\n• Os pontos só podem ser resgatados presencialmente na loja."
   };
 
   useEffect(() => {
@@ -83,44 +91,14 @@ export default function LoyaltyLanding() {
     if (!phone) return toast.error("Informe seu telefone");
     const cleanPhone = normalizeBrPhone(phone);
     if (cleanPhone.length < 10) return toast.error("Telefone inválido");
+    if (!restaurant?.id) return;
 
     setIsLoading(true);
     try {
-      // 1) Create consultation code
-      const { data: codeId, error: codeErr } = await supabase.rpc("create_loyalty_consultation_code", {
-        _restaurant_id: restaurant?.id,
-        _phone: cleanPhone,
-      });
-
-      if (codeErr) {
-        if (codeErr.message.includes("não encontrado")) {
-          throw new Error("Você ainda não possui cadastro no nosso programa de fidelidade. Faça um pedido para começar a pontuar!");
-        }
-        throw codeErr;
-      }
-
-      // 2) Get evolution integration
-      const { data: integ } = await supabase.from("evolution_integrations")
-        .select("id").eq("restaurant_id", restaurant?.id).maybeSingle();
-      
-      if (!integ?.id) throw new Error("Sistema de envio indisponível no momento. Por favor, tente mais tarde.");
-
-      // 3) Get the code from the database (we need the text code to send via WhatsApp)
-      // Since create_loyalty_consultation_code only returns the ID for security, we need to fetch the row if we are on the server side,
-      // but here we are on the client. Wait, the RPC returns the ID. 
-      // How do I get the code text to send? 
-      // I should have a separate edge function or the RPC should handle the sending.
-      // In the dashboard (LoyaltyRewardsTab), the code was fetched after RPC because the manager has access.
-      // Here, the public user DOES NOT have access to loyalty_redeem_codes.
-      
-      // I will create an edge function 'loyalty-otp' to handle both generation and sending for public use.
-      // But for now, let's assume I need to update the RPC or use an edge function.
-      
-      // Let's use an edge function to keep it secure.
       const { data, error: invokeErr } = await supabase.functions.invoke("loyalty-otp", {
         body: {
           action: "send",
-          restaurantId: restaurant?.id,
+          restaurantId: restaurant.id,
           phone: cleanPhone,
           type: "consultation"
         }
@@ -150,13 +128,15 @@ export default function LoyaltyLanding() {
       });
 
       if (error) throw error;
-      if (!data.success) {
+      
+      const response = data as any;
+      if (!response?.success) {
         setOtpValue("");
-        throw new Error(data.error || "Código inválido");
+        throw new Error(response?.error || "Código inválido");
       }
 
-      setMemberData(data.member);
-      setHistory(data.history || []);
+      setMemberData(response.member);
+      setHistory(response.history || []);
       setStep("dashboard");
       toast.success("Bem-vindo(a)!");
     } catch (e: any) {
@@ -195,7 +175,7 @@ export default function LoyaltyLanding() {
         {/* Header/Landing */}
         {step === "landing" && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
               <div className="bg-primary/10 p-8 flex flex-col items-center text-center space-y-4">
                 {restaurant.logo_url ? (
                   <img src={restaurant.logo_url} alt={restaurant.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-sm" />
