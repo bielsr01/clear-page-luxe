@@ -8,7 +8,9 @@ export default function LoyaltyLanding() {
   const { data: restaurant } = useQuery({
     queryKey: ["restaurant-loyalty", slug],
     queryFn: async () => {
+      if (!slug) throw new Error("Slug is required");
       const { data, error } = await supabase
+
         .from("restaurants")
         .select("name, logo_url")
         .eq("slug", slug)
