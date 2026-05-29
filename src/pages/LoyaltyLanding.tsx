@@ -68,11 +68,18 @@ export default function LoyaltyLanding() {
     enabled: !!slug,
   });
 
-  const rawSettings = restaurant?.loyalty_settings as any;
+  const rawSettings = restaurant?.loyalty_settings;
+  const settingsObj = Array.isArray(rawSettings) ? rawSettings[0] : (rawSettings as any);
+  
   const settings: LoyaltySettings = {
-    enabled: !!rawSettings?.[0]?.enabled,
-    loyalty_description: rawSettings?.[0]?.loyalty_description || "Acumule pontos em todas as suas compras e troque por benefícios exclusivos.",
-    loyalty_rules: rawSettings?.[0]?.loyalty_rules || "• A cada R$ 1,00 gasto equivale a 1 ponto.\n• Os pontos só podem ser utilizados na mesma unidade onde foram acumulados.\n• Os pontos só podem ser resgatados presencialmente na loja."
+    enabled: !!settingsObj?.enabled,
+    loyalty_description: settingsObj?.loyalty_description || "Acumule pontos em todas as suas compras e troque por benefícios exclusivos. Quanto mais você consome, mais vantagens recebe.",
+    loyalty_rules: settingsObj?.loyalty_rules || 
+      "• Acumule pontos em cada pedido: Ganhe pontos em todas as suas compras, seja pelo delivery, retirada ou PDV.\n" +
+      "• Troque por benefícios: Use seus pontos para resgatar produtos exclusivos ou descontos especiais em seus próximos pedidos.\n" +
+      "• Consulta Simples: Acompanhe seu saldo e histórico de pontos em tempo real através deste link oficial.\n" +
+      "• Validação por WhatsApp: Para sua segurança, o acesso ao seu extrato é validado através de um código enviado para seu WhatsApp.\n" +
+      "• Exclusividade: Os benefícios são exclusivos para cada loja e não podem ser transferidos entre diferentes unidades."
   };
 
   useEffect(() => {
@@ -161,9 +168,9 @@ export default function LoyaltyLanding() {
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
             <Award className="w-8 h-8 text-slate-300" />
           </div>
-          <h1 className="text-xl font-bold">Programa Indisponível</h1>
-          <p className="text-slate-500">Este restaurante não possui um programa de fidelidade ativo no momento.</p>
-          <Button variant="outline" onClick={() => window.history.back()}>Voltar</Button>
+          <h1 className="text-xl font-bold">Programa de Fidelidade Indisponível</h1>
+          <p className="text-slate-500">Este restaurante não possui um programa de fidelidade ativo no momento ou o endereço está incorreto.</p>
+          <Button variant="outline" className="w-full" onClick={() => window.history.back()}>Voltar</Button>
         </Card>
       </div>
     );
