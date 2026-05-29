@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,7 +24,16 @@ export default function LoyaltyLanding() {
     enabled: !!slug,
   });
 
+  useEffect(() => {
+    if (restaurant?.name) {
+      document.title = `Fidelidade - ${restaurant.name}`;
+    } else {
+      document.title = "Programa de Fidelidade";
+    }
+  }, [restaurant?.name]);
+
   return (
+
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-sm p-8 flex flex-col items-center text-center space-y-6">
         {restaurant?.logo_url ? (
