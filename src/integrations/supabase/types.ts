@@ -1092,7 +1092,7 @@ export type Database = {
           member_id: string
           phone: string
           restaurant_id: string
-          reward_id: string
+          reward_id: string | null
           used_at: string | null
         }
         Insert: {
@@ -1104,7 +1104,7 @@ export type Database = {
           member_id: string
           phone: string
           restaurant_id: string
-          reward_id: string
+          reward_id?: string | null
           used_at?: string | null
         }
         Update: {
@@ -1116,7 +1116,7 @@ export type Database = {
           member_id?: string
           phone?: string
           restaurant_id?: string
-          reward_id?: string
+          reward_id?: string | null
           used_at?: string | null
         }
         Relationships: []
@@ -1161,6 +1161,8 @@ export type Database = {
         Row: {
           created_at: string
           enabled: boolean
+          loyalty_description: string | null
+          loyalty_rules: string | null
           points_per_real: number
           restaurant_id: string
           updated_at: string
@@ -1168,6 +1170,8 @@ export type Database = {
         Insert: {
           created_at?: string
           enabled?: boolean
+          loyalty_description?: string | null
+          loyalty_rules?: string | null
           points_per_real?: number
           restaurant_id: string
           updated_at?: string
@@ -1175,6 +1179,8 @@ export type Database = {
         Update: {
           created_at?: string
           enabled?: boolean
+          loyalty_description?: string | null
+          loyalty_rules?: string | null
           points_per_real?: number
           restaurant_id?: string
           updated_at?: string
@@ -2503,6 +2509,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_loyalty_consultation_code: {
+        Args: { _phone: string; _restaurant_id: string }
+        Returns: string
+      }
       create_loyalty_redeem_code: {
         Args: { _member_id: string; _restaurant_id: string; _reward_id: string }
         Returns: {
@@ -2564,6 +2574,10 @@ export type Database = {
           _restaurant_id: string
         }
         Returns: string
+      }
+      verify_loyalty_consultation_code: {
+        Args: { _code: string; _code_id: string }
+        Returns: Json
       }
       verify_loyalty_redeem_code: {
         Args: { _code: string; _code_id: string }
