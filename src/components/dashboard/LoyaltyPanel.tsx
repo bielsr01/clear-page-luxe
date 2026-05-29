@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { brl, formatPhone, normalizeBrPhone, statusLabelFor } from "@/lib/format";
 import { Plus, Check, Trash2, Award, RefreshCw, Pencil, History, Search, BarChart3, Loader2, Link as LinkIcon, ExternalLink, Copy } from "lucide-react";
@@ -19,7 +20,13 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 const sb = supabase as any;
 
-type Settings = { restaurant_id: string; enabled: boolean; points_per_real: number };
+type Settings = { 
+  restaurant_id: string; 
+  enabled: boolean; 
+  points_per_real: number;
+  loyalty_description?: string;
+  loyalty_rules?: string;
+};
 type Member = { id: string; name: string; phone: string; points: number; created_at: string };
 type Tx = {
   id: string;
@@ -58,10 +65,15 @@ export function LoyaltyPanel({ restaurantId, isAdmin = false }: { restaurantId: 
   });
   const [enabled, setEnabled] = useState(false);
   const [pointsPerReal, setPointsPerReal] = useState("1");
+  const [loyaltyDescription, setLoyaltyDescription] = useState("");
+  const [loyaltyRules, setLoyaltyRules] = useState("");
+
   useEffect(() => {
     if (settingsQ.data) {
       setEnabled(!!settingsQ.data.enabled);
       setPointsPerReal(String(settingsQ.data.points_per_real ?? 1));
+      setLoyaltyDescription(settingsQ.data.loyalty_description || "");
+      setLoyaltyRules(settingsQ.data.loyalty_rules || "");
     }
   }, [settingsQ.data]);
 
@@ -84,10 +96,11 @@ export function LoyaltyPanel({ restaurantId, isAdmin = false }: { restaurantId: 
   };
 
   const saveSettings = async () => {
-
     const payload: any = {
       restaurant_id: restaurantId,
       enabled,
+      loyalty_description: loyaltyDescription,
+      loyalty_rules: loyaltyRules,
     };
     if (isAdmin) payload.points_per_real = Number(pointsPerReal) || 0;
     const { error } = await sb.from("loyalty_settings").upsert(payload, { onConflict: "restaurant_id" });
@@ -306,48 +319,74 @@ export function LoyaltyPanel({ restaurantId, isAdmin = false }: { restaurantId: 
           )}
 
           {/* Settings */}
-          <TabsContent value="settings" className="space-y-4 pt-4 max-w-md">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <LinkIcon className="w-4 h-4" /> Link do Programa
-              </Label>
-              <div className="flex gap-2">
-                <div className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono truncate border select-all" title={loyaltyLink}>
-                  {loyaltyLink || "Carregando..."}
-                </div>
-                <Button variant="outline" size="icon" onClick={copyLink} disabled={!loyaltyLink}>
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="icon" asChild disabled={!loyaltyLink}>
-                  <a href={loyaltyLink} target="_blank" rel="noreferrer">
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                </Button>
-              </div>
-              <p className="text-[10px] text-muted-foreground">Este é o link que você deve compartilhar com seus clientes para que eles acessem o programa de fidelidade.</p>
-            </div>
-
-            <div className="flex items-center justify-between border rounded-lg p-3">
-
-              <div>
-                <div className="font-medium">Status do programa</div>
-                <p className="text-xs text-muted-foreground">{isAdmin ? "Quando ativo, clientes podem optar por pontuar ao fazer pedido." : "A ativação ou desativação do programa é feita pelo administrador do sistema."}</p>
-              </div>
-              {canToggle ? <Switch checked={enabled} onCheckedChange={setEnabled} /> : <Badge variant={enabled ? "default" : "secondary"}>{enabled ? "Ativo" : "Inativo"}</Badge>}
-            </div>
-            {isAdmin ? (
+          <TabsContent value="settings" className="space-y-6 pt-4 max-w-2xl">
+            <div className="space-y-4 max-w-md">
               <div className="space-y-2">
-                <Label>Pontos por R$ 1,00</Label>
-                <Input type="number" step="0.01" min="0" value={pointsPerReal} onChange={(e) => setPointsPerReal(e.target.value)} />
-                <p className="text-xs text-muted-foreground">Configurável apenas pelo administrador. Padrão: 1 ponto por real gasto.</p>
+                <Label className="flex items-center gap-2">
+                  <LinkIcon className="w-4 h-4" /> Link do Programa
+                </Label>
+                <div className="flex gap-2">
+                  <div className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono truncate border select-all" title={loyaltyLink}>
+                    {loyaltyLink || "Carregando..."}
+                  </div>
+                  <Button variant="outline" size="icon" onClick={copyLink} disabled={!loyaltyLink}>
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" asChild disabled={!loyaltyLink}>
+                    <a href={loyaltyLink} target="_blank" rel="noreferrer">
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Este é o link que você deve compartilhar com seus clientes para que eles acessem o programa de fidelidade.</p>
               </div>
-            ) : (
-              <div className="space-y-1 rounded-lg border bg-muted/30 p-3">
-                <div className="text-xs text-muted-foreground">Pontos por R$ 1,00 (definido pelo administrador)</div>
-                <div className="font-bold text-lg">{pointsPerReal}</div>
+
+              <div className="flex items-center justify-between border rounded-lg p-3">
+                <div>
+                  <div className="font-medium">Status do programa</div>
+                  <p className="text-xs text-muted-foreground">{isAdmin ? "Quando ativo, clientes podem optar por pontuar ao fazer pedido." : "A ativação ou desativação do programa é feita pelo administrador do sistema."}</p>
+                </div>
+                {canToggle ? <Switch checked={enabled} onCheckedChange={setEnabled} /> : <Badge variant={enabled ? "default" : "secondary"}>{enabled ? "Ativo" : "Inativo"}</Badge>}
               </div>
-            )}
-            {(canToggle || isAdmin) && <Button onClick={saveSettings}>Salvar</Button>}
+
+              {isAdmin ? (
+                <div className="space-y-2">
+                  <Label>Pontos por R$ 1,00</Label>
+                  <Input type="number" step="0.01" min="0" value={pointsPerReal} onChange={(e) => setPointsPerReal(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Configurável apenas pelo administrador. Padrão: 1 ponto por real gasto.</p>
+                </div>
+              ) : (
+                <div className="space-y-1 rounded-lg border bg-muted/30 p-3">
+                  <div className="text-xs text-muted-foreground">Pontos por R$ 1,00 (definido pelo administrador)</div>
+                  <div className="font-bold text-lg">{pointsPerReal}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 border-t pt-6">
+              <div className="space-y-2">
+                <Label>Texto de apresentação</Label>
+                <Textarea 
+                  placeholder="Descreva seu programa de fidelidade..."
+                  value={loyaltyDescription}
+                  onChange={(e) => setLoyaltyDescription(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Regras do programa</Label>
+                <Textarea 
+                  placeholder="Liste as regras do programa..."
+                  value={loyaltyRules}
+                  onChange={(e) => setLoyaltyRules(e.target.value)}
+                  className="min-h-[120px]"
+                />
+                <p className="text-[10px] text-muted-foreground">Use uma regra por linha. Você pode usar emojis ou símbolos como • para destacar.</p>
+              </div>
+            </div>
+
+            <Button onClick={saveSettings} className="w-full sm:w-auto">Salvar Configurações</Button>
           </TabsContent>
 
           {/* Members */}
