@@ -20,7 +20,8 @@ import {
   Phone,
   ArrowRight,
   Info,
-  ShoppingBag
+  ShieldCheck,
+  Star
 } from "lucide-react";
 import { formatPhone, normalizeBrPhone } from "@/lib/format";
 
@@ -43,10 +44,11 @@ export default function LoyaltyLanding() {
   const [memberData, setMemberData] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
 
-  const { data: restaurant, isLoading: isRestLoading } = useQuery({
+  const { data: restaurant, isLoading: isRestLoading, error: queryError } = useQuery({
     queryKey: ["restaurant-loyalty-public", slug],
     queryFn: async () => {
-      if (!slug) throw new Error("Slug is required");
+      if (!slug) throw new Error("Slug é obrigatório");
+      
       const { data, error } = await supabase
         .from("restaurants")
         .select(`
@@ -60,7 +62,7 @@ export default function LoyaltyLanding() {
           )
         `)
         .eq("slug", slug)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
@@ -69,6 +71,7 @@ export default function LoyaltyLanding() {
   });
 
   const rawSettings = restaurant?.loyalty_settings;
+  // Handle both array and object formats for the joined table
   const settingsObj = Array.isArray(rawSettings) ? rawSettings[0] : (rawSettings as any);
   
   const settings: LoyaltySettings = {
@@ -84,7 +87,7 @@ export default function LoyaltyLanding() {
 
   useEffect(() => {
     if (restaurant?.name) {
-      document.title = `Fidelidade - ${restaurant.name}`;
+      document.title = `Fidelidade - Coxinha Surprise ${restaurant.name}`;
     }
   }, [restaurant?.name]);
 
@@ -161,16 +164,30 @@ export default function LoyaltyLanding() {
     );
   }
 
-  if (!restaurant || !settings.enabled) {
+  if (queryError || !restaurant || !settings.enabled) {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <Card className="max-w-md w-full text-center p-8 space-y-4">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
-            <Award className="w-8 h-8 text-slate-300" />
+        <Card className="max-w-md w-full text-center p-8 space-y-6 shadow-xl border-none rounded-3xl">
+          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
+            <Award className="w-10 h-10 text-slate-300" />
           </div>
-          <h1 className="text-xl font-bold">Programa de Fidelidade Indisponível</h1>
-          <p className="text-slate-500">Este restaurante não possui um programa de fidelidade ativo no momento ou o endereço está incorreto.</p>
-          <Button variant="outline" className="w-full" onClick={() => window.history.back()}>Voltar</Button>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-slate-800">Programa de Fidelidade Indisponível</h1>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Este restaurante não possui um programa de fidelidade ativo no momento ou o endereço acessado está incorreto.
+            </p>
+          </div>
+          <Button variant="outline" className="w-full h-12 font-bold rounded-xl" onClick={() => window.location.href = "/"}>
+            Ir para a página inicial
+          </Button>
+          
+          <div className="flex flex-col items-center gap-2 opacity-30 pt-4">
+            <span className="text-[10px] uppercase tracking-wider font-black">Powered by</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-slate-900 rounded-md flex items-center justify-center text-[10px] text-white font-bold">CS</div>
+              <span className="text-sm font-bold text-slate-900">Coxinha Surprise</span>
+            </div>
+          </div>
         </Card>
       </div>
     );
@@ -182,53 +199,59 @@ export default function LoyaltyLanding() {
         {/* Header/Landing */}
         {step === "landing" && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
-              <div className="bg-primary/10 p-8 flex flex-col items-center text-center space-y-4">
+            <div className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-slate-100">
+              <div className="bg-primary/10 p-10 flex flex-col items-center text-center space-y-4 relative">
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 p-6 opacity-10">
+                  <Star className="w-20 h-20 fill-primary" />
+                </div>
+                
                 {restaurant.logo_url ? (
-                  <img src={restaurant.logo_url} alt={restaurant.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-sm" />
+                  <img src={restaurant.logo_url} alt={restaurant.name} className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md z-10" />
                 ) : (
-                  <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold shadow-sm">
+                  <div className="w-28 h-28 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-black shadow-md z-10">
                     {restaurant.name.charAt(0)}
                   </div>
                 )}
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+                <div className="space-y-1 z-10">
+                  <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">
                     Programa de Fidelidade
                   </h1>
-                  <p className="text-primary font-bold text-lg">
+                  <p className="text-primary font-black text-xl">
                     Coxinha Surprise - {restaurant.name}
                   </p>
                 </div>
               </div>
-              <div className="p-8 space-y-8">
+              <div className="p-10 space-y-10">
                 <div className="space-y-4">
-                  <h2 className="text-lg font-bold flex items-center gap-2">
-                    <Info className="w-5 h-5 text-primary" /> Como funciona?
+                  <h2 className="text-xl font-black flex items-center gap-2 text-slate-800">
+                    <Info className="w-6 h-6 text-primary" /> Como funciona?
                   </h2>
-                  <p className="text-slate-600 leading-relaxed">
+                  <p className="text-slate-600 leading-relaxed font-medium">
                     {settings.loyalty_description}
                   </p>
                 </div>
 
                 <div className="space-y-4">
-                  <h2 className="text-lg font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-primary" /> Regras
+                  <h2 className="text-xl font-black flex items-center gap-2 text-slate-800">
+                    <ShieldCheck className="w-6 h-6 text-primary" /> Regras do Programa
                   </h2>
-                  <div className="bg-slate-50 rounded-xl p-4 whitespace-pre-wrap text-sm text-slate-600 leading-relaxed border border-slate-100">
+                  <div className="bg-slate-50 rounded-2xl p-6 whitespace-pre-wrap text-sm text-slate-600 leading-relaxed border border-slate-100 font-medium">
                     {settings.loyalty_rules}
                   </div>
                 </div>
 
                 <Button 
-                  className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/20" 
+                  className="w-full h-16 text-lg font-black shadow-lg shadow-primary/30 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]" 
                   onClick={() => setStep("phone")}
                 >
                   Consultar Saldo de Pontos
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </div>
             </div>
 
-            <div className="flex flex-col items-center gap-2 opacity-40 py-4">
+            <div className="flex flex-col items-center gap-2 opacity-40 py-6">
               <span className="text-[10px] uppercase tracking-wider font-black">Powered by</span>
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 bg-slate-900 rounded-md flex items-center justify-center text-[10px] text-white font-bold">CS</div>
@@ -240,42 +263,42 @@ export default function LoyaltyLanding() {
 
         {/* Step: Phone Input */}
         {step === "phone" && (
-          <Card className="border-none shadow-xl overflow-hidden rounded-2xl">
-            <CardHeader className="bg-primary text-primary-foreground space-y-1 pb-8">
+          <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
+            <CardHeader className="bg-primary text-primary-foreground space-y-2 pb-10">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-primary-foreground hover:bg-white/10 -ml-2 mb-2" 
+                className="text-primary-foreground hover:bg-white/10 -ml-2 mb-2 rounded-full" 
                 onClick={() => setStep("landing")}
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-6 h-6" />
               </Button>
-              <CardTitle className="text-2xl font-black">Consultar Pontos</CardTitle>
-              <CardDescription className="text-primary-foreground/80">
-                Informe seu WhatsApp cadastrado para enviarmos um código de acesso.
+              <CardTitle className="text-3xl font-black leading-none">Consultar Pontos</CardTitle>
+              <CardDescription className="text-primary-foreground/80 text-base font-medium">
+                Informe seu WhatsApp cadastrado para enviarmos um código de acesso seguro.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-8 space-y-6 -mt-4 bg-white rounded-t-2xl">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">WhatsApp com DDD</Label>
+            <CardContent className="p-10 space-y-8 -mt-6 bg-white rounded-t-[2.5rem]">
+              <div className="space-y-3">
+                <Label htmlFor="phone" className="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] ml-1">WhatsApp com DDD</Label>
                 <div className="relative">
-                  <Phone className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Phone className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <Input 
                     id="phone"
                     type="tel"
                     placeholder="(00) 00000-0000"
                     value={phone}
                     onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    className="pl-10 h-12 text-lg font-medium bg-slate-50 border-slate-200 focus:bg-white transition-all"
+                    className="pl-12 h-14 text-xl font-bold bg-slate-50 border-slate-100 focus:bg-white transition-all rounded-xl focus:ring-primary"
                   />
                 </div>
               </div>
               <Button 
-                className="w-full h-12 font-bold text-base" 
+                className="w-full h-14 font-black text-lg rounded-xl shadow-lg shadow-primary/20" 
                 onClick={() => handleSendOtp(false)}
                 disabled={isLoading}
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <MessageCircle className="w-5 h-5 mr-2" />}
+                {isLoading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <MessageCircle className="w-6 h-6 mr-2" />}
                 {isLoading ? "Enviando..." : "Receber código via WhatsApp"}
               </Button>
             </CardContent>
@@ -284,22 +307,22 @@ export default function LoyaltyLanding() {
 
         {/* Step: OTP Input */}
         {step === "otp" && (
-          <Card className="border-none shadow-xl overflow-hidden rounded-2xl">
-            <CardHeader className="bg-primary text-primary-foreground space-y-1 pb-8">
+          <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
+            <CardHeader className="bg-primary text-primary-foreground space-y-2 pb-10">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-primary-foreground hover:bg-white/10 -ml-2 mb-2" 
+                className="text-primary-foreground hover:bg-white/10 -ml-2 mb-2 rounded-full" 
                 onClick={() => setStep("phone")}
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-6 h-6" />
               </Button>
-              <CardTitle className="text-2xl font-black">Validar Código</CardTitle>
-              <CardDescription className="text-primary-foreground/80">
-                Digite o código de 6 dígitos que enviamos para {phone}
+              <CardTitle className="text-3xl font-black leading-none">Validar Código</CardTitle>
+              <CardDescription className="text-primary-foreground/80 text-base font-medium">
+                Digite o código de 6 dígitos enviado para {phone}
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-8 flex flex-col items-center space-y-8 -mt-4 bg-white rounded-t-2xl">
+            <CardContent className="p-10 flex flex-col items-center space-y-10 -mt-6 bg-white rounded-t-[2.5rem]">
               <InputOTP 
                 maxLength={6} 
                 value={otpValue} 
@@ -311,19 +334,19 @@ export default function LoyaltyLanding() {
                     <InputOTPSlot 
                       key={i} 
                       index={i} 
-                      className="w-10 h-14 md:w-12 md:h-16 text-2xl font-bold rounded-xl border-slate-200 bg-slate-50 focus:border-primary focus:bg-white transition-all shadow-sm" 
+                      className="w-10 h-14 md:w-14 md:h-20 text-3xl font-black rounded-2xl border-slate-100 bg-slate-50 focus:border-primary focus:bg-white transition-all shadow-inner" 
                     />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
 
-              <div className="w-full space-y-4">
+              <div className="w-full space-y-6">
                 <Button 
-                  className="w-full h-12 font-bold text-base" 
+                  className="w-full h-14 font-black text-lg rounded-xl shadow-lg shadow-primary/20" 
                   onClick={handleVerifyOtp}
                   disabled={isLoading || otpValue.length !== 6}
                 >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <ArrowRight className="w-5 h-5 mr-2" />}
+                  {isLoading ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <ArrowRight className="w-6 h-6 mr-2" />}
                   {isLoading ? "Validando..." : "Acessar minha conta"}
                 </Button>
 
@@ -331,9 +354,9 @@ export default function LoyaltyLanding() {
                   <button
                     onClick={() => handleSendOtp(true)}
                     disabled={isLoading || resendCooldown > 0}
-                    className="text-sm font-bold text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+                    className="text-sm font-black text-primary hover:underline disabled:opacity-50 disabled:no-underline transition-all"
                   >
-                    {resendCooldown > 0 ? `Reenviar em ${resendCooldown}s` : "Não recebi o código"}
+                    {resendCooldown > 0 ? `Reenviar disponível em ${resendCooldown}s` : "Não recebi o código via WhatsApp"}
                   </button>
                 </div>
               </div>
@@ -344,80 +367,85 @@ export default function LoyaltyLanding() {
         {/* Step: Dashboard/Member Area */}
         {step === "dashboard" && memberData && (
           <div className="space-y-6">
-            <Card className="border-none shadow-xl overflow-hidden rounded-3xl">
-              <div className="bg-primary p-8 text-primary-foreground relative">
-                <div className="flex justify-between items-start mb-6">
+            <Card className="border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
+              <div className="bg-primary p-10 text-primary-foreground relative">
+                <div className="flex justify-between items-start mb-8">
                   <div className="space-y-1">
-                    <p className="text-primary-foreground/60 text-xs font-black uppercase tracking-widest">Seu saldo atual</p>
-                    <div className="flex items-center gap-3">
-                      <Coins className="w-8 h-8 text-yellow-400 fill-yellow-400" />
-                      <h2 className="text-5xl font-black">{memberData.points}</h2>
-                      <span className="text-xl font-bold mt-2">pts</span>
+                    <p className="text-primary-foreground/60 text-[10px] font-black uppercase tracking-[0.2em]">Seu saldo atual</p>
+                    <div className="flex items-center gap-4">
+                      <div className="bg-yellow-400 p-2 rounded-2xl shadow-lg shadow-yellow-600/20">
+                        <Coins className="w-8 h-8 text-white fill-white" />
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <h2 className="text-6xl font-black tracking-tighter">{memberData.points}</h2>
+                        <span className="text-xl font-bold opacity-80 uppercase tracking-widest">pts</span>
+                      </div>
                     </div>
                   </div>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="text-primary-foreground hover:bg-white/10"
+                    className="text-primary-foreground hover:bg-white/10 rounded-full h-12 w-12"
                     onClick={() => {
                       setStep("landing");
                       setMemberData(null);
                       setOtpValue("");
                     }}
                   >
-                    <ArrowLeft className="w-6 h-6" />
+                    <ArrowLeft className="w-7 h-7" />
                   </Button>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xl font-black">{memberData.name}</p>
-                  <p className="text-primary-foreground/70 text-sm font-medium">{formatPhone(memberData.phone)}</p>
+                <div className="space-y-1 relative z-10">
+                  <p className="text-2xl font-black tracking-tight">{memberData.name}</p>
+                  <p className="text-primary-foreground/70 text-base font-bold tracking-wide">{formatPhone(memberData.phone)}</p>
                 </div>
                 
                 {/* Decorative circles */}
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-black/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-2xl pointer-events-none" />
               </div>
               
               <CardContent className="p-0 bg-white">
-                <div className="p-6 border-b">
-                  <h3 className="text-lg font-black flex items-center gap-2">
-                    <History className="w-5 h-5 text-primary" /> Extrato de Pontos
+                <div className="p-8 border-b flex items-center justify-between bg-slate-50/50">
+                  <h3 className="text-xl font-black flex items-center gap-3 text-slate-800 uppercase tracking-tight">
+                    <History className="w-6 h-6 text-primary" /> Extrato de Pontos
                   </h3>
+                  <div className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+                    Últimas movimentações
+                  </div>
                 </div>
 
                 <div className="divide-y max-h-[500px] overflow-y-auto">
                   {history.length === 0 ? (
-                    <div className="p-12 text-center text-slate-400 space-y-2">
-                      <Gift className="w-12 h-12 mx-auto opacity-20" />
-                      <p className="font-medium italic">Você ainda não possui movimentações.</p>
+                    <div className="p-16 text-center text-slate-300 space-y-4">
+                      <Gift className="w-16 h-16 mx-auto opacity-10" />
+                      <p className="font-bold italic text-lg">Você ainda não possui movimentações.</p>
                     </div>
                   ) : (
                     history.map((tx) => (
-                      <div key={tx.id} className="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${tx.points > 0 ? "bg-green-500" : "bg-red-500"}`} />
-                            <p className="font-bold text-slate-800">
-                              {tx.type === "redeem" ? "Resgate de Prêmio" : tx.type === "manual" ? "Ajuste Manual" : "Compra Realizada"}
+                      <div key={tx.id} className="p-6 flex justify-between items-center hover:bg-slate-50 transition-all border-l-4 border-l-transparent hover:border-l-primary">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full shadow-sm ${tx.points > 0 ? "bg-green-500" : "bg-red-500"}`} />
+                            <p className="font-black text-slate-800 text-lg tracking-tight">
+                              {tx.type === 'redeem' ? 'Resgate de Prêmio' : 
+                               tx.type === 'manual' ? 'Ajuste Manual' : 
+                               tx.order_number ? 'Compra Realizada' : 'Lançamento de Pontos'}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                            <span>{new Date(tx.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                          <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">
+                            <span className="bg-slate-100 px-2 py-1 rounded-md">{new Date(tx.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                            <span className="bg-slate-100 px-2 py-1 rounded-md">{new Date(tx.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                             {tx.order_number && (
-                              <>
-                                <span>•</span>
-                                <span className="bg-slate-100 px-1.5 py-0.5 rounded">Pedido #{tx.order_number}</span>
-                              </>
+                              <span className="bg-primary/5 text-primary px-2 py-1 rounded-md border border-primary/10">Pedido #{tx.order_number}</span>
                             )}
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={`text-lg font-black ${tx.points > 0 ? "text-green-600" : "text-red-600"}`}>
-                            {tx.points > 0 ? "+" : ""}{tx.points} pts
+                          <p className={`text-2xl font-black tracking-tighter ${tx.points > 0 ? "text-green-600" : "text-red-600"}`}>
+                            {tx.points > 0 ? "+" : ""}{tx.points}
+                            <span className="text-xs ml-1 uppercase">pts</span>
                           </p>
-                          {tx.balance_after !== undefined && (
-                            <p className="text-[10px] text-slate-400 font-bold uppercase">Saldo: {tx.balance_after} pts</p>
-                          )}
                         </div>
                       </div>
                     ))
@@ -425,14 +453,12 @@ export default function LoyaltyLanding() {
                 </div>
               </CardContent>
             </Card>
-            
-            <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10 flex items-center gap-4">
-              <div className="bg-primary text-white p-3 rounded-xl">
-                <ShoppingBag className="w-6 h-6" />
-              </div>
-              <div className="space-y-0.5">
-                <p className="font-black text-slate-900 leading-none">Que tal resgatar algo?</p>
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-tight">Vá até a nossa unidade e peça seu prêmio!</p>
+
+            <div className="flex flex-col items-center gap-2 opacity-40 py-8">
+              <span className="text-[10px] uppercase tracking-wider font-black">Powered by</span>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-slate-900 rounded-md flex items-center justify-center text-[10px] text-white font-bold">CS</div>
+                <span className="text-sm font-bold text-slate-900">Coxinha Surprise</span>
               </div>
             </div>
           </div>
