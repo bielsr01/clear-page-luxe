@@ -12,12 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Gift, Search, ArrowLeft, ArrowRight, Check, Bike, Store, ShoppingBag, History, MessageCircle, Loader2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Gift, Search, ArrowLeft, ArrowRight, Check, Bike, Store, ShoppingBag, History, MessageCircle, Loader2, Copy } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { brl, formatPhone } from "@/lib/format";
 import { usePermissions } from "@/hooks/usePermissions";
 import { DeliveryZone, GeoPoint, findDeliveryFee, geocodeAddress, haversineKm } from "@/lib/delivery";
 import { ordersKey } from "./OrdersPanel";
+import { useRestaurants } from "@/components/admin/RestaurantMultiSelect";
 
 const sb = supabase as any;
 
@@ -26,6 +27,15 @@ type Reward = {
   restaurant_id: string;
   product_id: string | null;
   name: string;
+  points_cost: number;
+  stock: number | null;
+  is_active: boolean;
+};
+
+type CloneRewardSource = {
+  id: string;
+  name: string;
+  product_id: string | null;
   points_cost: number;
   stock: number | null;
   is_active: boolean;
@@ -67,6 +77,7 @@ async function fetchProductOptionGroups(restaurantId: string, productId: string)
 export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restaurantId: string; isAdmin?: boolean }) {
   const qc = useQueryClient();
   const { can } = usePermissions(restaurantId);
+  const { data: restaurants = [] } = useRestaurants();
   // Criar/editar/excluir recompensas são exclusivos do admin do sistema
   const canRewardsEdit = isAdmin;
   const canRewardsDelete = isAdmin;
@@ -76,6 +87,14 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
     queryFn: async () => {
       const { data } = await sb.from("products").select("id, name, price").eq("restaurant_id", restaurantId).eq("is_active", true).order("name");
       return (data ?? []) as { id: string; name: string; price: number }[];
+    },
+  });
+
+  const allProductsQ = useQuery({
+    queryKey: ["loyalty-products-all", restaurantId],
+    queryFn: async () => {
+      const { data } = await sb.from("products").select("id, name").eq("restaurant_id", restaurantId).order("name");
+      return (data ?? []) as { id: string; name: string }[];
     },
   });
 
@@ -152,6 +171,82 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
   // ============== REDEEM WIZARD ==============
   const [redeemReward, setRedeemReward] = useState<Reward | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [cloneOpen, setCloneOpen] = useState(false);
+  const [cloneSourceId, setCloneSourceId] = useState("");
+  const [cloneBusy, setCloneBusy] = useState(false);
+
+  const { data: cloneSourceRewards = [] } = useQuery({
+    queryKey: ["loyalty-rewards-clone-source", cloneSourceId],
+    enabled: isAdmin && cloneOpen && !!cloneSourceId,
+    queryFn: async (): Promise<CloneRewardSource[]> => {
+      const { data } = await sb
+        .from("loyalty_rewards")
+        .select("id, name, product_id, points_cost, stock, is_active")
+        .eq("restaurant_id", cloneSourceId)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as CloneRewardSource[];
+    },
+  });
+
+  const { data: cloneSourceProducts = [] } = useQuery({
+    queryKey: ["loyalty-products-clone-source", cloneSourceId],
+    enabled: isAdmin && cloneOpen && !!cloneSourceId,
+    queryFn: async () => {
+      const { data } = await sb.from("products").select("id, name").eq("restaurant_id", cloneSourceId);
+      return (data ?? []) as { id: string; name: string }[];
+    },
+  });
+
+  const destProductsByName = useMemo(() => {
+    const map = new Map<string, { id: string; name: string }>();
+    (allProductsQ.data ?? []).forEach((p) => map.set(p.name.trim().toLowerCase(), p));
+    return map;
+  }, [allProductsQ.data]);
+
+  const clonePreview = useMemo(() => {
+    return cloneSourceRewards.map((r) => {
+      const srcProduct = cloneSourceProducts.find((p) => p.id === r.product_id);
+      const matchedProduct = srcProduct ? destProductsByName.get(srcProduct.name.trim().toLowerCase()) ?? null : null;
+      return {
+        ...r,
+        sourceProductName: srcProduct?.name ?? null,
+        destinationProductName: matchedProduct?.name ?? null,
+        destinationProductId: matchedProduct?.id ?? null,
+      };
+    });
+  }, [cloneSourceRewards, cloneSourceProducts, destProductsByName]);
+
+  const handleCloneRewards = async () => {
+    if (!isAdmin) return;
+    if (!cloneSourceId) return toast.error("Selecione o restaurante de origem");
+    if (cloneSourceId === restaurantId) return toast.error("Escolha um restaurante diferente");
+    if (!cloneSourceRewards.length) return toast.error("Nenhuma recompensa encontrada para clonar");
+
+    setCloneBusy(true);
+    try {
+      let cloned = 0;
+      for (const reward of clonePreview) {
+        const payload = {
+          restaurant_id: restaurantId,
+          product_id: reward.destinationProductId,
+          name: reward.name,
+          points_cost: reward.points_cost,
+          stock: reward.stock,
+          is_active: reward.is_active,
+        };
+        const { error } = await sb.from("loyalty_rewards").insert(payload);
+        if (error) throw error;
+        cloned++;
+      }
+      toast.success(`${cloned} recompensas clonadas com sucesso`);
+      qc.invalidateQueries({ queryKey: ["loyalty-rewards", restaurantId] });
+      setCloneOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao clonar recompensas");
+    } finally {
+      setCloneBusy(false);
+    }
+  };
 
   return (
     <div className="space-y-4 pt-4">
@@ -159,6 +254,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
         <div className="text-sm text-muted-foreground">Cadastre produtos do cardápio que podem ser resgatados com pontos</div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button variant="outline" onClick={() => setHistoryOpen(true)} className="flex-1 sm:flex-none"><History className="w-4 h-4 mr-1" />Histórico</Button>
+          {isAdmin && <Button variant="outline" onClick={() => setCloneOpen(true)} className="flex-1 sm:flex-none"><Copy className="w-4 h-4 mr-1" />Clonar recompensas</Button>}
           {canRewardsEdit && <Button onClick={openCreate} className="flex-1 sm:flex-none"><Plus className="w-4 h-4 mr-1" />Nova recompensa</Button>}
         </div>
       </div>
@@ -290,6 +386,69 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
         open={historyOpen}
         onOpenChange={setHistoryOpen}
       />
+
+      <Dialog open={cloneOpen} onOpenChange={setCloneOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Copy className="w-5 h-5" />Clonar recompensas</DialogTitle>
+            <DialogDescription>
+              Selecione um restaurante de origem. As recompensas serão copiadas com estoque, status e pontos. Quando possível, o produto será vinculado ao produto equivalente do restaurante atual pelo nome do produto.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Restaurante de origem</Label>
+              <Select value={cloneSourceId} onValueChange={setCloneSourceId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o restaurante de origem" />
+                </SelectTrigger>
+                <SelectContent>
+                  {restaurants.filter((r) => r.id !== restaurantId).map((r) => (
+                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {cloneSourceId && (
+              <div className="rounded-lg border p-3">
+                <div className="mb-2 text-sm font-semibold">Pré-visualização da clonagem</div>
+                <div className="max-h-72 overflow-y-auto space-y-2">
+                  {clonePreview.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">Nenhuma recompensa encontrada.</div>
+                  ) : clonePreview.map((r) => (
+                    <div key={r.id} className="rounded-md border bg-muted/20 p-3 text-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{r.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {r.sourceProductName ? `Produto origem: ${r.sourceProductName}` : "Sem produto vinculado"}{r.destinationProductName ? ` | destino: ${r.destinationProductName}` : ""}
+                          </div>
+                        </div>
+                        <Badge variant={r.is_active ? "default" : "secondary"}>{r.is_active ? "Ativa" : "Inativa"}</Badge>
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-3">
+                        <span>{r.points_cost} pts</span>
+                        <span>Estoque: {r.stock == null ? "∞" : r.stock}</span>
+                        <span>Produto: {r.destinationProductName ?? "não vinculado"}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setCloneOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCloneRewards} disabled={cloneBusy || !cloneSourceId || clonePreview.length === 0}>
+              {cloneBusy ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
+              Clonar recompensas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -373,7 +532,7 @@ function RedeemWizard({
   };
 
   const restaurant = restaurantQ.data as any;
-  const zones = (restaurant?.delivery_zones ?? []) as DeliveryZone[];
+  const zones = useMemo(() => (restaurant?.delivery_zones ?? []) as DeliveryZone[], [restaurant?.delivery_zones]);
   const feeMode = (restaurant?.delivery_fee_mode ?? "radius") as "fixed" | "radius";
   const fixedFee = Number(restaurant?.delivery_fixed_fee ?? 0);
   const hasZones = zones.length > 0;

@@ -137,7 +137,9 @@ export function BulkCampaignsPanel({
     const { error } = await sb.from("bulk_campaigns").update(patch).eq("id", id);
     if (error) return toast.error(error.message);
     if (status === "running") {
-      supabase.functions.invoke("bulk-campaign-worker", { body: {} }).catch(() => {});
+      supabase.functions.invoke("bulk-campaign-worker", {
+        body: scope === "restaurant" ? { restaurantId: restaurantId! } : {},
+      }).catch(() => {});
       toast.success("Campanha iniciada");
     } else toast.success("Campanha pausada");
     qc.invalidateQueries({ queryKey: ["bulk-campaigns"] });
@@ -147,7 +149,9 @@ export function BulkCampaignsPanel({
     if (!canEdit) return toast.error("Sem permissão para alterar campanha");
     const { error } = await sb.from("bulk_campaigns").update({ paused_until: null, sent_in_block: 0 }).eq("id", id);
     if (error) return toast.error(error.message);
-    supabase.functions.invoke("bulk-campaign-worker", { body: {} }).catch(() => {});
+    supabase.functions.invoke("bulk-campaign-worker", {
+      body: scope === "restaurant" ? { restaurantId: restaurantId! } : {},
+    }).catch(() => {});
     toast.success("Pausa removida");
     qc.invalidateQueries({ queryKey: ["bulk-campaigns"] });
   };

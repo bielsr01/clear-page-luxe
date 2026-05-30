@@ -52,6 +52,14 @@ export function QueroIntegrationCard({ restaurantId }: { restaurantId: string })
     if (error) return toast.error(error.message);
     toast.success("Integração Quero Delivery salva");
     qc.invalidateQueries({ queryKey: ["quero-integration", restaurantId] });
+    if (enabled) {
+      try {
+        await supabase.functions.invoke("quero-poll", { body: { restaurantId } });
+        qc.invalidateQueries({ queryKey: ["quero-events", restaurantId] });
+      } catch {
+        // O cron do servidor mantém a sincronização automática.
+      }
+    }
   };
 
   const testNow = async () => {
@@ -99,7 +107,7 @@ export function QueroIntegrationCard({ restaurantId }: { restaurantId: string })
             <DialogTitle>Integração Quero Delivery</DialogTitle>
             <DialogDescription>
               Cole o token Basic gerado no painel do Quero e o placeId da sua loja.
-              O sistema buscará e sincronizará pedidos automaticamente a cada 5 segundos.
+              O sistema buscará e sincronizará pedidos automaticamente em segundo plano.
             </DialogDescription>
           </DialogHeader>
 

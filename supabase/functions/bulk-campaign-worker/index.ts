@@ -34,7 +34,66 @@ async function evoFetch(apiUrl: string, path: string, apiKey: string, body: any)
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const userClient = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: authHeader } } });
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const { data: authData, error: authErr } = await userClient.auth.getUser(token);
+  if (authErr || !authData?.user?.id) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const uid = authData.user.id;
+  const supabase = createClient(SUPABASE_URL, SERVICE);
+  const { data: adminRow } = await supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "master_admin").maybeSingle();
+  const isAdmin = !!adminRow;
+
+  let body: { restaurantId?: string; restaurantIds?: string[] } = {};
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
+
+  const restaurantId = typeof body.restaurantId === "string" && body.restaurantId.trim() ? body.restaurantId.trim() : null;
+  const restaurantIds = Array.isArray(body.restaurantIds)
+    ? body.restaurantIds.map((id) => String(id).trim()).filter(Boolean)
+    : [];
+
+  if (!isAdmin) {
+    const scopeIds = restaurantId ? [restaurantId] : restaurantIds;
+    if (scopeIds.length === 0) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    for (const rid of scopeIds) {
+      const { data: allowed } = await supabase.rpc("is_restaurant_manager", {
+        _user_id: uid,
+        _restaurant_id: rid,
+      });
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+  }
+
   const startedAt = Date.now();
   const log: any[] = [];
   let processed = 0;
@@ -47,11 +106,21 @@ Deno.serve(async (req) => {
       .eq("status", "running")
       .limit(20);
 
-    if (!campaigns || campaigns.length === 0) break;
+    let filteredCampaigns = campaigns ?? [];
+    if (restaurantId) {
+      filteredCampaigns = filteredCampaigns.filter((c: any) => c.restaurant_id === restaurantId && !c.is_admin);
+    } else if (restaurantIds.length) {
+      const allowed = new Set(restaurantIds);
+      filteredCampaigns = filteredCampaigns.filter((c: any) => allowed.has(c.restaurant_id) && !c.is_admin);
+    } else if (!isAdmin) {
+      filteredCampaigns = [];
+    }
+
+    if (filteredCampaigns.length === 0) break;
 
     let didWork = false;
 
-    for (const c of campaigns) {
+    for (const c of filteredCampaigns) {
       if (Date.now() - startedAt >= MAX_RUN_MS) break;
 
       // Auto-resume if pause window expired

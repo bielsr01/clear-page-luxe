@@ -11,6 +11,7 @@ const corsHeaders = {
 };
 
 const QUERO_BASE = "https://api.quero.io";
+const RECONCILE_MIN_INTERVAL_MS = 60_000;
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -101,6 +102,37 @@ async function queroFetch(path: string, token: string): Promise<any> {
   try { parsed = JSON.parse(text); } catch {}
   if (!resp.ok) throw new Error(`Quero ${resp.status}: ${typeof parsed === "string" ? parsed : JSON.stringify(parsed).slice(0, 300)}`);
   return parsed;
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const bytes = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function makeEventKey(ev: any): Promise<string> {
+  const explicitParts = [
+    ev?.id,
+    ev?.eventId,
+    ev?.orderId,
+    ev?.orderCode,
+    ev?.status,
+    ev?.code,
+    ev?.fullCode,
+    ev?.createdAt,
+    ev?.created_at,
+  ]
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean);
+
+  if (explicitParts.length > 0) return explicitParts.join("|");
+  return `sha256:${await sha256Hex(JSON.stringify(ev ?? {}))}`;
+}
+
+function makeSyntheticEventKey(orderId: string | null | undefined, status: string | null | undefined, kind: string) {
+  return `${kind}:${String(orderId ?? "").trim()}:${String(status ?? "").trim()}`;
 }
 
 async function ingestOrder(integration: any, ev: any) {
@@ -298,17 +330,22 @@ async function reconcileOpenOrders(integration: any) {
       const cur = STATUS_ORDER[o.status] ?? -1;
       const nxt = STATUS_ORDER[mapped] ?? -1;
       if (mapped === "cancelled" || nxt >= cur) {
+        const eventKey = makeSyntheticEventKey(o.external_order_id, mapped, "reconcile");
         await supabase.from("orders")
           .update({ status: mapped, updated_at: new Date().toISOString() })
           .eq("id", o.id);
         // Loga como evento sintético para auditoria
-        await supabase.from("quero_events").insert({
+        await supabase.from("quero_events").upsert({
           integration_id: integration.id,
           restaurant_id: integration.restaurant_id,
           order_id: o.external_order_id,
+          event_key: eventKey,
           status: remoteStatus,
           payload: { source: "reconcile", status: remoteStatus, orderId: o.external_order_id },
           processed: true,
+        }, {
+          onConflict: "integration_id,event_key",
+          ignoreDuplicates: true,
         });
         updates++;
       }
@@ -327,14 +364,30 @@ async function pollOne(integration: any) {
   const list: any[] = Array.isArray(events) ? events : Array.isArray(events?.data) ? events.data : [];
   let lastCode: string | null = null;
   for (const ev of list) {
-    const { data: logged } = await supabase.from("quero_events").insert({
+    const eventKey = await makeEventKey(ev);
+    const { data: logged, error: logErr } = await supabase.from("quero_events").upsert({
       integration_id: integration.id,
       restaurant_id: integration.restaurant_id,
       order_id: ev.orderId ?? null,
       order_code: ev.orderCode ?? null,
       status: ev.status ?? null,
+      event_key: eventKey,
       payload: ev,
-    }).select("id").single();
+      processed: false,
+      error: null,
+    }, {
+      onConflict: "integration_id,event_key",
+      ignoreDuplicates: true,
+    }).select("id").maybeSingle();
+
+    if (logErr) {
+      console.error("[quero-poll] log insert error", logErr.message);
+      continue;
+    }
+    if (!logged?.id) {
+      lastCode = ev.status ?? lastCode;
+      continue;
+    }
 
     let err: string | null = null;
     try {
@@ -351,7 +404,16 @@ async function pollOne(integration: any) {
   // Reconcilia pedidos abertos contra a API da Quero (pega cancelamentos que
   // não vieram via polling).
   let reconciled = 0;
-  try { reconciled = await reconcileOpenOrders(integration); }
+  const lastReconcileAt = integration.last_reconcile_at ? new Date(integration.last_reconcile_at).getTime() : 0;
+  const canReconcile = !lastReconcileAt || Date.now() - lastReconcileAt >= RECONCILE_MIN_INTERVAL_MS;
+  try {
+    if (canReconcile) {
+      reconciled = await reconcileOpenOrders(integration);
+      await supabase.from("quero_integrations").update({
+        last_reconcile_at: new Date().toISOString(),
+      }).eq("id", integration.id);
+    }
+  }
   catch (e: any) { console.error("[quero-poll] reconcile fatal", e?.message ?? e); }
 
   await supabase.from("quero_integrations").update({
