@@ -2549,6 +2549,7 @@ export type Database = {
         Returns: boolean
       }
       normalize_br_phone: { Args: { _phone: string }; Returns: string }
+      quero_poll_burst: { Args: never; Returns: undefined }
       recompute_order_stock: { Args: { _order_id: string }; Returns: undefined }
       record_loyalty_earn: {
         Args: {
