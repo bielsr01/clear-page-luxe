@@ -463,11 +463,11 @@ export function PdvDialog({
           await supabase.from("order_item_options" as any).insert(optionRows);
         }
 
-        if (loyaltyOptIn && loyaltySettings?.enabled && phoneDigits.length >= 10) {
+        if (effOptIn && loyaltySettings?.enabled && phoneDigits.length >= 10) {
           try {
             const sb = supabase as any;
             const { normalizeBrPhone } = await import("@/lib/format");
-            const phoneFmt = normalizeBrPhone(customerPhone);
+            const phoneFmt = normalizeBrPhone(effPhone);
             const { data: existing } = await sb.from("loyalty_members").select("id")
               .eq("restaurant_id", restaurantId).eq("phone", phoneFmt).maybeSingle();
             let memberId = existing?.id as string | undefined;
@@ -498,7 +498,7 @@ export function PdvDialog({
             await supabase.rpc("upsert_customer_on_order" as any, {
               _restaurant_id: restaurantId,
               _name: trimmedName,
-              _phone: formatPhone(customerPhone),
+              _phone: formatPhone(effPhone),
             });
           } catch { /* noop */ }
         }
