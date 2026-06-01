@@ -545,7 +545,17 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
     qc.invalidateQueries();
   };
 
-  const channelOrders = orders.filter((o) => {
+  // Baseline visibility — respects per-channel/per-order-type permissions
+  const visibleOrders = orders.filter((o) => {
+    if (o.external_source === "ifood") return canIfood;
+    if (o.external_source === "quero") return canQuero;
+    if (o.order_type === "pdv") return canPdv;
+    if (o.order_type === "pickup") return canPickupType;
+    // delivery (or any other native order_type)
+    return canDeliveryType;
+  });
+
+  const channelOrders = visibleOrders.filter((o) => {
     if (channel === "all") return true;
     if (channel === "pdv") return o.order_type === "pdv";
     if (channel === "ifood") return o.external_source === "ifood";
@@ -561,13 +571,13 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
     return "bg-primary text-primary-foreground";
   };
 
-  const deliveryCount = orders.filter((o) => o.order_type !== "pdv" && o.external_source !== "ifood" && o.external_source !== "quero").length;
-  const deliveryPendingCount = orders.filter((o) => o.order_type !== "pdv" && o.external_source !== "ifood" && o.external_source !== "quero" && o.status === "pending").length;
-  const pdvCount = orders.filter((o) => o.order_type === "pdv").length;
-  const ifoodCount = orders.filter((o) => o.external_source === "ifood").length;
-  const ifoodPendingCount = orders.filter((o) => o.external_source === "ifood" && o.status === "pending").length;
-  const queroCount = orders.filter((o) => o.external_source === "quero").length;
-  const queroPendingCount = orders.filter((o) => o.external_source === "quero" && o.status === "pending").length;
+  const deliveryCount = visibleOrders.filter((o) => o.order_type !== "pdv" && o.external_source !== "ifood" && o.external_source !== "quero").length;
+  const deliveryPendingCount = visibleOrders.filter((o) => o.order_type !== "pdv" && o.external_source !== "ifood" && o.external_source !== "quero" && o.status === "pending").length;
+  const pdvCount = visibleOrders.filter((o) => o.order_type === "pdv").length;
+  const ifoodCount = visibleOrders.filter((o) => o.external_source === "ifood").length;
+  const ifoodPendingCount = visibleOrders.filter((o) => o.external_source === "ifood" && o.status === "pending").length;
+  const queroCount = visibleOrders.filter((o) => o.external_source === "quero").length;
+  const queroPendingCount = visibleOrders.filter((o) => o.external_source === "quero" && o.status === "pending").length;
   const allPendingCount = deliveryPendingCount + ifoodPendingCount + queroPendingCount;
 
   const sortRecent = (a: Order, b: Order) =>
