@@ -539,28 +539,8 @@ export function PdvDialog({
             </DialogTitle>
           </DialogHeader>
 
-          {/* Top bar: customer + discount + fee */}
+          {/* Top bar: discount */}
           <div className="px-4 py-2 border-b flex flex-wrap gap-2 items-center shrink-0 bg-muted/30">
-            <Button
-              variant={customerIdentified ? "secondary" : "default"}
-              size="sm"
-              onClick={() => {
-                setTmpName(customerName); setTmpPhone(customerPhone); setTmpLoyalty(loyaltyOptIn);
-                setCustomerOpen(true);
-              }}
-              className="gap-2"
-            >
-              {customerIdentified ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-              {customerIdentified
-                ? `${customerName || "Cliente"}${customerPhone ? " • " + formatPhone(customerPhone) : ""}`
-                : "Identificar cliente"}
-              {loyaltyOptIn && <Badge variant="outline" className="ml-1">Fidelidade</Badge>}
-            </Button>
-            {customerIdentified && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCustomerName(""); setCustomerPhone(""); setLoyaltyOptIn(false); }}>
-                <X className="w-4 h-4" />
-              </Button>
-            )}
             <div className="flex-1" />
             {canApplyDiscount && (
               <Button variant={discountValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
