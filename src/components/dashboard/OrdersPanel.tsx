@@ -545,15 +545,46 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
     qc.invalidateQueries();
   };
 
-  // Baseline visibility — respects per-channel/per-order-type permissions
+  // Channel key used for status-permission lookup (pickup shares delivery statuses)
+  const orderStatusChannel = (o: Order): "pdv" | "delivery" | "ifood" | "quero" => {
+    if (o.external_source === "ifood") return "ifood";
+    if (o.external_source === "quero") return "quero";
+    if (o.order_type === "pdv") return "pdv";
+    return "delivery";
+  };
+
+  // Baseline visibility — respects per-channel/per-order-type AND per-status permissions
   const visibleOrders = orders.filter((o) => {
-    if (o.external_source === "ifood") return canIfood;
-    if (o.external_source === "quero") return canQuero;
-    if (o.order_type === "pdv") return canPdv;
-    if (o.order_type === "pickup") return canPickupType;
-    // delivery (or any other native order_type)
-    return canDeliveryType;
+    let channelOk = false;
+    if (o.external_source === "ifood") channelOk = canIfood;
+    else if (o.external_source === "quero") channelOk = canQuero;
+    else if (o.order_type === "pdv") channelOk = canPdv;
+    else if (o.order_type === "pickup") channelOk = canPickupType;
+    else channelOk = canDeliveryType;
+    if (!channelOk) return false;
+    return can(`orders.statuses.${orderStatusChannel(o)}.${o.status}`);
   });
+
+  // Channels considered for the currently selected tab (used to gate column visibility)
+  const activeStatusChannels = (): Array<"pdv" | "delivery" | "ifood" | "quero"> => {
+    if (channel === "pdv") return ["pdv"];
+    if (channel === "ifood") return ["ifood"];
+    if (channel === "quero") return ["quero"];
+    if (channel === "delivery") return ["delivery"];
+    const arr: Array<"pdv" | "delivery" | "ifood" | "quero"> = [];
+    if (canPdv) arr.push("pdv");
+    if (canDelivery) arr.push("delivery");
+    if (canIfood) arr.push("ifood");
+    if (canQuero) arr.push("quero");
+    return arr;
+  };
+  const statusAllowedInActive = (status: string) =>
+    activeStatusChannels().some((ch) => can(`orders.statuses.${ch}.${status}`));
+
+  const showPendingCol = statusAllowedInActive("pending");
+  const showPreparingCol = statusAllowedInActive("preparing");
+  const showReadyCol = statusAllowedInActive("awaiting_pickup");
+  const showOutCol = statusAllowedInActive("out_for_delivery");
 
   const channelOrders = visibleOrders.filter((o) => {
     if (channel === "all") return true;
@@ -860,48 +891,64 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         </div>
       ) : (
         <>
-          {/* Desktop: 4 colunas fixas (Finalizados em painel lateral) */}
+          {/* Desktop: colunas dinâmicas conforme permissões de status */}
           <div className="hidden md:grid gap-3 grid-cols-2 lg:grid-cols-4 items-stretch flex-1 min-h-0">
-            <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined}>
-              {pendingOrders.map((o) => renderCard(o, true))}
-            </Column>
-            <Column title="Em preparo" count={preparingOrders.length}>
-              {preparingOrders.map((o) => renderCard(o))}
-            </Column>
-            <Column title="Pronto" count={readyOrders.length}>
-              {readyOrders.map((o) => renderCard(o))}
-            </Column>
-            <Column title="Em entrega" count={outForDeliveryOrders.length}>
-              {outForDeliveryOrders.map((o) => renderCard(o))}
-            </Column>
+            {showPendingCol && (
+              <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined}>
+                {pendingOrders.map((o) => renderCard(o, true))}
+              </Column>
+            )}
+            {showPreparingCol && (
+              <Column title="Em preparo" count={preparingOrders.length}>
+                {preparingOrders.map((o) => renderCard(o))}
+              </Column>
+            )}
+            {showReadyCol && (
+              <Column title="Pronto" count={readyOrders.length}>
+                {readyOrders.map((o) => renderCard(o))}
+              </Column>
+            )}
+            {showOutCol && (
+              <Column title="Em entrega" count={outForDeliveryOrders.length}>
+                {outForDeliveryOrders.map((o) => renderCard(o))}
+              </Column>
+            )}
           </div>
 
           {/* Mobile: filtros + 1 coluna */}
           <div className="flex md:hidden flex-col gap-3 flex-1 min-h-0">
             <Tabs value={mobileCol} onValueChange={(v) => setMobileCol(v as typeof mobileCol)}>
               <TabsList className="grid grid-cols-2 h-auto w-full gap-1 p-1">
-                <TabsTrigger value="pending" className={`text-xs gap-1 ${pendingOrders.length > 0 ? "text-destructive animate-pulse" : ""}`}>Aguard. aceitação <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="h-4 min-w-4 px-1 text-[10px]">{pendingOrders.length}</Badge></TabsTrigger>
-                <TabsTrigger value="preparing" className="text-xs gap-1">Em preparo <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{preparingOrders.length}</Badge></TabsTrigger>
-                <TabsTrigger value="ready" className="text-xs gap-1">Pronto <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{readyOrders.length}</Badge></TabsTrigger>
-                <TabsTrigger value="out" className="text-xs gap-1">Em entrega <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{outForDeliveryOrders.length}</Badge></TabsTrigger>
+                {showPendingCol && (
+                  <TabsTrigger value="pending" className={`text-xs gap-1 ${pendingOrders.length > 0 ? "text-destructive animate-pulse" : ""}`}>Aguard. aceitação <Badge variant={pendingOrders.length > 0 ? "destructive" : "secondary"} className="h-4 min-w-4 px-1 text-[10px]">{pendingOrders.length}</Badge></TabsTrigger>
+                )}
+                {showPreparingCol && (
+                  <TabsTrigger value="preparing" className="text-xs gap-1">Em preparo <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{preparingOrders.length}</Badge></TabsTrigger>
+                )}
+                {showReadyCol && (
+                  <TabsTrigger value="ready" className="text-xs gap-1">Pronto <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{readyOrders.length}</Badge></TabsTrigger>
+                )}
+                {showOutCol && (
+                  <TabsTrigger value="out" className="text-xs gap-1">Em entrega <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">{outForDeliveryOrders.length}</Badge></TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
-            {mobileCol === "pending" && (
+            {mobileCol === "pending" && showPendingCol && (
               <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined} className="flex-1 min-h-0">
                 {pendingOrders.map((o) => renderCard(o, true))}
               </Column>
             )}
-            {mobileCol === "preparing" && (
+            {mobileCol === "preparing" && showPreparingCol && (
               <Column title="Em preparo" count={preparingOrders.length} className="flex-1 min-h-0">
                 {preparingOrders.map((o) => renderCard(o))}
               </Column>
             )}
-            {mobileCol === "ready" && (
+            {mobileCol === "ready" && showReadyCol && (
               <Column title="Pronto" count={readyOrders.length} className="flex-1 min-h-0">
                 {readyOrders.map((o) => renderCard(o))}
               </Column>
             )}
-            {mobileCol === "out" && (
+            {mobileCol === "out" && showOutCol && (
               <Column title="Em entrega" count={outForDeliveryOrders.length} className="flex-1 min-h-0">
                 {outForDeliveryOrders.map((o) => renderCard(o))}
               </Column>
