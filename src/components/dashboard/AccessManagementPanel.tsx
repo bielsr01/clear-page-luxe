@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, KeyRound, ShieldCheck } from "lucide-react";
+import { Plus, Pencil, Trash2, KeyRound, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { FULL_PERMISSIONS, Permissions, mergePermissions, PDV_STATUSES, DELIVERY_STATUSES, IFOOD_STATUSES, QUERO_STATUSES } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
