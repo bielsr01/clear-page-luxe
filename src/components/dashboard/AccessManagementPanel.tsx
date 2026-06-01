@@ -278,6 +278,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
   const [uName, setUName] = useState("");
   const [uEmail, setUEmail] = useState("");
   const [uPassword, setUPassword] = useState("");
+  const [showUPassword, setShowUPassword] = useState(false);
   const [uGroupId, setUGroupId] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
