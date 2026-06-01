@@ -16,6 +16,18 @@ type Body = {
   cancelCode?: string;
 };
 
+function queroAuthHeader(token: string) {
+  const trimmed = String(token ?? "").trim();
+  if (/^(basic|bearer)\s+/i.test(trimmed)) return trimmed;
+  return `Basic ${trimmed}`;
+}
+
+function queroErrorMessage(parsed: any, fallback: string) {
+  if (typeof parsed === "string" && parsed.trim()) return parsed;
+  if (Array.isArray(parsed?.errors) && parsed.errors.length) return parsed.errors.join("; ");
+  return parsed?.error ?? parsed?.message ?? parsed?.ex ?? fallback;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") {
@@ -81,7 +93,7 @@ Deno.serve(async (req) => {
     const pathByAction: Record<string, string> = {
       confirm: `/orders/${order.external_order_id}/confirm`,
       dispatch: `/orders/${order.external_order_id}/dispatch`,
-      readyForPickup: `/orders/${order.external_order_id}/ready-for-pickup`,
+      readyForPickup: `/orders/${order.external_order_id}/ready-fo-pickup`,
       deliveryCompleted: `/orders/${order.external_order_id}/delivery-completed`,
       cancel: `/orders/${order.external_order_id}/request-cancellation`,
     };
@@ -93,10 +105,10 @@ Deno.serve(async (req) => {
     }
 
     const url = `${QUERO_BASE}${path}?placeId=${encodeURIComponent(integ.place_id)}`;
-    const auth = integ.token.startsWith("Basic ") ? integ.token : `Basic ${integ.token}`;
+    const auth = queroAuthHeader(integ.token);
     const init: RequestInit = {
       method: "POST",
-      headers: { authorization: auth, "Content-Type": "application/json", accept: "application/json" },
+      headers: { Authorization: auth, "Content-Type": "application/json", Accept: "application/json" },
     };
     if (body.action === "cancel") {
       init.body = JSON.stringify({
@@ -104,17 +116,24 @@ Deno.serve(async (req) => {
         code: body.cancelCode ?? "INTERNAL_DIFFICULTIES_OF_THE_RESTAURANT",
         mode: "MANUAL",
       });
+    } else if (body.action === "deliveryCompleted") {
+      // A Quero valida orderId no path e placeId na requisição; enviamos também
+      // no corpo para compatibilidade com a rota delivery-completed atual.
+      init.body = JSON.stringify({
+        orderId: order.external_order_id,
+        placeId: integ.place_id,
+      });
     }
 
     const resp = await fetch(url, init);
     const text = await resp.text();
     let parsed: any = text;
     try { parsed = JSON.parse(text); } catch {}
-    if (!resp.ok) {
+    if (!resp.ok || (parsed && typeof parsed === "object" && parsed.r === false)) {
       console.error("[quero-action] error", resp.status, parsed);
       return new Response(JSON.stringify({
         ok: false,
-        error: parsed?.error ?? parsed?.errors?.[0] ?? `Quero ${resp.status}`,
+        error: queroErrorMessage(parsed, `Quero ${resp.status}`),
         quero_status: resp.status,
         detail: parsed,
       }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
