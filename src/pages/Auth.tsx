@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ChefHat } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 
 const signInSchema = z.object({
@@ -16,10 +16,25 @@ const signInSchema = z.object({
   password: z.string().min(6, "Mínimo 6 caracteres").max(72),
 });
 
+function translateAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials") || m.includes("invalid_credentials")) {
+    return "Email ou senha incorretos";
+  }
+  if (m.includes("email not confirmed")) return "Email ainda não confirmado";
+  if (m.includes("user not found")) return "Usuário não encontrado";
+  if (m.includes("too many requests") || m.includes("rate limit")) {
+    return "Muitas tentativas. Tente novamente em alguns instantes";
+  }
+  if (m.includes("network")) return "Erro de conexão. Verifique sua internet";
+  return "Não foi possível entrar. Verifique seus dados e tente novamente";
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const { user, isMasterAdmin, isManager, loading, rolesLoading } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && !rolesLoading && user) {
@@ -37,7 +52,7 @@ export default function Auth() {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(translateAuthError(error.message));
     toast.success("Bem-vindo!");
   };
 
@@ -61,7 +76,25 @@ export default function Auth() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pwd-in">Senha</Label>
-                <Input id="pwd-in" name="password" type="password" required autoComplete="current-password" />
+                <div className="relative">
+                  <Input
+                    id="pwd-in"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="current-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={busy}>{busy ? "Entrando..." : "Entrar"}</Button>
             </form>
