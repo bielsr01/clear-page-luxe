@@ -19,7 +19,7 @@ interface Props { restaurantId: string }
 interface AccessGroup { id: string; name: string; permissions: any; is_default: boolean }
 interface MemberRow { user_id: string; access_group_id: string | null; full_name: string | null; email: string | null; is_owner: boolean }
 
-type StatusChannel = "pdv" | "delivery" | "ifood";
+type StatusChannel = "pdv" | "delivery" | "ifood" | "quero";
 const STATUS_LABELS: Record<string, string> = {
   pending: "Novos",
   preparing: "Em preparo",
@@ -34,6 +34,7 @@ const STATUS_LISTS: Record<StatusChannel, readonly string[]> = {
   pdv: PDV_STATUSES,
   delivery: DELIVERY_STATUSES,
   ifood: IFOOD_STATUSES,
+  quero: QUERO_STATUSES,
 };
 
 type Row = { path: string; label: string; statusChannel?: StatusChannel };
