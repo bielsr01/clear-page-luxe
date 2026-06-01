@@ -149,6 +149,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   ...Object.fromEntries(PDV_STATUSES.map((s) => [`orders.statuses.pdv.${s}`, "orders.channels.pdv"])),
   ...Object.fromEntries(DELIVERY_STATUSES.map((s) => [`orders.statuses.delivery.${s}`, "orders.channels.delivery"])),
   ...Object.fromEntries(IFOOD_STATUSES.map((s) => [`orders.statuses.ifood.${s}`, "orders.channels.ifood"])),
+  ...Object.fromEntries(QUERO_STATUSES.map((s) => [`orders.statuses.quero.${s}`, "orders.channels.quero"])),
 };
 
 function applyDependencies(perms: any, path: string, value: boolean) {
