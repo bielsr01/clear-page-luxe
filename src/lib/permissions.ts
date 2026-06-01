@@ -71,6 +71,7 @@ export const FULL_PERMISSIONS: Permissions = {
     create_pdv_order: true,
     apply_pdv_discount: true,
     cancel_finalized: true,
+    view_history: true,
   },
   menu: { view: true, edit: true },
   customers: { view: true, create: true, edit: true, delete: true },
