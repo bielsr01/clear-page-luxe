@@ -332,7 +332,29 @@ export function PdvDialog({
     w.document.open(); w.document.write(html); w.document.close();
   };
 
-  const confirmOrder = async (alsoPrint: boolean) => {
+  const handleConfirmSale = (alsoPrint: boolean) => {
+    if (cart.length === 0) { toast.error("Adicione produtos ao pedido"); return; }
+    if (!payment) {
+      setPaymentShake(true);
+      setTimeout(() => setPaymentShake(false), 600);
+      toast.error("Selecione uma forma de pagamento");
+      return;
+    }
+    if (loyaltySettings?.enabled) {
+      setPendingPrint(alsoPrint);
+      setLoyaltyPromptName("");
+      setLoyaltyPromptPhone("");
+      setLoyaltyPromptStep("ask");
+      setLoyaltyPromptOpen(true);
+      return;
+    }
+    confirmOrder(alsoPrint, { name: "", phone: "", optIn: false });
+  };
+
+  const confirmOrder = async (
+    alsoPrint: boolean,
+    override?: { name: string; phone: string; optIn: boolean },
+  ) => {
     if (cart.length === 0) { toast.error("Adicione produtos ao pedido"); return; }
     if (!payment) {
       setPaymentShake(true);
@@ -352,8 +374,11 @@ export function PdvDialog({
       }
     }
     setSubmitting(true);
-    const phoneDigits = unmaskPhone(customerPhone);
-    const trimmedName = customerName.trim() || "Cliente Balcão";
+    const effName = override?.name ?? customerName;
+    const effPhone = override?.phone ?? customerPhone;
+    const effOptIn = override?.optIn ?? loyaltyOptIn;
+    const phoneDigits = unmaskPhone(effPhone);
+    const trimmedName = effName.trim() || "Cliente Balcão";
     const orderPayload: any = {
       restaurant_id: restaurantId,
       order_type: "pdv",
@@ -367,7 +392,7 @@ export function PdvDialog({
       service_fee: serviceFeeApplied,
       delivery_fee: 0,
       total,
-      loyalty_opt_in: loyaltyOptIn,
+      loyalty_opt_in: effOptIn,
     };
     try {
       const { data: order, error } = await supabase
