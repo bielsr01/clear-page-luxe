@@ -545,15 +545,46 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
     qc.invalidateQueries();
   };
 
-  // Baseline visibility — respects per-channel/per-order-type permissions
+  // Channel key used for status-permission lookup (pickup shares delivery statuses)
+  const orderStatusChannel = (o: Order): "pdv" | "delivery" | "ifood" | "quero" => {
+    if (o.external_source === "ifood") return "ifood";
+    if (o.external_source === "quero") return "quero";
+    if (o.order_type === "pdv") return "pdv";
+    return "delivery";
+  };
+
+  // Baseline visibility — respects per-channel/per-order-type AND per-status permissions
   const visibleOrders = orders.filter((o) => {
-    if (o.external_source === "ifood") return canIfood;
-    if (o.external_source === "quero") return canQuero;
-    if (o.order_type === "pdv") return canPdv;
-    if (o.order_type === "pickup") return canPickupType;
-    // delivery (or any other native order_type)
-    return canDeliveryType;
+    let channelOk = false;
+    if (o.external_source === "ifood") channelOk = canIfood;
+    else if (o.external_source === "quero") channelOk = canQuero;
+    else if (o.order_type === "pdv") channelOk = canPdv;
+    else if (o.order_type === "pickup") channelOk = canPickupType;
+    else channelOk = canDeliveryType;
+    if (!channelOk) return false;
+    return can(`orders.statuses.${orderStatusChannel(o)}.${o.status}`);
   });
+
+  // Channels considered for the currently selected tab (used to gate column visibility)
+  const activeStatusChannels = (): Array<"pdv" | "delivery" | "ifood" | "quero"> => {
+    if (channel === "pdv") return ["pdv"];
+    if (channel === "ifood") return ["ifood"];
+    if (channel === "quero") return ["quero"];
+    if (channel === "delivery") return ["delivery"];
+    const arr: Array<"pdv" | "delivery" | "ifood" | "quero"> = [];
+    if (canPdv) arr.push("pdv");
+    if (canDelivery) arr.push("delivery");
+    if (canIfood) arr.push("ifood");
+    if (canQuero) arr.push("quero");
+    return arr;
+  };
+  const statusAllowedInActive = (status: string) =>
+    activeStatusChannels().some((ch) => can(`orders.statuses.${ch}.${status}`));
+
+  const showPendingCol = statusAllowedInActive("pending");
+  const showPreparingCol = statusAllowedInActive("preparing");
+  const showReadyCol = statusAllowedInActive("awaiting_pickup");
+  const showOutCol = statusAllowedInActive("out_for_delivery");
 
   const channelOrders = visibleOrders.filter((o) => {
     if (channel === "all") return true;
