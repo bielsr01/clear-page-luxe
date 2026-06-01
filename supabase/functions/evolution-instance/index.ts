@@ -47,6 +47,27 @@ async function configureWebhook(base: string, apiKey: string, instanceName: stri
   });
 }
 
+async function createEvolutionInstance(URL_ENV: string, KEY_ENV: string, admin: any, restaurantId: string | undefined, adminScope: boolean) {
+  let base = "";
+  let nameSeed = "admin";
+  if (adminScope) {
+    base = "admin";
+    nameSeed = "admin000";
+  } else {
+    const { data: rest } = await admin.from("restaurants").select("slug, name").eq("id", restaurantId).maybeSingle();
+    base = rest?.slug || rest?.name || "";
+    nameSeed = restaurantId || "restaurant";
+  }
+  let instanceName = genInstanceName(nameSeed, base, false);
+  let r = await evoFetch(URL_ENV, "/instance/create", KEY_ENV, { instanceName, integration: "WHATSAPP-BAILEYS", qrcode: true });
+  if (!truthyOk(r) && (r.status === 403 || r.status === 409 || /exist|already|conflict/i.test(JSON.stringify(r.data)))) {
+    instanceName = genInstanceName(nameSeed, base, true);
+    r = await evoFetch(URL_ENV, "/instance/create", KEY_ENV, { instanceName, integration: "WHATSAPP-BAILEYS", qrcode: true });
+  }
+  if (!truthyOk(r)) throw new Error(`Falha ao criar instância (${r.status}): ${JSON.stringify(r.data).slice(0, 300)}`);
+  return { instanceName, instanceToken: r.data?.hash || r.data?.instance?.hash || r.data?.token || null, qr: await buildPureQrImage(r.data), raw: r.data };
+}
+
 function slugify(s: string) {
   return (s || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -173,33 +194,10 @@ Deno.serve(async (req) => {
       let instanceToken = existing?.instance_token as string | undefined;
 
       if (!instanceName) {
-        let base = "";
-        let nameSeed = "admin";
-        if (adminScope) {
-          base = "admin";
-          nameSeed = "admin000";
-        } else {
-          const { data: rest } = await admin.from("restaurants")
-            .select("slug, name").eq("id", restaurantId).maybeSingle();
-          base = rest?.slug || rest?.name || "";
-          nameSeed = restaurantId;
-        }
-        instanceName = genInstanceName(nameSeed, base, false);
-        let r = await evoFetch(URL_ENV, "/instance/create", KEY_ENV, {
-          instanceName,
-          integration: "WHATSAPP-BAILEYS",
-          qrcode: true,
-        });
-        // Se nome já existir, tenta com sufixo aleatório
-        if (!r.ok && (r.status === 403 || r.status === 409 || /exist|already|conflict/i.test(JSON.stringify(r.data)))) {
-          instanceName = genInstanceName(nameSeed, base, true);
-          r = await evoFetch(URL_ENV, "/instance/create", KEY_ENV, {
-            instanceName, integration: "WHATSAPP-BAILEYS", qrcode: true,
-          });
-        }
-        if (!truthyOk(r)) throw new Error(`Falha ao criar instância (${r.status}): ${JSON.stringify(r.data).slice(0, 300)}`);
-        instanceToken = r.data?.hash || r.data?.instance?.hash || r.data?.token || null;
-        const qr = await buildPureQrImage(r.data);
+        const created = await createEvolutionInstance(URL_ENV, KEY_ENV, admin, restaurantId, !!adminScope);
+        instanceName = created.instanceName;
+        instanceToken = created.instanceToken;
+        const qr = created.qr;
         await configureWebhook(URL_ENV, KEY_ENV, instanceName, SUPABASE_URL, SERVICE).catch((err) => {
           console.error("evolution webhook setup failed", err?.message || err);
         });
@@ -210,7 +208,7 @@ Deno.serve(async (req) => {
           instance_token: instanceToken,
           enabled: true,
           qrcode: qr,
-          last_status: r.data?.instance?.status || "created",
+          last_status: created.raw?.instance?.status || "created",
           last_check_at: new Date().toISOString(),
         });
         return new Response(JSON.stringify({ ok: true, instanceName, qrcode: qr, status: "created" }), {
@@ -223,12 +221,23 @@ Deno.serve(async (req) => {
     }
 
     if (action === "connect") {
-      const instanceName = existing?.instance_name;
-      if (!instanceName) throw new Error("Instância não criada ainda");
+      let instanceName = existing?.instance_name;
+      if (!instanceName) {
+        const created = await createEvolutionInstance(URL_ENV, KEY_ENV, admin, restaurantId, !!adminScope);
+        instanceName = created.instanceName;
+        await upsertRow({ api_url: sanitizeBase(URL_ENV), api_key: KEY_ENV, instance_name: created.instanceName, instance_token: created.instanceToken, enabled: true, qrcode: created.qr, last_status: "created", last_check_at: new Date().toISOString() });
+      }
       await configureWebhook(URL_ENV, KEY_ENV, instanceName, SUPABASE_URL, SERVICE).catch((err) => {
         console.error("evolution webhook setup failed", err?.message || err);
       });
-      const r = await evoFetch(URL_ENV, `/instance/connect/${encodeURIComponent(instanceName)}`, KEY_ENV, undefined, "GET");
+      let r = await evoFetch(URL_ENV, `/instance/connect/${encodeURIComponent(instanceName)}`, KEY_ENV, undefined, "GET");
+      if (!truthyOk(r) && r.status === 404) {
+        const created = await createEvolutionInstance(URL_ENV, KEY_ENV, admin, restaurantId, !!adminScope);
+        instanceName = created.instanceName;
+        await configureWebhook(URL_ENV, KEY_ENV, instanceName, SUPABASE_URL, SERVICE).catch(() => {});
+        await upsertRow({ api_url: sanitizeBase(URL_ENV), api_key: KEY_ENV, instance_name: created.instanceName, instance_token: created.instanceToken, enabled: true, qrcode: created.qr, last_status: "created", last_check_at: new Date().toISOString() });
+        r = await evoFetch(URL_ENV, `/instance/connect/${encodeURIComponent(instanceName)}`, KEY_ENV, undefined, "GET");
+      }
       if (!truthyOk(r)) throw new Error(`Falha ao obter QR (${r.status}): ${JSON.stringify(r.data).slice(0, 300)}`);
       const qr = await buildPureQrImage(r.data);
       const code = r.data?.code || r.data?.qrcode?.code || null;
