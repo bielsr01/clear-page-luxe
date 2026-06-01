@@ -116,10 +116,13 @@ export function PdvDialog({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [loyaltyOptIn, setLoyaltyOptIn] = useState(false);
-  const [customerOpen, setCustomerOpen] = useState(false);
-  const [tmpName, setTmpName] = useState("");
-  const [tmpPhone, setTmpPhone] = useState("");
-  const [tmpLoyalty, setTmpLoyalty] = useState(false);
+
+  // Loyalty prompt (shown on confirm sale)
+  const [loyaltyPromptOpen, setLoyaltyPromptOpen] = useState(false);
+  const [loyaltyPromptStep, setLoyaltyPromptStep] = useState<"ask" | "form">("ask");
+  const [loyaltyPromptName, setLoyaltyPromptName] = useState("");
+  const [loyaltyPromptPhone, setLoyaltyPromptPhone] = useState("");
+  const [pendingPrint, setPendingPrint] = useState(false);
 
   // Discount
   const [discountType, setDiscountType] = useState<"value" | "percent">("value");
