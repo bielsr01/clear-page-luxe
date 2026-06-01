@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     const pathByAction: Record<string, string> = {
       confirm: `/orders/${order.external_order_id}/confirm`,
       dispatch: `/orders/${order.external_order_id}/dispatch`,
-      readyForPickup: `/orders/${order.external_order_id}/ready-for-pickup`,
+      readyForPickup: `/orders/${order.external_order_id}/ready-fo-pickup`,
       deliveryCompleted: `/orders/${order.external_order_id}/delivery-completed`,
       cancel: `/orders/${order.external_order_id}/request-cancellation`,
     };
