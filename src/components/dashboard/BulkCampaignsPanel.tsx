@@ -584,12 +584,17 @@ function CampaignDialog({
     to: r.to ? new Date(r.to + "T23:59:59").getTime() : null,
   }));
 
+  const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const filtered = (customers ?? []).filter((c: any) => {
     if (existingCustomerIds.has(c.id)) return false;
     if (restaurantFilters.size > 0 && !restaurantFilters.has(c.restaurant_id)) return false;
     if (search.trim()) {
-      const q = search.toLowerCase();
-      if (!(c.name?.toLowerCase().includes(q) || unmaskPhone(c.phone || "").includes(unmaskPhone(search)))) return false;
+      const term = search.trim();
+      const qName = norm(term);
+      const qPhone = unmaskPhone(term);
+      const nameHit = qName.length > 0 && norm(c.name || "").includes(qName);
+      const phoneHit = qPhone.length > 0 && unmaskPhone(c.phone || "").includes(qPhone);
+      if (!nameHit && !phoneHit) return false;
     }
     if (typeFilters.size > 0 && !typeFilters.has(getClientType(c.orders_count))) return false;
     if (statusFilters.size > 0) { const s = getClientStatus(c.last_order_at); if (!s || !statusFilters.has(s)) return false; }
@@ -603,6 +608,10 @@ function CampaignDialog({
       if (!dateRangesNorm.some(r => (r.from === null || t >= r.from) && (r.to === null || t <= r.to))) return false;
     }
     return true;
+  }).sort((a: any, b: any) => {
+    const ap = picked.has(a.id) ? 0 : 1;
+    const bp = picked.has(b.id) ? 0 : 1;
+    return ap - bp;
   });
 
   const togglePick = (id: string) => { const n = new Set(picked); n.has(id) ? n.delete(id) : n.add(id); setPicked(n); };
