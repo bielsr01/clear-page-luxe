@@ -454,7 +454,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         preparing: "confirm",
         awaiting_pickup: "readyForPickup",
         out_for_delivery: "dispatch",
-        delivered: "delivered",
+        delivered: "deliveryCompleted",
       };
       const action = actionMap[next];
       if (action) {
