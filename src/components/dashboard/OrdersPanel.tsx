@@ -124,7 +124,9 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
   const qc = useQueryClient();
   const { can } = usePermissions(restaurantId);
   const canPdv = can("orders.channels.pdv");
-  const canDelivery = can("orders.channels.delivery") || can("orders.channels.pickup");
+  const canDeliveryType = can("orders.channels.delivery");
+  const canPickupType = can("orders.channels.pickup");
+  const canDelivery = canDeliveryType || canPickupType;
   const canIfood = can("orders.channels.ifood");
   const canQuero = can("orders.channels.quero");
   const canChangeStatus = can("orders.change_status");
