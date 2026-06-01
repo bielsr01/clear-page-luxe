@@ -116,10 +116,13 @@ export function PdvDialog({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [loyaltyOptIn, setLoyaltyOptIn] = useState(false);
-  const [customerOpen, setCustomerOpen] = useState(false);
-  const [tmpName, setTmpName] = useState("");
-  const [tmpPhone, setTmpPhone] = useState("");
-  const [tmpLoyalty, setTmpLoyalty] = useState(false);
+
+  // Loyalty prompt (shown on confirm sale)
+  const [loyaltyPromptOpen, setLoyaltyPromptOpen] = useState(false);
+  const [loyaltyPromptStep, setLoyaltyPromptStep] = useState<"ask" | "form">("ask");
+  const [loyaltyPromptName, setLoyaltyPromptName] = useState("");
+  const [loyaltyPromptPhone, setLoyaltyPromptPhone] = useState("");
+  const [pendingPrint, setPendingPrint] = useState(false);
 
   // Discount
   const [discountType, setDiscountType] = useState<"value" | "percent">("value");
@@ -329,7 +332,29 @@ export function PdvDialog({
     w.document.open(); w.document.write(html); w.document.close();
   };
 
-  const confirmOrder = async (alsoPrint: boolean) => {
+  const handleConfirmSale = (alsoPrint: boolean) => {
+    if (cart.length === 0) { toast.error("Adicione produtos ao pedido"); return; }
+    if (!payment) {
+      setPaymentShake(true);
+      setTimeout(() => setPaymentShake(false), 600);
+      toast.error("Selecione uma forma de pagamento");
+      return;
+    }
+    if (loyaltySettings?.enabled) {
+      setPendingPrint(alsoPrint);
+      setLoyaltyPromptName("");
+      setLoyaltyPromptPhone("");
+      setLoyaltyPromptStep("ask");
+      setLoyaltyPromptOpen(true);
+      return;
+    }
+    confirmOrder(alsoPrint, { name: "", phone: "", optIn: false });
+  };
+
+  const confirmOrder = async (
+    alsoPrint: boolean,
+    override?: { name: string; phone: string; optIn: boolean },
+  ) => {
     if (cart.length === 0) { toast.error("Adicione produtos ao pedido"); return; }
     if (!payment) {
       setPaymentShake(true);
@@ -349,8 +374,11 @@ export function PdvDialog({
       }
     }
     setSubmitting(true);
-    const phoneDigits = unmaskPhone(customerPhone);
-    const trimmedName = customerName.trim() || "Cliente Balcão";
+    const effName = override?.name ?? customerName;
+    const effPhone = override?.phone ?? customerPhone;
+    const effOptIn = override?.optIn ?? loyaltyOptIn;
+    const phoneDigits = unmaskPhone(effPhone);
+    const trimmedName = effName.trim() || "Cliente Balcão";
     const orderPayload: any = {
       restaurant_id: restaurantId,
       order_type: "pdv",
@@ -364,7 +392,7 @@ export function PdvDialog({
       service_fee: serviceFeeApplied,
       delivery_fee: 0,
       total,
-      loyalty_opt_in: loyaltyOptIn,
+      loyalty_opt_in: effOptIn,
     };
     try {
       const { data: order, error } = await supabase
@@ -435,11 +463,11 @@ export function PdvDialog({
           await supabase.from("order_item_options" as any).insert(optionRows);
         }
 
-        if (loyaltyOptIn && loyaltySettings?.enabled && phoneDigits.length >= 10) {
+        if (effOptIn && loyaltySettings?.enabled && phoneDigits.length >= 10) {
           try {
             const sb = supabase as any;
             const { normalizeBrPhone } = await import("@/lib/format");
-            const phoneFmt = normalizeBrPhone(customerPhone);
+            const phoneFmt = normalizeBrPhone(effPhone);
             const { data: existing } = await sb.from("loyalty_members").select("id")
               .eq("restaurant_id", restaurantId).eq("phone", phoneFmt).maybeSingle();
             let memberId = existing?.id as string | undefined;
@@ -470,7 +498,7 @@ export function PdvDialog({
             await supabase.rpc("upsert_customer_on_order" as any, {
               _restaurant_id: restaurantId,
               _name: trimmedName,
-              _phone: formatPhone(customerPhone),
+              _phone: formatPhone(effPhone),
             });
           } catch { /* noop */ }
         }
@@ -481,7 +509,7 @@ export function PdvDialog({
     }
   };
 
-  const customerIdentified = !!(customerName.trim() || customerPhone.trim());
+  
 
   // Picker helpers
   const togglePick = (g: OptGroup, itemId: string) => {
@@ -536,28 +564,8 @@ export function PdvDialog({
             </DialogTitle>
           </DialogHeader>
 
-          {/* Top bar: customer + discount + fee */}
+          {/* Top bar: discount */}
           <div className="px-4 py-2 border-b flex flex-wrap gap-2 items-center shrink-0 bg-muted/30">
-            <Button
-              variant={customerIdentified ? "secondary" : "default"}
-              size="sm"
-              onClick={() => {
-                setTmpName(customerName); setTmpPhone(customerPhone); setTmpLoyalty(loyaltyOptIn);
-                setCustomerOpen(true);
-              }}
-              className="gap-2"
-            >
-              {customerIdentified ? <UserCheck className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-              {customerIdentified
-                ? `${customerName || "Cliente"}${customerPhone ? " • " + formatPhone(customerPhone) : ""}`
-                : "Identificar cliente"}
-              {loyaltyOptIn && <Badge variant="outline" className="ml-1">Fidelidade</Badge>}
-            </Button>
-            {customerIdentified && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCustomerName(""); setCustomerPhone(""); setLoyaltyOptIn(false); }}>
-                <X className="w-4 h-4" />
-              </Button>
-            )}
             <div className="flex-1" />
             {canApplyDiscount && (
               <Button variant={discountValue > 0 ? "secondary" : "outline"} size="sm" className="gap-2"
@@ -741,11 +749,11 @@ export function PdvDialog({
 
                 <div className="grid grid-cols-2 gap-2">
                   <Button variant="outline" onClick={reset} className="gap-1"><X className="w-4 h-4" /> Limpar</Button>
-                  <Button variant="secondary" onClick={() => confirmOrder(true)} disabled={submitting || cart.length === 0} className="gap-1">
+                  <Button variant="secondary" onClick={() => handleConfirmSale(true)} disabled={submitting || cart.length === 0} className="gap-1">
                     <Printer className="w-4 h-4" /> Confirmar e imprimir
                   </Button>
                 </div>
-                <Button className="w-full" onClick={() => confirmOrder(false)} disabled={submitting || cart.length === 0}>
+                <Button className="w-full" onClick={() => handleConfirmSale(false)} disabled={submitting || cart.length === 0}>
                   {submitting ? "Finalizando..." : "Confirmar venda"}
                 </Button>
               </div>
@@ -754,45 +762,74 @@ export function PdvDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Customer dialog */}
-      <Dialog open={customerOpen} onOpenChange={setCustomerOpen}>
+      {/* Loyalty prompt dialog */}
+      <Dialog open={loyaltyPromptOpen} onOpenChange={(o) => { if (!o) setLoyaltyPromptOpen(false); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Identificar cliente</DialogTitle>
-            <DialogDescription>Preencha os dados do cliente para esta venda.</DialogDescription>
+            <DialogTitle>Programa de fidelidade</DialogTitle>
+            <DialogDescription>
+              {loyaltyPromptStep === "ask"
+                ? "O cliente deseja se cadastrar no programa de fidelidade desta loja?"
+                : "Informe nome e telefone para cadastrar no programa de fidelidade."}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Nome</Label>
-              <Input value={tmpName} onChange={(e) => setTmpName(e.target.value)} placeholder="Nome do cliente" autoFocus />
-            </div>
-            <div>
-              <Label className="text-xs">Telefone</Label>
-              <Input value={formatPhone(tmpPhone)} onChange={(e) => setTmpPhone(e.target.value)} placeholder="(11) 99999-9999" inputMode="numeric" />
-            </div>
-            {loyaltySettings?.enabled && (
-              <div className="flex items-center justify-between rounded-md border p-3">
+          {loyaltyPromptStep === "ask" ? (
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={submitting}
+                onClick={() => {
+                  setLoyaltyPromptOpen(false);
+                  confirmOrder(pendingPrint, { name: "", phone: "", optIn: false });
+                }}
+              >
+                Não
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={submitting}
+                onClick={() => setLoyaltyPromptStep("form")}
+              >
+                Sim, cadastrar
+              </Button>
+            </DialogFooter>
+          ) : (
+            <>
+              <div className="space-y-3">
                 <div>
-                  <div className="text-sm font-medium">Cadastrar no programa de fidelidade</div>
-                  <div className="text-xs text-muted-foreground">Pontuará {Number(loyaltySettings.points_per_real)} ponto(s) por real desta venda.</div>
+                  <Label className="text-xs">Nome <span className="text-destructive">*</span></Label>
+                  <Input value={loyaltyPromptName} onChange={(e) => setLoyaltyPromptName(e.target.value)} placeholder="Nome do cliente" autoFocus />
                 </div>
-                <Switch checked={tmpLoyalty} onCheckedChange={setTmpLoyalty} />
+                <div>
+                  <Label className="text-xs">Telefone <span className="text-destructive">*</span></Label>
+                  <Input value={formatPhone(loyaltyPromptPhone)} onChange={(e) => setLoyaltyPromptPhone(e.target.value)} placeholder="(11) 99999-9999" inputMode="numeric" />
+                </div>
+                {loyaltySettings?.enabled && (
+                  <div className="text-xs text-muted-foreground rounded-md bg-muted/50 p-3">
+                    Pontuará {Number(loyaltySettings.points_per_real)} ponto(s) por real desta venda.
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCustomerOpen(false)}>Cancelar</Button>
-            <Button onClick={() => {
-              if (tmpLoyalty && unmaskPhone(tmpPhone).length < 10) { toast.error("Informe um telefone válido para fidelidade"); return; }
-              setCustomerName(tmpName);
-              setCustomerPhone(tmpPhone);
-              setLoyaltyOptIn(tmpLoyalty);
-              setCustomerOpen(false);
-              toast.success("Cliente identificado");
-            }}>Confirmar</Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setLoyaltyPromptStep("ask")} disabled={submitting}>Voltar</Button>
+                <Button
+                  disabled={submitting}
+                  onClick={() => {
+                    if (!loyaltyPromptName.trim()) { toast.error("Informe o nome do cliente"); return; }
+                    if (unmaskPhone(loyaltyPromptPhone).length < 10) { toast.error("Informe um telefone válido"); return; }
+                    setLoyaltyPromptOpen(false);
+                    confirmOrder(pendingPrint, { name: loyaltyPromptName, phone: loyaltyPromptPhone, optIn: true });
+                  }}
+                >
+                  Confirmar venda
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
 
       {/* Discount dialog */}
       <Dialog open={discountOpen} onOpenChange={setDiscountOpen}>
