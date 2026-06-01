@@ -1912,6 +1912,7 @@ export type Database = {
           last_event_at: string | null
           last_event_code: string | null
           last_poll_at: string | null
+          last_reconcile_at: string | null
           last_status: string | null
           place_id: string
           restaurant_id: string
@@ -1925,6 +1926,7 @@ export type Database = {
           last_event_at?: string | null
           last_event_code?: string | null
           last_poll_at?: string | null
+          last_reconcile_at?: string | null
           last_status?: string | null
           place_id: string
           restaurant_id: string
@@ -1938,6 +1940,7 @@ export type Database = {
           last_event_at?: string | null
           last_event_code?: string | null
           last_poll_at?: string | null
+          last_reconcile_at?: string | null
           last_status?: string | null
           place_id?: string
           restaurant_id?: string
