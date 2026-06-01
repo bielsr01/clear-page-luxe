@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, KeyRound, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { FULL_PERMISSIONS, Permissions, mergePermissions, PDV_STATUSES, DELIVERY_STATUSES, IFOOD_STATUSES } from "@/lib/permissions";
+import { FULL_PERMISSIONS, Permissions, mergePermissions, PDV_STATUSES, DELIVERY_STATUSES, IFOOD_STATUSES, QUERO_STATUSES } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props { restaurantId: string }
@@ -19,7 +19,7 @@ interface Props { restaurantId: string }
 interface AccessGroup { id: string; name: string; permissions: any; is_default: boolean }
 interface MemberRow { user_id: string; access_group_id: string | null; full_name: string | null; email: string | null; is_owner: boolean }
 
-type StatusChannel = "pdv" | "delivery" | "ifood";
+type StatusChannel = "pdv" | "delivery" | "ifood" | "quero";
 const STATUS_LABELS: Record<string, string> = {
   pending: "Novos",
   preparing: "Em preparo",
@@ -34,6 +34,7 @@ const STATUS_LISTS: Record<StatusChannel, readonly string[]> = {
   pdv: PDV_STATUSES,
   delivery: DELIVERY_STATUSES,
   ifood: IFOOD_STATUSES,
+  quero: QUERO_STATUSES,
 };
 
 type Row = { path: string; label: string; statusChannel?: StatusChannel };
@@ -45,6 +46,7 @@ const SECTIONS: Array<{ key: keyof Permissions; label: string; rows: Row[] }> = 
     { path: "orders.channels.delivery", label: "Ver pedidos Delivery", statusChannel: "delivery" },
     { path: "orders.channels.pickup", label: "Ver pedidos Retirada" },
     { path: "orders.channels.ifood", label: "Ver pedidos iFood", statusChannel: "ifood" },
+    { path: "orders.channels.quero", label: "Ver pedidos Quero Delivery", statusChannel: "quero" },
     { path: "orders.change_status", label: "Mudar Status" },
     { path: "orders.edit", label: "Pode editar/excluir pedido (exclusão apenas antes do aceite)" },
     { path: "orders.create_pdv_order", label: "Pode fazer um novo pedido PDV" },
@@ -118,6 +120,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "orders.channels.delivery": "orders.view",
   "orders.channels.pickup": "orders.view",
   "orders.channels.ifood": "orders.view",
+  "orders.channels.quero": "orders.view",
   "orders.change_status": "orders.view",
   "orders.edit": "orders.view",
   "orders.create_pdv_order": "orders.channels.pdv",
@@ -146,6 +149,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   ...Object.fromEntries(PDV_STATUSES.map((s) => [`orders.statuses.pdv.${s}`, "orders.channels.pdv"])),
   ...Object.fromEntries(DELIVERY_STATUSES.map((s) => [`orders.statuses.delivery.${s}`, "orders.channels.delivery"])),
   ...Object.fromEntries(IFOOD_STATUSES.map((s) => [`orders.statuses.ifood.${s}`, "orders.channels.ifood"])),
+  ...Object.fromEntries(QUERO_STATUSES.map((s) => [`orders.statuses.quero.${s}`, "orders.channels.quero"])),
 };
 
 function applyDependencies(perms: any, path: string, value: boolean) {
