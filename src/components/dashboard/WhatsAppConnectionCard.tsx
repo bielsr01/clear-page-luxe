@@ -39,6 +39,7 @@ export function WhatsAppConnectionCard({
       return data ?? null;
     },
     enabled: adminScope || !!restaurantId,
+    refetchInterval: open ? 10000 : false,
   });
 
   const hasInstance = !!data?.instance_name;
@@ -98,6 +99,13 @@ export function WhatsAppConnectionCard({
 
   useEffect(() => () => stopPoll(), []);
 
+  useEffect(() => {
+    if (!open || !hasInstance) return;
+    supabase.functions.invoke("evolution-instance", {
+      body: adminScope ? { action: "state", adminScope: true } : { action: "state", restaurantId },
+    }).finally(() => qc.invalidateQueries({ queryKey }));
+  }, [open, hasInstance, adminScope, restaurantId]);
+
   async function handleConnect() {
     try {
       // Make sure an instance exists
@@ -121,6 +129,17 @@ export function WhatsAppConnectionCard({
       qc.invalidateQueries({ queryKey });
     } catch (e: any) {
       toast.error(e.message || "Erro");
+    }
+  }
+
+  async function handleRestart() {
+    try {
+      await call("restart");
+      toast.success("Reconexão iniciada");
+      qc.invalidateQueries({ queryKey });
+      startPoll();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao reiniciar");
     }
   }
 
@@ -170,15 +189,29 @@ export function WhatsAppConnectionCard({
             </div>
 
             {!isConnected ? (
-              <Button
-                size="lg"
-                className="w-full h-14 text-base bg-green-600 hover:bg-green-700"
-                onClick={handleConnect}
-                disabled={!!busy}
-              >
-                {busy ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <QrCode className="w-5 h-5 mr-2" />}
-                Conectar WhatsApp
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-base bg-green-600 hover:bg-green-700"
+                  onClick={handleConnect}
+                  disabled={!!busy}
+                >
+                  {busy ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <QrCode className="w-5 h-5 mr-2" />}
+                  Conectar WhatsApp
+                </Button>
+                {hasInstance && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" className="flex-1" onClick={handleRestart} disabled={!!busy}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Reiniciar conexão
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={handleReset} disabled={!!busy}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Recriar instância
+                    </Button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline" className="flex-1" onClick={handleLogout} disabled={!!busy}>
