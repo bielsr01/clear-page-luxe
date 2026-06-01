@@ -248,14 +248,14 @@ export function buildTicketHtml(
     .ticket, .ticket * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color:#000 !important; }
   }
   body { margin:0; background:#f5f5f5; }
-  .ticket { width:72mm; margin:0 auto; padding:8px; font-family:'Arial',sans-serif; color:#000; font-size:14px; line-height:1.45; font-weight:700; background:#fff; -webkit-text-stroke:0.3px #000; }
-  .ticket h1 { font-size:18px; font-weight:900; margin:0; text-align:center; -webkit-text-stroke:0.6px #000; }
+  .ticket { width:72mm; margin:0 auto; padding:8px; font-family:'Arial',sans-serif; color:#000; font-size:14px; line-height:1.45; font-weight:700; background:#fff; }
+  .ticket h1 { font-size:18px; font-weight:900; margin:0; text-align:center; }
   .muted { color:#000; font-weight:700; }
   .center { text-align:center; }
   .row { display:flex; justify-content:space-between; gap:8px; }
   .sep { border-top:1.5px solid #000; margin:6px 0; }
-  .item-name { font-weight:900; -webkit-text-stroke:0.5px #000; }
-  .total { font-size:17px; font-weight:900; -webkit-text-stroke:0.6px #000; }
+  .item-name { font-weight:900; }
+  .total { font-size:17px; font-weight:900; }
   .logo { max-width:50mm; max-height:25mm; display:block; margin:0 auto 6px; object-fit:contain; filter:contrast(1.4) brightness(0.85); }
   .no-print { padding:12px; text-align:center; }
   .no-print button { padding:8px 16px; border:1px solid #333; border-radius:6px; cursor:pointer; background:#fff; }
