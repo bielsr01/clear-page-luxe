@@ -146,6 +146,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "orders.create_pdv_order": "orders.channels.pdv",
   "orders.apply_pdv_discount": "orders.create_pdv_order",
   "orders.cancel_finalized": "orders.change_status",
+  "orders.view_history": "orders.view",
   ...Object.fromEntries(PDV_STATUSES.map((s) => [`orders.statuses.pdv.${s}`, "orders.channels.pdv"])),
   ...Object.fromEntries(DELIVERY_STATUSES.map((s) => [`orders.statuses.delivery.${s}`, "orders.channels.delivery"])),
   ...Object.fromEntries(IFOOD_STATUSES.map((s) => [`orders.statuses.ifood.${s}`, "orders.channels.ifood"])),
