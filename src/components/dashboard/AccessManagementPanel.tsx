@@ -460,7 +460,15 @@ export function AccessManagementPanel({ restaurantId }: Props) {
           <div className="space-y-3">
             <div><Label>Nome</Label><Input value={uName} onChange={(e) => setUName(e.target.value)} /></div>
             <div><Label>Email{userDialog.editing && <span className="text-xs text-muted-foreground"> (deixe em branco para manter)</span>}</Label><Input type="email" value={uEmail} onChange={(e) => setUEmail(e.target.value)} /></div>
-            <div><Label>Senha{userDialog.editing && <span className="text-xs text-muted-foreground"> (deixe em branco para manter)</span>}</Label><Input type="password" value={uPassword} onChange={(e) => setUPassword(e.target.value)} /></div>
+            <div>
+              <Label>Senha{userDialog.editing && <span className="text-xs text-muted-foreground"> (deixe em branco para manter)</span>}</Label>
+              <div className="relative">
+                <Input type={showUPassword ? "text" : "password"} value={uPassword} onChange={(e) => setUPassword(e.target.value)} className="pr-10" />
+                <button type="button" onClick={() => setShowUPassword((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1} aria-label={showUPassword ? "Ocultar senha" : "Mostrar senha"}>
+                  {showUPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
             <div>
               <Label>Grupo de acesso</Label>
               <Select value={uGroupId || "__full"} onValueChange={(v) => setUGroupId(v === "__full" ? "" : v)}>
