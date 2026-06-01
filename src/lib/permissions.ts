@@ -24,6 +24,7 @@ export type Permissions = {
     create_pdv_order: boolean;
     apply_pdv_discount: boolean;
     cancel_finalized: boolean;
+    view_history: boolean;
   };
   menu: { view: boolean; edit: boolean };
   customers: { view: boolean; create: boolean; edit: boolean; delete: boolean };
@@ -70,6 +71,7 @@ export const FULL_PERMISSIONS: Permissions = {
     create_pdv_order: true,
     apply_pdv_discount: true,
     cancel_finalized: true,
+    view_history: true,
   },
   menu: { view: true, edit: true },
   customers: { view: true, create: true, edit: true, delete: true },
@@ -109,6 +111,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
     create_pdv_order: false,
     apply_pdv_discount: false,
     cancel_finalized: false,
+    view_history: false,
   },
   menu: { view: false, edit: false },
   customers: { view: false, create: false, edit: false, delete: false },
@@ -143,6 +146,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "orders.create_pdv_order": "orders.channels.pdv",
   "orders.apply_pdv_discount": "orders.create_pdv_order",
   "orders.cancel_finalized": "orders.change_status",
+  "orders.view_history": "orders.view",
   ...Object.fromEntries(PDV_STATUSES.map((s) => [`orders.statuses.pdv.${s}`, "orders.channels.pdv"])),
   ...Object.fromEntries(DELIVERY_STATUSES.map((s) => [`orders.statuses.delivery.${s}`, "orders.channels.delivery"])),
   ...Object.fromEntries(IFOOD_STATUSES.map((s) => [`orders.statuses.ifood.${s}`, "orders.channels.ifood"])),
@@ -183,6 +187,7 @@ const LEGACY_INHERIT_FROM_PARENT: string[] = [
   "orders.channels.quero",
   "finance.view_fee_breakdown",
   "orders.apply_pdv_discount",
+  "orders.view_history",
 ];
 
 // Para chaves legadas onde queremos herdar de outro nó (não o "parent" das dependências).

@@ -134,6 +134,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
   const canViewFeeBreakdown = can("finance.view_fee_breakdown");
   const canCreatePdv = can("orders.create_pdv_order");
   const canCancelFinalized = can("orders.cancel_finalized");
+  const canViewHistory = can("orders.view_history");
   type Channel = "all" | "delivery" | "pdv" | "ifood" | "quero";
   const initialChannel: Channel = "all";
   const [channel, setChannel] = useState<Channel>(initialChannel);
@@ -865,9 +866,11 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         </Tabs>
 
         <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
-          <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)} className="gap-2 flex-1 md:flex-none text-xs md:text-sm">
-            <History className="w-4 h-4" /> <span className="truncate">Histórico</span>
-          </Button>
+          {canViewHistory && (
+            <Button variant="outline" size="sm" onClick={() => setHistoryOpen(true)} className="gap-2 flex-1 md:flex-none text-xs md:text-sm">
+              <History className="w-4 h-4" /> <span className="truncate">Histórico</span>
+            </Button>
+          )}
           {canCreatePdv && (
             <Button size="sm" onClick={() => setPdvOpen(true)} className="gap-2 flex-1 md:flex-none text-xs md:text-sm">
               <Plus className="w-4 h-4" /> <span className="truncate">Novo PDV</span>

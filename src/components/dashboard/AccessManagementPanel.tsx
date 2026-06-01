@@ -52,6 +52,7 @@ const SECTIONS: Array<{ key: keyof Permissions; label: string; rows: Row[] }> = 
     { path: "orders.create_pdv_order", label: "Pode fazer um novo pedido PDV" },
     { path: "orders.apply_pdv_discount", label: "Pode aplicar desconto no PDV" },
     { path: "orders.cancel_finalized", label: "Cancelar pedido já finalizado Delivery/Retirada e PDV" },
+    { path: "orders.view_history", label: "Ver histórico de pedidos" },
   ]},
   { key: "menu", label: "Cardápio", rows: [
     { path: "menu.view", label: "Visualizar cardápio" },
@@ -126,6 +127,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "orders.create_pdv_order": "orders.channels.pdv",
   "orders.apply_pdv_discount": "orders.create_pdv_order",
   "orders.cancel_finalized": "orders.change_status",
+  "orders.view_history": "orders.view",
   "menu.edit": "menu.view",
   "customers.create": "customers.view",
   "customers.edit": "customers.view",
