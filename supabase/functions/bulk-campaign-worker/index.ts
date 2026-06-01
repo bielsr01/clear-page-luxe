@@ -175,7 +175,8 @@ Deno.serve(async (req) => {
       }
 
       const number = normalizePhone(rec.phone);
-      const personalized = (c.message_text || "").replace(/\{nome\}/gi, rec.name || "");
+      const firstName = (rec.name || "").trim().split(/\s+/)[0] || "";
+      const personalized = (c.message_text || "").replace(/\{nome\}/gi, firstName);
       const inst = encodeURIComponent(integ.instance_name);
       let r;
       try {
