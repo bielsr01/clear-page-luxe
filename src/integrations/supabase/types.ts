@@ -1836,6 +1836,7 @@ export type Database = {
         Row: {
           created_at: string
           error: string | null
+          event_key: string
           id: string
           integration_id: string | null
           order_code: string | null
@@ -1848,6 +1849,7 @@ export type Database = {
         Insert: {
           created_at?: string
           error?: string | null
+          event_key: string
           id?: string
           integration_id?: string | null
           order_code?: string | null
@@ -1860,6 +1862,7 @@ export type Database = {
         Update: {
           created_at?: string
           error?: string | null
+          event_key?: string
           id?: string
           integration_id?: string | null
           order_code?: string | null
