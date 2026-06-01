@@ -111,6 +111,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
     create_pdv_order: false,
     apply_pdv_discount: false,
     cancel_finalized: false,
+    view_history: false,
   },
   menu: { view: false, edit: false },
   customers: { view: false, create: false, edit: false, delete: false },
