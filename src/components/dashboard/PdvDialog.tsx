@@ -749,11 +749,11 @@ export function PdvDialog({
 
                 <div className="grid grid-cols-2 gap-2">
                   <Button variant="outline" onClick={reset} className="gap-1"><X className="w-4 h-4" /> Limpar</Button>
-                  <Button variant="secondary" onClick={() => confirmOrder(true)} disabled={submitting || cart.length === 0} className="gap-1">
+                  <Button variant="secondary" onClick={() => handleConfirmSale(true)} disabled={submitting || cart.length === 0} className="gap-1">
                     <Printer className="w-4 h-4" /> Confirmar e imprimir
                   </Button>
                 </div>
-                <Button className="w-full" onClick={() => confirmOrder(false)} disabled={submitting || cart.length === 0}>
+                <Button className="w-full" onClick={() => handleConfirmSale(false)} disabled={submitting || cart.length === 0}>
                   {submitting ? "Finalizando..." : "Confirmar venda"}
                 </Button>
               </div>
