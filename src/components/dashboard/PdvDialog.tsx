@@ -509,7 +509,7 @@ export function PdvDialog({
     }
   };
 
-  const customerIdentified = !!(customerName.trim() || customerPhone.trim());
+  
 
   // Picker helpers
   const togglePick = (g: OptGroup, itemId: string) => {
