@@ -102,7 +102,7 @@ export function TicketItemsBlock({
             )}
             {groups.map((g, gi) => (
               <div key={`${g.name}-${gi}`} style={{ fontSize: 13, paddingLeft: 4, marginTop: 2 }}>
-                <div style={{ fontWeight: 700 }}>{g.name}:</div>
+                <div style={{ fontWeight: 800 }}>{g.name}:</div>
                 {g.items.map((opt, oi) => {
                   const totalQty = opt.qty * it.quantity;
                   const extra = opt.extra_price * totalQty;
