@@ -737,45 +737,74 @@ export function PdvDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Customer dialog */}
-      <Dialog open={customerOpen} onOpenChange={setCustomerOpen}>
+      {/* Loyalty prompt dialog */}
+      <Dialog open={loyaltyPromptOpen} onOpenChange={(o) => { if (!o) setLoyaltyPromptOpen(false); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Identificar cliente</DialogTitle>
-            <DialogDescription>Preencha os dados do cliente para esta venda.</DialogDescription>
+            <DialogTitle>Programa de fidelidade</DialogTitle>
+            <DialogDescription>
+              {loyaltyPromptStep === "ask"
+                ? "O cliente deseja se cadastrar no programa de fidelidade desta loja?"
+                : "Informe nome e telefone para cadastrar no programa de fidelidade."}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Nome</Label>
-              <Input value={tmpName} onChange={(e) => setTmpName(e.target.value)} placeholder="Nome do cliente" autoFocus />
-            </div>
-            <div>
-              <Label className="text-xs">Telefone</Label>
-              <Input value={formatPhone(tmpPhone)} onChange={(e) => setTmpPhone(e.target.value)} placeholder="(11) 99999-9999" inputMode="numeric" />
-            </div>
-            {loyaltySettings?.enabled && (
-              <div className="flex items-center justify-between rounded-md border p-3">
+          {loyaltyPromptStep === "ask" ? (
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                disabled={submitting}
+                onClick={() => {
+                  setLoyaltyPromptOpen(false);
+                  confirmOrder(pendingPrint, { name: "", phone: "", optIn: false });
+                }}
+              >
+                Não
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={submitting}
+                onClick={() => setLoyaltyPromptStep("form")}
+              >
+                Sim, cadastrar
+              </Button>
+            </DialogFooter>
+          ) : (
+            <>
+              <div className="space-y-3">
                 <div>
-                  <div className="text-sm font-medium">Cadastrar no programa de fidelidade</div>
-                  <div className="text-xs text-muted-foreground">Pontuará {Number(loyaltySettings.points_per_real)} ponto(s) por real desta venda.</div>
+                  <Label className="text-xs">Nome <span className="text-destructive">*</span></Label>
+                  <Input value={loyaltyPromptName} onChange={(e) => setLoyaltyPromptName(e.target.value)} placeholder="Nome do cliente" autoFocus />
                 </div>
-                <Switch checked={tmpLoyalty} onCheckedChange={setTmpLoyalty} />
+                <div>
+                  <Label className="text-xs">Telefone <span className="text-destructive">*</span></Label>
+                  <Input value={formatPhone(loyaltyPromptPhone)} onChange={(e) => setLoyaltyPromptPhone(e.target.value)} placeholder="(11) 99999-9999" inputMode="numeric" />
+                </div>
+                {loyaltySettings?.enabled && (
+                  <div className="text-xs text-muted-foreground rounded-md bg-muted/50 p-3">
+                    Pontuará {Number(loyaltySettings.points_per_real)} ponto(s) por real desta venda.
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCustomerOpen(false)}>Cancelar</Button>
-            <Button onClick={() => {
-              if (tmpLoyalty && unmaskPhone(tmpPhone).length < 10) { toast.error("Informe um telefone válido para fidelidade"); return; }
-              setCustomerName(tmpName);
-              setCustomerPhone(tmpPhone);
-              setLoyaltyOptIn(tmpLoyalty);
-              setCustomerOpen(false);
-              toast.success("Cliente identificado");
-            }}>Confirmar</Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setLoyaltyPromptStep("ask")} disabled={submitting}>Voltar</Button>
+                <Button
+                  disabled={submitting}
+                  onClick={() => {
+                    if (!loyaltyPromptName.trim()) { toast.error("Informe o nome do cliente"); return; }
+                    if (unmaskPhone(loyaltyPromptPhone).length < 10) { toast.error("Informe um telefone válido"); return; }
+                    setLoyaltyPromptOpen(false);
+                    confirmOrder(pendingPrint, { name: loyaltyPromptName, phone: loyaltyPromptPhone, optIn: true });
+                  }}
+                >
+                  Confirmar venda
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
 
       {/* Discount dialog */}
       <Dialog open={discountOpen} onOpenChange={setDiscountOpen}>
