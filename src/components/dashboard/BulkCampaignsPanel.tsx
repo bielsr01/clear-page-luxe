@@ -487,11 +487,6 @@ function CampaignDialog({
   const [pauseAfter, setPauseAfter] = useState(campaign?.pause_after_messages ?? 0);
   const [pauseMinutes, setPauseMinutes] = useState(campaign?.pause_duration_minutes ?? 0);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
-    return () => clearTimeout(t);
-  }, [search]);
   const [typeFilters, setTypeFilters] = useState<Set<ClientType>>(new Set());
   const [statusFilters, setStatusFilters] = useState<Set<ClientStatus>>(new Set());
   const [restaurantFilters, setRestaurantFilters] = useState<Set<string>>(new Set());
@@ -515,25 +510,19 @@ function CampaignDialog({
   const [uploading, setUploading] = useState(false);
 
   const idsKey = restaurantIds.slice().sort().join(",");
+  // Carrega contatos uma única vez — busca é puramente client-side (ver `filtered`)
   const { data: customers, isLoading } = useQuery({
-    queryKey: ["bulk-pick-customers", idsKey, debouncedSearch],
+    queryKey: ["bulk-pick-customers", idsKey, ""],
     enabled: open && restaurantIds.length > 0,
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const term = debouncedSearch;
-      const buildQuery = () => {
-        let q = sb.from("customers")
+      const buildQuery = () =>
+        sb.from("customers")
           .select("id, restaurant_id, name, phone, orders_count, last_order_at")
-          .in("restaurant_id", restaurantIds);
-        if (term.length >= 2) {
-          const safe = term.replace(/[%,()]/g, " ").trim();
-          const digits = term.replace(/\D/g, "");
-          const phonePattern = digits.length >= 2 ? "%" + digits.split("").join("%") + "%" : null;
-          const orParts = [`name.ilike.%${safe}%`];
-          if (phonePattern) orParts.push(`phone.ilike.${phonePattern}`);
-          q = q.or(orParts.join(","));
-        }
-        return q.order("last_order_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).order("id", { ascending: true });
-      };
+          .in("restaurant_id", restaurantIds)
+          .order("last_order_at", { ascending: false, nullsFirst: false })
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true });
       const CHUNK = 1000;
       const all: any[] = [];
       let from = 0;
