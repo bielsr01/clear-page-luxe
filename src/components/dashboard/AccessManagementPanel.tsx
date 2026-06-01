@@ -120,6 +120,7 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "orders.channels.delivery": "orders.view",
   "orders.channels.pickup": "orders.view",
   "orders.channels.ifood": "orders.view",
+  "orders.channels.quero": "orders.view",
   "orders.change_status": "orders.view",
   "orders.edit": "orders.view",
   "orders.create_pdv_order": "orders.channels.pdv",
