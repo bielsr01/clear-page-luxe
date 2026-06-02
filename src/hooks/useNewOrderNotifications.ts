@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ordersKey } from "@/components/dashboard/OrdersPanel";
-import { playSound } from "@/lib/orderSound";
+import { getSoundChoice, playSound } from "@/lib/orderSound";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type NotificationItem = {
   id: string;
