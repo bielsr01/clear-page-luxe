@@ -3,7 +3,7 @@ import { useParams, Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { brl, orderStatusLabel, paymentLabel, orderTypeLabel } from "@/lib/format";
+import { brl, orderStatusLabel, paymentLabel, orderTypeLabel, displayOrderNumber } from "@/lib/format";
 import { Check, ChefHat, Clock, MapPin, Truck, Package, X, Bike, Store } from "lucide-react";
 
 const STEPS_DELIVERY = [
@@ -91,7 +91,7 @@ export default function OrderTracking() {
           <Link to={restaurant ? `/r/${restaurant.slug}` : "/"} className="text-sm opacity-90 hover:opacity-100">← {restaurant?.name ?? "Voltar"}</Link>
           <h1 className="text-2xl font-bold mt-2">Acompanhe seu pedido</h1>
           {order.order_number && (
-            <div className="mt-1 text-sm opacity-90">Pedido <span className="font-mono font-bold">#{order.order_number}</span></div>
+            <div className="mt-1 text-sm opacity-90">Pedido <span className="font-mono font-bold">#{displayOrderNumber(order)}</span></div>
           )}
         </div>
       </header>
