@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
-import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel } from "@/lib/format";
+import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel, displayOrderNumber } from "@/lib/format";
 import { DEFAULT_PRINT_SETTINGS, PrintSettings, normalizePrintSettings } from "@/components/dashboard/PrintSettings";
 import { TicketItemsBlock } from "@/components/TicketItemsBlock";
 
@@ -28,6 +28,7 @@ interface OrderRow {
   restaurant_id: string;
   external_source: string | null;
   external_order_id: string | null;
+  external_display_id: string | null;
 }
 
 interface ItemRow {
@@ -162,7 +163,7 @@ export default function OrderTicket() {
             <div className="sep" />
             <div className="center">{dateStr}</div>
             <div className="center" style={{ fontWeight: 800, marginTop: 2 }}>
-              {orderTypeLabel[order.order_type]} #{order.order_number}
+              {orderTypeLabel[order.order_type]} #{displayOrderNumber(order)}
             </div>
           </>
         )}
