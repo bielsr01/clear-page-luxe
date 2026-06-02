@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
-import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel } from "@/lib/format";
+import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel, displayOrderNumber } from "@/lib/format";
 import {
   DEFAULT_PRINT_SETTINGS,
   PrintSettings,
@@ -112,7 +112,7 @@ export default function CustomerTicketPublic() {
             <div className="sep" />
             <div className="center">{dateStr}</div>
             <div className="center" style={{ fontWeight: 800, marginTop: 2 }}>
-              {orderTypeLabel[order.order_type as "delivery" | "pickup"]} #{order.order_number}
+              {orderTypeLabel[order.order_type as "delivery" | "pickup"]} #{displayOrderNumber(order)}
             </div>
           </>
         )}
