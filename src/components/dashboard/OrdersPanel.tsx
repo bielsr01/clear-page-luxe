@@ -1195,7 +1195,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
             <DialogTitle>Confirmar entrega iFood</DialogTitle>
             <DialogDescription>
               Digite o código de entrega informado pelo cliente para confirmar o pedido
-              {ifoodCodeTarget ? ` #${ifoodCodeTarget.order_number}` : ""}.
+              {ifoodCodeTarget ? ` #${displayOrderNumber(ifoodCodeTarget)}` : ""}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
