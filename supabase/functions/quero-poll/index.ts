@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 const QUERO_BASE = "https://api.quero.io";
-const RECONCILE_MIN_INTERVAL_MS = 60_000;
+const RECONCILE_MIN_INTERVAL_MS = 5_000;
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
