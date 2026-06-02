@@ -522,7 +522,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       toast.error(error.message);
     } else {
       patchOrder(o.id, { status: "cancelled" });
-      toast.success(`Pedido #${o.order_number} cancelado`);
+      toast.success(`Pedido #${displayOrderNumber(o)} cancelado`);
     }
     setPending(o.id, false);
   };
