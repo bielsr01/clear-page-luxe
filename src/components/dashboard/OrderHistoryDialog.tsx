@@ -188,6 +188,7 @@ export function OrderHistoryDialog({
     if (search) {
       const q = search.toLowerCase();
       if (
+        !displayOrderNumber(o).toLowerCase().includes(q) &&
         !String(o.order_number).includes(q) &&
         !(o.customer_name ?? "").toLowerCase().includes(q) &&
         !(o.customer_phone ?? "").toLowerCase().includes(q)
