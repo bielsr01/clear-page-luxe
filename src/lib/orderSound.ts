@@ -1,12 +1,13 @@
 // Sound options for new-order notifications.
 // Sounds are synthesized with the Web Audio API so we don't need any assets.
 
-export type SoundId = "off" | "bell" | "beep" | "chime";
+export type SoundId = "off" | "bell" | "beep" | "chime" | "alarm";
 
 export const SOUND_OPTIONS: { id: SoundId; label: string }[] = [
   { id: "bell", label: "Sino" },
   { id: "beep", label: "Beep" },
   { id: "chime", label: "Campainha" },
+  { id: "alarm", label: "Campainha alta (irritante)" },
   { id: "off", label: "Desativado" },
 ];
 
@@ -18,7 +19,6 @@ export function getSoundChoice(scope?: string | null): SoundId {
   try {
     const v = localStorage.getItem(storageKey(scope)) as SoundId | null;
     if (v && SOUND_OPTIONS.some((o) => o.id === v)) return v;
-    // Fallback to legacy global value (one-time migration read)
     if (scope) {
       const legacy = localStorage.getItem(LEGACY_KEY) as SoundId | null;
       if (legacy && SOUND_OPTIONS.some((o) => o.id === legacy)) return legacy;
@@ -61,23 +61,36 @@ function tone(ac: AudioContext, freq: number, start: number, duration: number, t
   osc.stop(ac.currentTime + start + duration + 0.05);
 }
 
-export function playSound(id: SoundId = getSoundChoice()) {
-  if (id === "off") return;
+// Returns approximate duration in ms of the played sound.
+export function playSound(id: SoundId = getSoundChoice()): number {
+  if (id === "off") return 0;
   const ac = getCtx();
-  if (!ac) return;
+  if (!ac) return 0;
   try {
     if (id === "bell") {
-      // Bell: bright high tone + lower harmonic, long decay
       tone(ac, 1760, 0, 0.9, "triangle", 0.35);
       tone(ac, 880, 0, 1.1, "sine", 0.25);
+      return 1100;
     } else if (id === "beep") {
-      // Short double beep
       tone(ac, 1200, 0, 0.18, "square", 0.3);
       tone(ac, 1200, 0.22, 0.18, "square", 0.3);
+      return 400;
     } else if (id === "chime") {
-      // Ding-dong doorbell
       tone(ac, 880, 0, 0.5, "sine", 0.3);
       tone(ac, 659, 0.35, 0.7, "sine", 0.3);
+      return 1050;
+    } else if (id === "alarm") {
+      // Loud, harsh school-bell style: alternating high square tones
+      tone(ac, 1600, 0.00, 0.22, "square", 0.85);
+      tone(ac, 2000, 0.00, 0.22, "square", 0.6);
+      tone(ac, 1600, 0.28, 0.22, "square", 0.85);
+      tone(ac, 2000, 0.28, 0.22, "square", 0.6);
+      tone(ac, 1600, 0.56, 0.22, "square", 0.85);
+      tone(ac, 2000, 0.56, 0.22, "square", 0.6);
+      tone(ac, 1600, 0.84, 0.30, "square", 0.85);
+      tone(ac, 2000, 0.84, 0.30, "square", 0.6);
+      return 1200;
     }
   } catch {}
+  return 0;
 }
