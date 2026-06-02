@@ -159,11 +159,11 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
     if (pendingIds.size === 0) return;
     const interval = setInterval(() => {
       try {
-        playSound();
+        playSound(getSoundChoice(soundScope));
       } catch {}
     }, 5000);
     return () => clearInterval(interval);
-  }, [pendingIds]);
+  }, [pendingIds, soundScope]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const markAllRead = () => {
