@@ -154,16 +154,7 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
 
   const pulse = pendingIds.size > 0;
 
-  // Repeat the notification sound while there are pending orders not yet accepted
-  useEffect(() => {
-    if (pendingIds.size === 0) return;
-    const interval = setInterval(() => {
-      try {
-        playSound(getSoundChoice(soundScope));
-      } catch {}
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [pendingIds, soundScope]);
+  // Sound plays once per new order (on INSERT). No repeating loop.
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const markAllRead = () => {
