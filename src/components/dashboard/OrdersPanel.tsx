@@ -702,7 +702,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               <div className="font-semibold text-sm flex items-center gap-1.5 flex-wrap">
                 <User className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{o.customer_name}</span>
-                <Badge variant="outline" className="font-mono text-[10px] px-1 py-0">#{o.order_number}</Badge>
+                <Badge variant="outline" className="font-mono text-[10px] px-1 py-0">#{displayOrderNumber(o)}</Badge>
               </div>
             </div>
             <div className="text-[11px] text-muted-foreground flex items-center gap-1 shrink-0">
