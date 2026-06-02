@@ -898,7 +898,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           <div className="hidden md:grid gap-3 grid-cols-2 lg:grid-cols-4 items-stretch flex-1 min-h-0">
             {showPendingCol && (
               <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined}>
-                {pendingOrders.map((o) => renderCard(o, true))}
+                {pendingOrders.map((o) => renderCard(o))}
               </Column>
             )}
             {showPreparingCol && (
@@ -938,7 +938,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
             </Tabs>
             {mobileCol === "pending" && showPendingCol && (
               <Column title="Aguardando aceitação" count={pendingOrders.length} accent={pendingOrders.length > 0 ? "bg-destructive/15 text-destructive animate-pulse" : undefined} className="flex-1 min-h-0">
-                {pendingOrders.map((o) => renderCard(o, true))}
+                {pendingOrders.map((o) => renderCard(o))}
               </Column>
             )}
             {mobileCol === "preparing" && showPreparingCol && (
