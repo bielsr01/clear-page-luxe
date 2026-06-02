@@ -475,7 +475,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       patchOrder(o.id, { status: prevStatus });
       toast.error(error.message);
     } else {
-      toast.success(`Pedido #${o.order_number} → "${orderStatusLabel[next]}"`);
+      toast.success(`Pedido #${displayOrderNumber(o)} → "${orderStatusLabel[next]}"`);
     }
     setPending(o.id, false);
   };
