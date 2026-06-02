@@ -1,4 +1,4 @@
-import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel } from "./format";
+import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel, displayOrderNumber } from "./format";
 import {
   DEFAULT_KITCHEN_PRINT_SETTINGS,
   DEFAULT_PRINT_SETTINGS,
@@ -33,6 +33,7 @@ export interface TicketOrder {
   created_at: string;
   external_source?: string | null;
   external_order_id?: string | null;
+  external_display_id?: string | null;
 }
 
 export interface TicketOrderOption {
@@ -239,7 +240,7 @@ export function buildTicketHtml(
 
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8" />
-<title>Ticket #${order.order_number}</title>
+<title>Ticket #${displayOrderNumber(order)}</title>
 <style>
   @page { size: 80mm auto; margin: 4mm; }
   @media print {
@@ -269,7 +270,7 @@ export function buildTicketHtml(
   ${ps.order_type_date ? `
     <div class="sep"></div>
     <div class="center">${dateStr}</div>
-    <div class="center" style="font-weight:800;margin-top:2px">${orderTypeLabel[order.order_type]} #${order.order_number}</div>
+    <div class="center" style="font-weight:800;margin-top:2px">${orderTypeLabel[order.order_type]} #${displayOrderNumber(order)}</div>
     ${order.external_source === "ifood" ? `<div class="center" style="font-weight:900;margin-top:2px">IFOOD</div>` : ""}
     ${order.external_source === "quero" ? `<div class="center" style="font-weight:900;margin-top:2px">QUERO DELIVERY</div>` : ""}
   ` : ""}
