@@ -1118,7 +1118,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
             <AlertDialogTitle>Excluir pedido permanentemente?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget && (
-                <>Esta ação <strong>não pode ser desfeita</strong>. O pedido <strong>#{deleteTarget.order_number}</strong> de <strong>{deleteTarget.customer_name}</strong> ({brl(deleteTarget.total)}) será removido do banco e todos os relatórios serão recalculados.</>
+                <>Esta ação <strong>não pode ser desfeita</strong>. O pedido <strong>#{displayOrderNumber(deleteTarget)}</strong> de <strong>{deleteTarget.customer_name}</strong> ({brl(deleteTarget.total)}) será removido do banco e todos os relatórios serão recalculados.</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
