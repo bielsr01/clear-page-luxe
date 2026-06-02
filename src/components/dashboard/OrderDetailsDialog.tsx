@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, formatIfoodPhone } from "@/lib/format";
+import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, formatIfoodPhone, displayOrderNumber } from "@/lib/format";
 import { calcIfoodReceivable, DEFAULT_IFOOD_FEES, type IfoodFeeSettings } from "@/lib/ifoodFees";
 import { calcQueroReceivable, DEFAULT_QUERO_FEES, type QueroFeeSettings } from "@/lib/queroFees";
 import { MapPin, Navigation, Phone, MessageCircle, Printer, Trash2, X, User, Clock, CornerDownRight } from "lucide-react";
@@ -36,6 +36,7 @@ interface OrderLike {
   delivery_latitude: number | null;
   delivery_longitude: number | null;
   external_source?: string | null;
+  external_display_id?: string | null;
   restaurant_id?: string;
   merchant_subsidy?: number | null;
   ifood_subsidy?: number | null;
@@ -175,7 +176,7 @@ export function OrderDetailsDialog({
       <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Carregando pedido #{order.order_number}…</DialogTitle>
+            <DialogTitle>Carregando pedido #{displayOrderNumber(order)}…</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-4">
             <div className="h-20 rounded-lg bg-muted animate-pulse" />
@@ -220,7 +221,7 @@ export function OrderDetailsDialog({
     <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Detalhes Completos do Pedido #{order.order_number}</DialogTitle>
+          <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -229,7 +230,7 @@ export function OrderDetailsDialog({
             <div className="flex items-center justify-between gap-2">
               <div className="font-semibold flex items-center gap-2">
                 <User className="w-4 h-4" /> {order.customer_name}
-                <Badge variant="outline" className="font-mono">#{order.order_number}</Badge>
+                <Badge variant="outline" className="font-mono">#{displayOrderNumber(order)}</Badge>
               </div>
               <Badge className={
                 order.status === "delivered" ? "bg-success text-success-foreground" :

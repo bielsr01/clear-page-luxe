@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { brl, orderStatusLabel } from "@/lib/format";
+import { brl, orderStatusLabel, displayOrderNumber } from "@/lib/format";
 import { Check, ChefHat, Clock, Package, Truck, X, ChevronRight, ListOrdered } from "lucide-react";
 
 const STEPS = ["pending", "accepted", "preparing", "out_for_delivery", "awaiting_pickup", "delivered"] as const;
@@ -143,7 +143,7 @@ export function ActiveOrderBanner({ restaurantId }: { restaurantId: string }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {o.order_number != null && <span className="font-mono text-xs font-semibold">#{o.order_number}</span>}
+                        {o.order_number != null && <span className="font-mono text-xs font-semibold">#{displayOrderNumber(o)}</span>}
                         <Badge variant={o.status === "cancelled" ? "destructive" : "secondary"} className="text-xs">
                           {orderStatusLabel[o.status]}
                         </Badge>

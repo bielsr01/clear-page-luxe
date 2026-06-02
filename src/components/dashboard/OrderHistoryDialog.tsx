@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { APP_TIMEZONE, brl, formatPhone, formatIfoodPhone, orderStatusLabel } from "@/lib/format";
+import { APP_TIMEZONE, brl, formatPhone, formatIfoodPhone, orderStatusLabel, displayOrderNumber } from "@/lib/format";
 import { OrderDetailsDialog } from "./OrderDetailsDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -188,6 +188,7 @@ export function OrderHistoryDialog({
     if (search) {
       const q = search.toLowerCase();
       if (
+        !displayOrderNumber(o).toLowerCase().includes(q) &&
         !String(o.order_number).includes(q) &&
         !(o.customer_name ?? "").toLowerCase().includes(q) &&
         !(o.customer_phone ?? "").toLowerCase().includes(q)
@@ -307,7 +308,7 @@ export function OrderHistoryDialog({
                     const phoneFmt = o.external_source === "ifood" ? formatIfoodPhone(o.customer_phone) : formatPhone(o.customer_phone);
                     return (
                     <div key={o.id} className="grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 items-center text-sm hover:bg-accent/30">
-                      <div className="font-mono">#{o.order_number}</div>
+                      <div className="font-mono">#{displayOrderNumber(o)}</div>
                       <div className="text-xs text-muted-foreground">
                         {new Date(o.created_at).toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })}<br />
                         {new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit" })}

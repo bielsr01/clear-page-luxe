@@ -243,7 +243,7 @@ async function ingestOrder(integration: any, ev: any) {
     order_type: orderType,
     external_source: "quero",
     external_order_id: orderId,
-    external_display_id: od.displayId ?? ev.orderCode ?? null,
+    external_display_id: ev.orderCode ?? od.displayId ?? null,
   }).select("id").single();
   if (error) throw error;
 

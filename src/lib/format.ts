@@ -1,6 +1,23 @@
 export const brl = (v: number | string) =>
   Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+/**
+ * Número do pedido exibido na UI.
+ * Para pedidos vindos de plataformas externas (Quero/iFood), usa o código externo
+ * (orderCode/displayId) para que o número exibido bata com o da plataforma.
+ * Para pedidos próprios, mantém o `order_number` interno.
+ */
+export const displayOrderNumber = (o: {
+  order_number?: number | string | null;
+  external_source?: string | null;
+  external_display_id?: string | null;
+}): string => {
+  if (o?.external_source && o.external_display_id) {
+    return String(o.external_display_id);
+  }
+  return String(o?.order_number ?? "");
+};
+
 /** Fuso horário oficial do sistema (Brasília, GMT-3). */
 export const APP_TIMEZONE = "America/Sao_Paulo";
 

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, orderTypeLabel } from "@/lib/format";
+import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, orderTypeLabel, displayOrderNumber } from "@/lib/format";
 import { toast } from "sonner";
 import { Bike, ChefHat, CheckCircle2, Clock, History, MapPin, MessageCircle, Phone, Plus, Printer, Store, Trash2, User, X, Utensils } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -475,7 +475,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       patchOrder(o.id, { status: prevStatus });
       toast.error(error.message);
     } else {
-      toast.success(`Pedido #${o.order_number} → "${orderStatusLabel[next]}"`);
+      toast.success(`Pedido #${displayOrderNumber(o)} → "${orderStatusLabel[next]}"`);
     }
     setPending(o.id, false);
   };
@@ -522,7 +522,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       toast.error(error.message);
     } else {
       patchOrder(o.id, { status: "cancelled" });
-      toast.success(`Pedido #${o.order_number} cancelado`);
+      toast.success(`Pedido #${displayOrderNumber(o)} cancelado`);
     }
     setPending(o.id, false);
   };
@@ -637,7 +637,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               <div className="min-w-0 flex items-center gap-1.5">
                 <User className="w-3 h-3 shrink-0" />
                 <span className="truncate text-xs font-semibold">{o.customer_name}</span>
-                <Badge variant="outline" className="font-mono text-[10px] px-1 py-0">#{o.order_number}</Badge>
+                <Badge variant="outline" className="font-mono text-[10px] px-1 py-0">#{displayOrderNumber(o)}</Badge>
               </div>
               <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 shrink-0">
                 <Clock className="w-2.5 h-2.5" />
@@ -702,7 +702,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               <div className="font-semibold text-sm flex items-center gap-1.5 flex-wrap">
                 <User className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{o.customer_name}</span>
-                <Badge variant="outline" className="font-mono text-[10px] px-1 py-0">#{o.order_number}</Badge>
+                <Badge variant="outline" className="font-mono text-[10px] px-1 py-0">#{displayOrderNumber(o)}</Badge>
               </div>
             </div>
             <div className="text-[11px] text-muted-foreground flex items-center gap-1 shrink-0">
@@ -1118,7 +1118,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
             <AlertDialogTitle>Excluir pedido permanentemente?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget && (
-                <>Esta ação <strong>não pode ser desfeita</strong>. O pedido <strong>#{deleteTarget.order_number}</strong> de <strong>{deleteTarget.customer_name}</strong> ({brl(deleteTarget.total)}) será removido do banco e todos os relatórios serão recalculados.</>
+                <>Esta ação <strong>não pode ser desfeita</strong>. O pedido <strong>#{displayOrderNumber(deleteTarget)}</strong> de <strong>{deleteTarget.customer_name}</strong> ({brl(deleteTarget.total)}) será removido do banco e todos os relatórios serão recalculados.</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1195,7 +1195,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
             <DialogTitle>Confirmar entrega iFood</DialogTitle>
             <DialogDescription>
               Digite o código de entrega informado pelo cliente para confirmar o pedido
-              {ifoodCodeTarget ? ` #${ifoodCodeTarget.order_number}` : ""}.
+              {ifoodCodeTarget ? ` #${displayOrderNumber(ifoodCodeTarget)}` : ""}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
