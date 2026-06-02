@@ -24,6 +24,8 @@ export type NotificationItem = {
  */
 export function useNewOrderNotifications(restaurantId: string | undefined, isOnOrdersTab: boolean) {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const soundScope = user?.id && restaurantId ? `${user.id}:${restaurantId}` : null;
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const pendingIdsRef = useRef(pendingIds);
