@@ -86,7 +86,7 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
           } catch {}
 
           try {
-            playSound();
+            playSound(getSoundChoice(soundScope));
           } catch {}
 
           setNotifications((prev) => [
