@@ -36,6 +36,7 @@ interface OrderLike {
   delivery_latitude: number | null;
   delivery_longitude: number | null;
   external_source?: string | null;
+  external_display_id?: string | null;
   restaurant_id?: string;
   merchant_subsidy?: number | null;
   ifood_subsidy?: number | null;
