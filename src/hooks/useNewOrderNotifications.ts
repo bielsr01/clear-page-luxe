@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ordersKey } from "@/components/dashboard/OrdersPanel";
-import { playSound } from "@/lib/orderSound";
+import { getSoundChoice, playSound } from "@/lib/orderSound";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type NotificationItem = {
   id: string;
@@ -23,6 +24,8 @@ export type NotificationItem = {
  */
 export function useNewOrderNotifications(restaurantId: string | undefined, isOnOrdersTab: boolean) {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const soundScope = user?.id && restaurantId ? `${user.id}:${restaurantId}` : null;
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const pendingIdsRef = useRef(pendingIds);
@@ -83,7 +86,7 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
           } catch {}
 
           try {
-            playSound();
+            playSound(getSoundChoice(soundScope));
           } catch {}
 
           setNotifications((prev) => [
@@ -156,11 +159,11 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
     if (pendingIds.size === 0) return;
     const interval = setInterval(() => {
       try {
-        playSound();
+        playSound(getSoundChoice(soundScope));
       } catch {}
     }, 5000);
     return () => clearInterval(interval);
-  }, [pendingIds]);
+  }, [pendingIds, soundScope]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const markAllRead = () => {

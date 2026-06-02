@@ -10,17 +10,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Volume2, VolumeX, Check } from "lucide-react";
 import { SOUND_OPTIONS, SoundId, getSoundChoice, playSound, setSoundChoice } from "@/lib/orderSound";
+import { useAuth } from "@/contexts/AuthContext";
 
-export function SoundPicker() {
+interface Props {
+  restaurantId?: string | null;
+}
+
+export function SoundPicker({ restaurantId }: Props) {
+  const { user } = useAuth();
+  const scope = user?.id && restaurantId ? `${user.id}:${restaurantId}` : null;
   const [choice, setChoice] = useState<SoundId>("bell");
 
   useEffect(() => {
-    setChoice(getSoundChoice());
-  }, []);
+    setChoice(getSoundChoice(scope));
+  }, [scope]);
 
   const select = (id: SoundId) => {
     setChoice(id);
-    setSoundChoice(id);
+    setSoundChoice(id, scope);
     if (id !== "off") playSound(id);
   };
 

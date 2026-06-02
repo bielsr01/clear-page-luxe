@@ -10,19 +10,26 @@ export const SOUND_OPTIONS: { id: SoundId; label: string }[] = [
   { id: "off", label: "Desativado" },
 ];
 
-const STORAGE_KEY = "mesapro:order-sound";
+const LEGACY_KEY = "mesapro:order-sound";
+const storageKey = (scope?: string | null) =>
+  scope ? `mesapro:order-sound:${scope}` : LEGACY_KEY;
 
-export function getSoundChoice(): SoundId {
+export function getSoundChoice(scope?: string | null): SoundId {
   try {
-    const v = localStorage.getItem(STORAGE_KEY) as SoundId | null;
+    const v = localStorage.getItem(storageKey(scope)) as SoundId | null;
     if (v && SOUND_OPTIONS.some((o) => o.id === v)) return v;
+    // Fallback to legacy global value (one-time migration read)
+    if (scope) {
+      const legacy = localStorage.getItem(LEGACY_KEY) as SoundId | null;
+      if (legacy && SOUND_OPTIONS.some((o) => o.id === legacy)) return legacy;
+    }
   } catch {}
   return "bell";
 }
 
-export function setSoundChoice(id: SoundId) {
+export function setSoundChoice(id: SoundId, scope?: string | null) {
   try {
-    localStorage.setItem(STORAGE_KEY, id);
+    localStorage.setItem(storageKey(scope), id);
   } catch {}
 }
 
