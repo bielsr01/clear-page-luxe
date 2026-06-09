@@ -425,23 +425,11 @@ async function pollOne(integration: any) {
   return list.length + reconciled;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  let restaurantId: string | null = null;
-  try {
-    const body = await req.json();
-    restaurantId = body?.restaurantId ?? null;
-  } catch { /* sem body = roda todos */ }
-
+async function runOnce(restaurantId: string | null) {
   let q = supabase.from("quero_integrations").select("*").eq("enabled", true);
   if (restaurantId) q = q.eq("restaurant_id", restaurantId);
   const { data: integrations, error } = await q;
-  if (error) {
-    return new Response(JSON.stringify({ ok: false, error: error.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  if (error) throw error;
 
   const results: any[] = [];
   for (const integ of integrations ?? []) {
@@ -458,8 +446,50 @@ Deno.serve(async (req) => {
       results.push({ restaurant_id: integ.restaurant_id, error: msg });
     }
   }
+  return results;
+}
 
-  return new Response(JSON.stringify({ ok: true, results }), {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  let restaurantId: string | null = null;
+  let loop = true;
+  let durationMs = 55_000; // cobre quase 1 minuto entre invocações do cron
+  let intervalMs = 1_000;
+  try {
+    const body = await req.json();
+    restaurantId = body?.restaurantId ?? null;
+    if (body?.loop === false) loop = false;
+    if (typeof body?.durationMs === "number") durationMs = Math.min(60_000, Math.max(0, body.durationMs));
+    if (typeof body?.intervalMs === "number") intervalMs = Math.max(500, body.intervalMs);
+  } catch { /* sem body = roda em loop padrão */ }
+
+  // Quando chamado com restaurantId específico (uso interno/manual), executa
+  // apenas 1x pra responder rápido. Cron (sem body) entra em loop interno.
+  if (restaurantId) loop = false;
+
+  const started = Date.now();
+  let iterations = 0;
+  let lastResults: any[] = [];
+  try {
+    do {
+      lastResults = await runOnce(restaurantId);
+      iterations++;
+      if (!loop) break;
+      const elapsed = Date.now() - started;
+      if (elapsed + intervalMs >= durationMs) break;
+      await sleep(intervalMs);
+    } while (true);
+  } catch (e: any) {
+    return new Response(JSON.stringify({ ok: false, error: e?.message ?? String(e) }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify({ ok: true, iterations, results: lastResults }), {
     status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
+
