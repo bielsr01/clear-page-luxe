@@ -60,6 +60,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   };
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [openStep, setOpenStep] = useState<"mode" | "cash">("mode");
   const [closeDialog, setCloseDialog] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -138,6 +139,8 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       } else {
         setOpenMode(withinSchedule ? "today" : "minutes");
         setOpenMinutes("30");
+        // Se já está dentro do horário, pula direto para o caixa
+        setOpenStep(withinSchedule ? "cash" : "mode");
         setOpenDialog(true);
       }
     } else {
@@ -195,7 +198,12 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
-    warnCashOnClose();
+    if (closeMode === "minutes") {
+      warnCashOnClose();
+    } else if (cashOpen) {
+      // Fechamento prolongado: abre o popup de fechamento de caixa automaticamente
+      requestCashflowAction("close");
+    }
   };
 
   // Auto-sync: quando override expira ou a janela de horário muda, atualiza is_open no banco
@@ -255,17 +263,22 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{withinSchedule ? "Abrir restaurante" : "Abrir fora do horário"}</DialogTitle>
+            <DialogTitle>
+              {openStep === "cash"
+                ? "Abertura de caixa"
+                : (withinSchedule ? "Abrir restaurante" : "Abrir fora do horário")}
+            </DialogTitle>
             <DialogDescription>
-              {withinSchedule
-                ? "Para abrir o restaurante é necessário um caixa aberto."
-                : "O restaurante está fora do horário de funcionamento configurado. Por quanto tempo deseja manter aberto? Ao expirar, o sistema fecha automaticamente."}
+              {openStep === "cash"
+                ? "Informe o valor inicial em dinheiro presente na gaveta para abrir o caixa."
+                : (withinSchedule
+                  ? "Para abrir o restaurante é necessário um caixa aberto."
+                  : "O restaurante está fora do horário de funcionamento configurado. Por quanto tempo deseja manter aberto? Ao expirar, o sistema fecha automaticamente.")}
             </DialogDescription>
           </DialogHeader>
 
-          {!cashOpen && (
+          {openStep === "cash" && !cashOpen && (
             <div className="space-y-3 py-2 border rounded-lg p-3 bg-muted/40">
-              <div className="text-sm font-medium">Abertura de caixa</div>
               {prevClose != null && (
                 <div className="text-xs text-muted-foreground">
                   Sugestão baseada no fechamento anterior: <b>{brl(Number(prevClose))}</b>
@@ -285,11 +298,10 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
                   placeholder={cashIsDifferent ? "Explique o motivo da diferença…" : ""}
                 />
               </div>
-
             </div>
           )}
 
-          {!withinSchedule && (
+          {openStep === "mode" && !withinSchedule && (
             <RadioGroup value={openMode} onValueChange={(v) => setOpenMode(v as any)} className="space-y-3 py-2">
               <div className="flex items-center gap-3">
                 <RadioGroupItem value="minutes" id="om" />
@@ -328,8 +340,16 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancelar</Button>
-            <Button onClick={confirmOpen} disabled={busy}>Confirmar abertura</Button>
+            {openStep === "cash" && !withinSchedule ? (
+              <Button variant="outline" onClick={() => setOpenStep("mode")}>Voltar</Button>
+            ) : (
+              <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancelar</Button>
+            )}
+            {openStep === "mode" && !cashOpen ? (
+              <Button onClick={() => setOpenStep("cash")} disabled={busy}>Avançar</Button>
+            ) : (
+              <Button onClick={confirmOpen} disabled={busy}>Confirmar abertura</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
