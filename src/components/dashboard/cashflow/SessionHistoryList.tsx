@@ -114,15 +114,13 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                 if (r.status === "open") {
                   status = <Badge className="bg-success text-success-foreground">Aberto</Badge>;
                 } else {
-                  const diffs: string[] = [];
-                  if (Math.abs(cashDiff) > EPS) diffs.push("espécie");
-                  if (Math.abs(pixDiff) > EPS) diffs.push("PIX");
-                  if (Math.abs(cardDiff) > EPS) diffs.push("cartão");
-                  if (diffs.length === 0) {
-                    status = <Badge variant="secondary">Sem diferença</Badge>;
-                  } else {
-                    status = <Badge variant="destructive">Diferença {diffs.join(" + ")}</Badge>;
-                  }
+                  const hasDiff =
+                    Math.abs(cashDiff) > EPS ||
+                    Math.abs(pixDiff) > EPS ||
+                    Math.abs(cardDiff) > EPS;
+                  status = hasDiff
+                    ? <Badge variant="destructive">Diferença</Badge>
+                    : <Badge variant="secondary">Sem diferença</Badge>;
                 }
 
                 const cell = (counted: number | null | undefined, diff: number) => {
