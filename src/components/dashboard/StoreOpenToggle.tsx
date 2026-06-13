@@ -106,6 +106,11 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     if (!user?.id) { toast.error("Usuário não autenticado"); return false; }
     const value = Number(String(cashAmount).replace(",", "."));
     if (isNaN(value) || value < 0) { toast.error("Valor inicial do caixa inválido"); return false; }
+    if (cashIsDifferent && !cashNotes.trim()) {
+      toast.error("Informe o motivo da diferença em relação ao fechamento anterior");
+      return false;
+    }
+
     const { error } = await supabase.from("cash_register_sessions").insert({
       restaurant_id: restaurantId,
       opened_by: user.id,
