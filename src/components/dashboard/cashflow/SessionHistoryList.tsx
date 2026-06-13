@@ -14,7 +14,10 @@ interface Row {
   counted_cash: number | null;
   difference: number | null;
   status: "open" | "closed";
+  opening_notes: string | null;
+  closing_notes: string | null;
 }
+
 
 export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
   const q = useQuery({
