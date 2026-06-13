@@ -198,7 +198,12 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
-    warnCashOnClose();
+    if (closeMode === "minutes") {
+      warnCashOnClose();
+    } else if (cashOpen) {
+      // Fechamento prolongado: abre o popup de fechamento de caixa automaticamente
+      requestCashflowAction("close");
+    }
   };
 
   // Auto-sync: quando override expira ou a janela de horário muda, atualiza is_open no banco
