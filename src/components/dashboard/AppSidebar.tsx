@@ -1,4 +1,4 @@
-import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck } from "lucide-react";
+import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck, Wallet } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
