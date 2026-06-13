@@ -85,19 +85,41 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     onChanged();
   };
 
+  const openCashIfNeeded = async (): Promise<boolean> => {
+    if (cashOpen) return true;
+    if (!user?.id) { toast.error("Usuário não autenticado"); return false; }
+    const value = Number(String(cashAmount).replace(",", "."));
+    if (isNaN(value) || value < 0) { toast.error("Valor inicial do caixa inválido"); return false; }
+    const { error } = await supabase.from("cash_register_sessions").insert({
+      restaurant_id: restaurantId,
+      opened_by: user.id,
+      opening_amount: value,
+      opening_notes: cashNotes || null,
+      status: "open" as const,
+    } as any);
+    if (error) {
+      if (error.code === "23505") { await refetchCash(); return true; }
+      toast.error(error.message);
+      return false;
+    }
+    await refetchCash();
+    toast.success("Caixa aberto");
+    setCashAmount("0");
+    setCashNotes("");
+    return true;
+  };
+
   const handleToggle = (next: boolean) => {
     if (next) {
-      // Tentando abrir
-      if (withinSchedule) {
-        // Dentro do horário: limpar override (volta ao automático aberto)
-        persist(null).then(() => { toast.success("Loja aberta"); promptCashAfter(true); });
+      // Tentando abrir — sempre passa pelo diálogo para garantir caixa aberto
+      if (withinSchedule && cashOpen) {
+        persist(null).then(() => { toast.success("Loja aberta"); });
       } else {
-        setOpenMode("minutes");
+        setOpenMode(withinSchedule ? "today" : "minutes");
         setOpenMinutes("30");
         setOpenDialog(true);
       }
     } else {
-      // Tentando fechar
       setCloseMode("minutes");
       setMinutes("30");
       setCloseDialog(true);
@@ -123,12 +145,20 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   };
 
   const confirmOpen = async () => {
+    // Garante caixa aberto antes de abrir a loja
+    const ok = await openCashIfNeeded();
+    if (!ok) return;
+
+    if (withinSchedule) {
+      await persist(null);
+      setOpenDialog(false);
+      toast.success("Loja aberta");
+      return;
+    }
+
     let until: string;
     if (openMode === "early") {
-      if (!earlyClose) {
-        toast.error("Não há horário agendado para hoje");
-        return;
-      }
+      if (!earlyClose) { toast.error("Não há horário agendado para hoje"); return; }
       until = earlyClose.toISOString();
     } else {
       until = computeUntil(openMode as "minutes" | "until" | "today", openMinutes, openUntilTime);
@@ -136,7 +166,6 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "open", until });
     setOpenDialog(false);
     toast.success("Loja aberta manualmente");
-    promptCashAfter(true);
   };
 
 
@@ -145,7 +174,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
-    promptCashAfter(false);
+    warnCashOnClose();
   };
 
   // Auto-sync: quando override expira ou a janela de horário muda, atualiza is_open no banco
