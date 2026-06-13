@@ -1,59 +1,58 @@
-# Confirmação de resgate de fidelidade via código WhatsApp (OTP)
+## Caixa Diário — plano de implementação
 
-Adicionar uma etapa extra no fluxo de resgate de recompensa: quando o operador clicar em **Confirmar resgate** na etapa 5, o sistema envia um código de 6 dígitos para o WhatsApp do cliente cadastrado e exige a digitação desse código antes de criar o pedido e debitar os pontos.
+### O que já existe (reaproveitar)
+- Tabelas: `cash_register_sessions`, `cash_movements`, `cash_withdrawals`, `payment_reconciliation` — todas com RLS por restaurante via `is_restaurant_manager`.
+- Enums: `cash_session_status` (open/closed), `cash_movement_type` (opening, order_cash, change_out, withdrawal, supply, adjustment), `payment_method` (cash, pix, card_on_delivery, online).
+- Aba "Fluxo de caixa" já existe no `AppSidebar` / `ManagerDashboard` (placeholder "Em breve").
+- `FinancePanel` (mensal) permanece intocado e continua acessível em "Receitas - Despesas".
 
-## Fluxo proposto
+### Mudanças de banco (1 migration)
+1. `ALTER TABLE public.orders ADD COLUMN cash_session_id uuid REFERENCES public.cash_register_sessions(id)` + índice.
+2. `ALTER TABLE public.orders ADD COLUMN created_by uuid` (quem registrou — usado em PDV / cancelamentos).
+3. Estender enum `payment_method` com `card_debit`, `card_credit`, `mixed` (mantém os existentes funcionando).
+4. Estender enum `cash_movement_type` com `cancel_refund` (estorno de venda cancelada paga em dinheiro).
+5. Trigger `tg_orders_attach_cash_session` em `orders` (BEFORE INSERT) que, se `restaurant_id` for de venda interna (`order_type IN ('pdv','delivery','pickup')` e não `external_source`), procura sessão `open` da unidade e seta `cash_session_id`. Se não houver sessão aberta e `order_type='pdv'` → `RAISE EXCEPTION 'Nenhum caixa aberto'`. Para delivery/pickup do cardápio público apenas anexa se existir (não bloqueia cliente final).
+6. Trigger `tg_orders_cash_movement` AFTER INSERT/UPDATE em `orders`: ao status `delivered` (ou `accepted` p/ delivery, conforme padrão atual) insere linha em `cash_movements` (`order_cash` / `cancel_refund`) com `session_id` e valor por forma de pagamento. Idempotente via `order_id` + `type`.
+7. View `v_cash_session_summary` que calcula em tempo real para cada sessão: `cash_sales`, `pix_sales`, `card_sales`, `manual_in`, `manual_out`, `expected_cash`, `total_movement`.
+8. Habilitar realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE cash_register_sessions, cash_movements, cash_withdrawals;` (se ainda não estiverem).
+9. Function `public.close_cash_session(_session_id, counted_cash, counted_pix, counted_card, notes)` SECURITY DEFINER — calcula esperado a partir da view, grava em `cash_register_sessions` (status=closed, expected_cash, counted_cash, difference) e em `payment_reconciliation` (1 linha por método).
+10. Function `public.reopen_cash_session(_session_id)` restrita a `master_admin`.
+11. GRANTs/policies revisadas para `authenticated`.
 
-1. Operador chega à etapa 5 (resumo) — igual hoje.
-2. Clica em **Confirmar resgate**.
-   - Sistema gera código aleatório de 6 dígitos.
-   - Salva no banco (tabela nova `loyalty_redeem_codes`) com `expires_at = now() + 10 min`.
-   - Dispara mensagem via Evolution para o telefone do `selectedMember`:
-     `Seu código de confirmação de resgate é XXXXXX`
-3. Abre um segundo diálogo (modal sobreposto) com:
-   - Campo de 6 dígitos (`InputOTP`).
-   - Texto: *"Enviamos um código para o WhatsApp de {nome} ({telefone})"*.
-   - Botão **Validar e finalizar resgate**.
-   - Link **Reenviar código** (gera novo código, invalida anterior, throttle de 30s).
-4. Ao validar:
-   - Confere código + validade no banco.
-   - Se ok: roda o fluxo atual de `confirm()` (cria pedido, chama RPC `redeem_loyalty_points`), marca código como `used_at = now()`, fecha tudo, toast de sucesso.
-   - Se inválido/expirado: toast de erro, mantém modal aberto para nova tentativa (máx 5 tentativas, depois precisa reenviar).
+### Frontend
+Novo diretório `src/components/dashboard/cashflow/`:
+- `CashFlowPanel.tsx` — container da aba "cash-flow" com 2 abas internas:
+  - **Caixa diário** (novo) — default
+  - **Resumo mensal** (renderiza `FinancePanel` atual, sem alteração)
+- `CurrentSessionCard.tsx` — mostra sessão aberta (aberto por, hora, valor inicial, totais por forma, esperado, total geral) com subscribe em realtime nas 3 tabelas.
+- `OpenSessionDialog.tsx` — modal de abertura (valor inicial, observação).
+- `CloseSessionDialog.tsx` — modal de fechamento (dinheiro/pix/cartão contados, observação, mostra diferenças, chama `close_cash_session`).
+- `CashMovementDialog.tsx` — entrada/retirada manual (tipo, valor, motivo).
+- `SessionHistoryList.tsx` — sessões fechadas com drill-down (movimentações, vendas, diferenças).
+- `useCashSession.ts` — hook com query da sessão aberta + summary + realtime.
 
-Cliente sem telefone válido (< 10 dígitos) ou restaurante sem integração Evolution ativa → mostrar erro claro e não permitir confirmar.
+Integrações:
+- **`PdvDialog.tsx`**: bloquear venda se `useCashSession` não tiver sessão aberta — mostrar botão "Abrir caixa" que abre o `OpenSessionDialog`. Injeta `created_by = auth.uid()` no insert do pedido.
+- **`StoreOpenToggle.tsx`**:
+  - Ao abrir loja → se não houver sessão aberta, abre `OpenSessionDialog` em seguida (toast com CTA).
+  - Ao fechar loja → se houver sessão aberta, abre `CloseSessionDialog` (bloqueia confirmação se usuário descartar? mostra aviso modal não-bloqueante).
+- **`ManagerDashboard.tsx`**: substituir o `<div>Em breve.</div>` da view `cash-flow` por `<CashFlowPanel restaurantId={...} />`.
+- **`OrdersPanel` / cancelamentos**: nenhum código novo — o trigger cuida do estorno automático ao status virar `cancelled`.
 
-## Detalhes técnicos
+### Detalhes técnicos
+- A view `v_cash_session_summary` é a **fonte única** de números no front (evita divergência). Front consulta `.from('v_cash_session_summary').eq('session_id', ...)`.
+- Realtime: subscribe em `cash_register_sessions` (sessão atual), `cash_movements` (toda inserção) e `orders` filtrado por `restaurant_id` invalidam a query do summary.
+- `payment_method='mixed'`: front grava em `orders.payment_method='mixed'` e cria 2+ linhas em `cash_movements` no momento da venda PDV (já há suporte multi-linha por venda).
+- Auditoria: nenhum DELETE é exposto — UI só oferece "Estornar" que cria movimento `adjustment` negativo com motivo + `created_by`.
+- Tipos: após a migration, `src/integrations/supabase/types.ts` será regenerado automaticamente.
 
-### Banco (migration nova)
+### Entregáveis nesta ordem
+1. Migration (banco + view + functions + triggers + realtime).
+2. Componentes em `src/components/dashboard/cashflow/`.
+3. Patch em `PdvDialog`, `StoreOpenToggle`, `ManagerDashboard`.
+4. Resumo curto de onde tudo ficou.
 
-Tabela `public.loyalty_redeem_codes`:
-- `id uuid PK`, `restaurant_id uuid`, `member_id uuid`, `reward_id uuid`
-- `code text` (6 dígitos, armazenado como texto), `phone text`
-- `created_at`, `expires_at` (default `now()+10min`), `used_at`, `attempts int default 0`
-- Index em `(restaurant_id, member_id, reward_id, used_at)`.
-- GRANTs para `authenticated` + `service_role`.
-- RLS: política `is_restaurant_manager(auth.uid(), restaurant_id) OR has_role(..., 'master_admin')` para ALL.
-
-Duas funções SECURITY DEFINER (mais simples e seguro do que expor SELECT direto):
-- `create_loyalty_redeem_code(_restaurant_id, _member_id, _reward_id) RETURNS table(id uuid, code text, phone text)` — invalida códigos anteriores não usados do mesmo trio, gera código de 6 dígitos via `lpad((floor(random()*1000000))::text, 6, '0')`, valida que o member pertence ao restaurante, retorna código + telefone do member.
-- `verify_loyalty_redeem_code(_code_id uuid, _code text) RETURNS boolean` — incrementa `attempts`, valida não expirado, não usado, ≤ 5 tentativas; em sucesso seta `used_at` e retorna true.
-
-### Frontend — `src/components/dashboard/LoyaltyRewardsTab.tsx`
-
-No `RedeemDialog`:
-- Novo estado: `otpStep: "idle"|"sending"|"awaiting"`, `codeId`, `otpInput`, `resendCooldown`.
-- Substituir handler do botão **Confirmar resgate**:
-  1. chama `supabase.rpc("create_loyalty_redeem_code", {...})`,
-  2. chama `supabase.functions.invoke("evolution-send", { body: { action: "send", integrationId, phone, text: "Seu código de confirmação de resgate é " + code } })`,
-  3. abre sub-dialog OTP.
-- Sub-dialog usa `InputOTP` (6 slots, `inputMode="numeric"`).
-- **Validar**: `rpc("verify_loyalty_redeem_code", { _code_id, _code })`; se true → executa a função `confirm()` atual (criação de pedido + `redeem_loyalty_points`). Se false → toast de erro.
-- Buscar `integrationId` ativo do restaurante uma vez (query `evolution_integrations` por `restaurant_id`).
-
-Sem mudanças em outros painéis. A edge function `evolution-send` existente já cobre o envio e a autorização.
-
-## Itens fora de escopo
-
-- Sem histórico/visualização dos códigos para o operador.
-- Sem alteração no fluxo de cliente final na vitrine.
-- Sem rate-limit global além do "5 tentativas + reenviar".
+### Fora de escopo (não mexer)
+- `FinancePanel` mensal e `AdminFinancePanel` — preservados.
+- Pedidos vindos de iFood/Quero (`external_source` setado) não geram movimento de caixa.
+- Permissões granulares por grupo: usaremos a permission `finance` existente como gate.
