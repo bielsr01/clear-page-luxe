@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,16 +14,30 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   restaurantId: string;
   sessionId: string;
+  direction: "in" | "out";
   onDone?: () => void;
 }
 
-export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId, onDone }: Props) {
+export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId, direction, onDone }: Props) {
   const { user } = useAuth();
-  const [direction, setDirection] = useState<"in" | "out">("in");
   const [method, setMethod] = useState<"cash" | "pix">("cash");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMethod("cash");
+      setAmount("");
+      setNotes("");
+    }
+  }, [open]);
+
+  const isIn = direction === "in";
+  const title = isIn ? "Registrar entrada" : "Registrar retirada / sangria";
+  const description = isIn
+    ? "Lance uma entrada manual no caixa (ex.: troco inicial, reforço)."
+    : "Lance uma retirada manual do caixa (ex.: sangria, pagamento fornecedor).";
 
   const submit = async () => {
     const value = Number(String(amount).replace(",", "."));
@@ -36,11 +50,11 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
       return;
     }
     setBusy(true);
-    const signed = direction === "in" ? value : -value;
+    const signed = isIn ? value : -value;
     const { error } = await supabase.from("cash_movements").insert({
       restaurant_id: restaurantId,
       session_id: sessionId,
-      type: (direction === "in" ? "adjustment" : "withdrawal") as any,
+      type: (isIn ? "adjustment" : "withdrawal") as any,
       method: method as any,
       amount: signed,
       description: notes,
@@ -51,9 +65,7 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
       toast.error(error.message);
       return;
     }
-    toast.success(direction === "in" ? "Entrada registrada" : "Retirada registrada");
-    setAmount("");
-    setNotes("");
+    toast.success(isIn ? "Entrada registrada" : "Retirada registrada");
     onOpenChange(false);
     onDone?.();
   };
@@ -62,20 +74,10 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Movimentação de caixa</DialogTitle>
-          <DialogDescription>Registre entradas ou retiradas em dinheiro. Cada movimentação fica auditada.</DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
-          <RadioGroup value={direction} onValueChange={(v) => setDirection(v as "in" | "out")} className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="in" id="mv-in" />
-              <Label htmlFor="mv-in">Entrada</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="out" id="mv-out" />
-              <Label htmlFor="mv-out">Retirada / Sangria</Label>
-            </div>
-          </RadioGroup>
           <div>
             <Label>Forma</Label>
             <RadioGroup value={method} onValueChange={(v) => setMethod(v as "cash" | "pix")} className="flex gap-4 mt-1">
@@ -95,13 +97,18 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
           </div>
           <div>
             <Label>Motivo</Label>
-            <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ex.: troco, sangria, pagamento fornecedor..." />
+            <Textarea
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={isIn ? "Ex.: reforço de troco, aporte..." : "Ex.: sangria, pagamento fornecedor..."}
+            />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={busy} variant={direction === "out" ? "destructive" : "default"}>
-            {direction === "in" ? "Registrar entrada" : "Registrar retirada"}
+          <Button onClick={submit} disabled={busy} variant={isIn ? "default" : "destructive"}>
+            {isIn ? "Registrar entrada" : "Registrar retirada"}
           </Button>
         </DialogFooter>
       </DialogContent>
