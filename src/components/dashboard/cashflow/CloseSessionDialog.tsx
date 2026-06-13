@@ -27,7 +27,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   useEffect(() => {
     if (open && summary) {
       setCountedCash(String(summary.expected_cash ?? 0));
-      setCountedPix(String(summary.pix_sales ?? 0));
+      setCountedPix(String(summary.expected_pix ?? summary.pix_sales ?? 0));
       setCountedCard(String(summary.card_sales ?? 0));
     }
   }, [open, summary]);
