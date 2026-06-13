@@ -27,7 +27,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   useEffect(() => {
     if (open && summary) {
       setCountedCash(String(summary.expected_cash ?? 0));
-      setCountedPix(String(summary.pix_sales ?? 0));
+      setCountedPix(String(summary.expected_pix ?? summary.pix_sales ?? 0));
       setCountedCard(String(summary.card_sales ?? 0));
     }
   }, [open, summary]);
@@ -38,7 +38,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   };
 
   const diffCash = num(countedCash) - (summary?.expected_cash ?? 0);
-  const diffPix = num(countedPix) - (summary?.pix_sales ?? 0);
+  const diffPix = num(countedPix) - (summary?.expected_pix ?? summary?.pix_sales ?? 0);
   const diffCard = num(countedCard) - (summary?.card_sales ?? 0);
 
   const submit = async () => {
@@ -92,7 +92,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
 
         <div className="grid sm:grid-cols-3 gap-3">
           <FieldWithExpected label="Dinheiro" expected={summary?.expected_cash ?? 0} value={countedCash} onChange={setCountedCash} diff={diffCash} fmtDiff={fmtDiff} diffCls={diffCls} />
-          <FieldWithExpected label="Pix" expected={summary?.pix_sales ?? 0} value={countedPix} onChange={setCountedPix} diff={diffPix} fmtDiff={fmtDiff} diffCls={diffCls} />
+          <FieldWithExpected label="Pix" expected={summary?.expected_pix ?? summary?.pix_sales ?? 0} value={countedPix} onChange={setCountedPix} diff={diffPix} fmtDiff={fmtDiff} diffCls={diffCls} />
           <FieldWithExpected label="Cartão" expected={summary?.card_sales ?? 0} value={countedCard} onChange={setCountedCard} diff={diffCard} fmtDiff={fmtDiff} diffCls={diffCls} />
         </div>
 
