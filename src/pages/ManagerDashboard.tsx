@@ -35,6 +35,7 @@ import { AccessManagementPanel } from "@/components/dashboard/AccessManagementPa
 import { usePermissions } from "@/hooks/usePermissions";
 import { IfoodWidgetMount } from "@/components/dashboard/IfoodWidgetMount";
 import { CashFlowPanel } from "@/components/dashboard/cashflow/CashFlowPanel";
+import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { ManualSendPanel } from "@/components/dashboard/ManualSendPanel";
@@ -80,6 +81,20 @@ export default function ManagerDashboard() {
   const qc = useQueryClient();
   const { user, signOut, isMasterAdmin, rolesLoading } = useAuth();
   const [view, setView] = useState<DashboardView>("orders");
+
+  // Navigate to cash-flow when something requests a cash session prompt
+  useEffect(() => {
+    return onCashflowRequest((action) => {
+      setView((v) => {
+        if (v !== "cash-flow") {
+          // Re-emit after mount so the panel picks it up
+          setTimeout(() => requestCashflowAction(action), 200);
+          return "cash-flow";
+        }
+        return v;
+      });
+    });
+  }, []);
 
   const { data: restaurant, isLoading: loadingRest } = useQuery({
     queryKey: ["managerRestaurant", user?.id],
