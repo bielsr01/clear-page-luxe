@@ -33,10 +33,23 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const withinSchedule = isWithinSchedule(openingHours);
   const { isOpen: cashOpen, refetch: refetchCash } = useCashSession(restaurantId);
   const { user } = useAuth();
+  const { data: prevClose } = usePreviousCashClose(restaurantId);
 
   // Cash opening fields (used inline when opening the store without an open cash session)
   const [cashAmount, setCashAmount] = useState("0");
   const [cashNotes, setCashNotes] = useState("");
+
+  // Pré-preenche com o fechamento anterior quando disponível
+  useEffect(() => {
+    if (!cashOpen && prevClose != null) {
+      setCashAmount(String(Number(prevClose).toFixed(2)));
+    }
+  }, [cashOpen, prevClose]);
+
+  const cashValueNum = Number(String(cashAmount).replace(",", "."));
+  const cashIsDifferent = prevClose != null && !isNaN(cashValueNum)
+    && Math.abs(cashValueNum - Number(prevClose)) > 0.001;
+
 
   const warnCashOnClose = () => {
     if (cashOpen) {
