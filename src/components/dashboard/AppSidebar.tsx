@@ -1,4 +1,4 @@
-import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck } from "lucide-react";
+import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck, Wallet } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
@@ -38,11 +38,13 @@ export type DashboardView =
   | "supply-orders"
   | "stock"
   | "expenses"
-  | "finance";
+  | "finance"
+  | "cash-flow";
 
 const mainItems: { id: DashboardView; title: string; icon: any }[] = [
   { id: "overview", title: "Visão geral", icon: LayoutDashboard },
   { id: "orders", title: "Pedidos", icon: ShoppingBag },
+  { id: "cash-flow", title: "Fluxo de caixa", icon: Wallet },
   { id: "menu", title: "Cardápio", icon: UtensilsCrossed },
   { id: "customers", title: "Clientes", icon: Users },
 ];
