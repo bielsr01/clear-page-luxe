@@ -106,11 +106,21 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   };
 
   const confirmOpen = async () => {
-    const until = computeUntil(openMode, openMinutes, openUntilTime);
+    let until: string;
+    if (openMode === "early") {
+      if (!earlyClose) {
+        toast.error("Não há horário agendado para hoje");
+        return;
+      }
+      until = earlyClose.toISOString();
+    } else {
+      until = computeUntil(openMode, openMinutes, openUntilTime);
+    }
     await persist({ type: "open", until });
     setOpenDialog(false);
     toast.success("Loja aberta manualmente");
   };
+
 
   const confirmClose = async () => {
     const until = computeUntil(closeMode, minutes, untilTime);
