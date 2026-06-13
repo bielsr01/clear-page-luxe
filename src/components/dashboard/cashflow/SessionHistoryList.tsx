@@ -57,6 +57,8 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                 <TableHead>Contado</TableHead>
                 <TableHead>Diferença</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Observações</TableHead>
+
               </TableRow>
             </TableHeader>
             <TableBody>
