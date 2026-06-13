@@ -27,7 +27,12 @@ export interface CashSessionSummary {
   orders_count: number;
   manual_in: number;
   manual_out: number;
+  manual_in_cash: number;
+  manual_out_cash: number;
+  manual_in_pix: number;
+  manual_out_pix: number;
   expected_cash: number;
+  expected_pix: number;
   total_movement: number;
 }
 
