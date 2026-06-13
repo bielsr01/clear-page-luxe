@@ -14,7 +14,10 @@ interface Row {
   counted_cash: number | null;
   difference: number | null;
   status: "open" | "closed";
+  opening_notes: string | null;
+  closing_notes: string | null;
 }
+
 
 export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
   const q = useQuery({
@@ -22,10 +25,11 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase
         .from("cash_register_sessions")
-        .select("id, opened_at, closed_at, opening_amount, expected_cash, counted_cash, difference, status")
+        .select("id, opened_at, closed_at, opening_amount, expected_cash, counted_cash, difference, status, opening_notes, closing_notes")
         .eq("restaurant_id", restaurantId)
         .order("opened_at", { ascending: false })
         .limit(50);
+
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
@@ -53,6 +57,8 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                 <TableHead>Contado</TableHead>
                 <TableHead>Diferença</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Observações</TableHead>
+
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -76,7 +82,13 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                       {r.difference != null ? brl(Number(r.difference)) : "—"}
                     </TableCell>
                     <TableCell>{status}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[260px]">
+                      {r.opening_notes && <div><b>Abertura:</b> {r.opening_notes}</div>}
+                      {r.closing_notes && <div><b>Fechamento:</b> {r.closing_notes}</div>}
+                      {!r.opening_notes && !r.closing_notes && "—"}
+                    </TableCell>
                   </TableRow>
+
                 );
               })}
             </TableBody>

@@ -16,6 +16,9 @@ import {
 import { useCashSession } from "@/hooks/useCashSession";
 import { requestCashflowAction } from "@/lib/cashflowBus";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePreviousCashClose } from "@/hooks/usePreviousCashClose";
+import { brl } from "@/lib/format";
+
 
 interface Props {
   restaurantId: string;
@@ -30,10 +33,23 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const withinSchedule = isWithinSchedule(openingHours);
   const { isOpen: cashOpen, refetch: refetchCash } = useCashSession(restaurantId);
   const { user } = useAuth();
+  const { data: prevClose } = usePreviousCashClose(restaurantId);
 
   // Cash opening fields (used inline when opening the store without an open cash session)
   const [cashAmount, setCashAmount] = useState("0");
   const [cashNotes, setCashNotes] = useState("");
+
+  // Pré-preenche com o fechamento anterior quando disponível
+  useEffect(() => {
+    if (!cashOpen && prevClose != null) {
+      setCashAmount(String(Number(prevClose).toFixed(2)));
+    }
+  }, [cashOpen, prevClose]);
+
+  const cashValueNum = Number(String(cashAmount).replace(",", "."));
+  const cashIsDifferent = prevClose != null && !isNaN(cashValueNum)
+    && Math.abs(cashValueNum - Number(prevClose)) > 0.001;
+
 
   const warnCashOnClose = () => {
     if (cashOpen) {
@@ -90,6 +106,11 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     if (!user?.id) { toast.error("Usuário não autenticado"); return false; }
     const value = Number(String(cashAmount).replace(",", "."));
     if (isNaN(value) || value < 0) { toast.error("Valor inicial do caixa inválido"); return false; }
+    if (cashIsDifferent && !cashNotes.trim()) {
+      toast.error("Informe o motivo da diferença em relação ao fechamento anterior");
+      return false;
+    }
+
     const { error } = await supabase.from("cash_register_sessions").insert({
       restaurant_id: restaurantId,
       opened_by: user.id,
@@ -245,14 +266,26 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
           {!cashOpen && (
             <div className="space-y-3 py-2 border rounded-lg p-3 bg-muted/40">
               <div className="text-sm font-medium">Abertura de caixa</div>
+              {prevClose != null && (
+                <div className="text-xs text-muted-foreground">
+                  Sugestão baseada no fechamento anterior: <b>{brl(Number(prevClose))}</b>
+                </div>
+              )}
               <div>
                 <Label>Valor inicial (R$)</Label>
                 <Input type="number" step="0.01" min={0} value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} />
               </div>
               <div>
-                <Label>Observação (opcional)</Label>
-                <Input value={cashNotes} onChange={(e) => setCashNotes(e.target.value)} />
+                <Label>
+                  Observação {cashIsDifferent ? <span className="text-destructive">(obrigatória — valor difere do fechamento anterior)</span> : "(opcional)"}
+                </Label>
+                <Input
+                  value={cashNotes}
+                  onChange={(e) => setCashNotes(e.target.value)}
+                  placeholder={cashIsDifferent ? "Explique o motivo da diferença…" : ""}
+                />
               </div>
+
             </div>
           )}
 
