@@ -38,7 +38,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   };
 
   const diffCash = num(countedCash) - (summary?.expected_cash ?? 0);
-  const diffPix = num(countedPix) - (summary?.pix_sales ?? 0);
+  const diffPix = num(countedPix) - (summary?.expected_pix ?? summary?.pix_sales ?? 0);
   const diffCard = num(countedCard) - (summary?.card_sales ?? 0);
 
   const submit = async () => {
