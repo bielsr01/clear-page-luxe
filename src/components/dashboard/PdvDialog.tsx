@@ -19,6 +19,9 @@ import { fetchCategories, fetchProducts, menuKeys } from "./MenuManager";
 import { ordersKey } from "./OrdersPanel";
 import { buildTicketHtml, TicketOptionCatalog, TicketRestaurant } from "@/lib/ticket";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCashSession } from "@/hooks/useCashSession";
+import { OpenSessionDialog } from "@/components/dashboard/cashflow/OpenSessionDialog";
 
 type PaymentMethod = "cash" | "pix" | "card_on_delivery";
 
