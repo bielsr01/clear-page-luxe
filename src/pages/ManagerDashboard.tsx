@@ -34,6 +34,7 @@ import { StockPanel } from "@/components/dashboard/StockPanel";
 import { AccessManagementPanel } from "@/components/dashboard/AccessManagementPanel";
 import { usePermissions } from "@/hooks/usePermissions";
 import { IfoodWidgetMount } from "@/components/dashboard/IfoodWidgetMount";
+import { CashFlowPanel } from "@/components/dashboard/cashflow/CashFlowPanel";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { ManualSendPanel } from "@/components/dashboard/ManualSendPanel";
@@ -302,8 +303,8 @@ export default function ManagerDashboard() {
               </LazyView>
             )}
             {view === "cash-flow" && (
-              <LazyView viewKey={view} variant="list">
-                <div className="text-sm text-muted-foreground">Em breve.</div>
+              <LazyView viewKey={view} variant="stats">
+                <CashFlowPanel restaurantId={restaurant.id} />
               </LazyView>
             )}
             {view === "menu" && (
