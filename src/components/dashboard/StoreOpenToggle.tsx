@@ -60,6 +60,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   };
 
   const [openDialog, setOpenDialog] = useState(false);
+  const [openStep, setOpenStep] = useState<"mode" | "cash">("mode");
   const [closeDialog, setCloseDialog] = useState(false);
   const [busy, setBusy] = useState(false);
 
