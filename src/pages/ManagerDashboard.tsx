@@ -219,6 +219,7 @@ export default function ManagerDashboard() {
     stock: "Estoque",
     expenses: "Cadastro de despesas",
     finance: "Receitas - Despesas",
+    "cash-flow": "Fluxo de caixa",
   };
 
   return (
