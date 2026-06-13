@@ -114,7 +114,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       }
       until = earlyClose.toISOString();
     } else {
-      until = computeUntil(openMode, openMinutes, openUntilTime);
+      until = computeUntil(openMode as "minutes" | "until" | "today", openMinutes, openUntilTime);
     }
     await persist({ type: "open", until });
     setOpenDialog(false);
