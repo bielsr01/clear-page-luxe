@@ -74,9 +74,11 @@ export function CurrentSessionCard({ restaurantId }: Props) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={refetch} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
-            <Button size="sm" variant="secondary" onClick={() => setMovDlg(true)}>
+            <Button size="sm" variant="secondary" onClick={() => setInDlg(true)}>
               <ArrowDownCircle className="w-4 h-4 mr-1" /> Entrada
-              <ArrowUpCircle className="w-4 h-4 ml-2 mr-1" /> Retirada
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setOutDlg(true)}>
+              <ArrowUpCircle className="w-4 h-4 mr-1" /> Retirada
             </Button>
             <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
               <Lock className="w-4 h-4 mr-1" /> Fechar caixa
