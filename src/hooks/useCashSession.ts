@@ -76,7 +76,7 @@ export function useCashSession(restaurantId: string | undefined) {
   useEffect(() => {
     if (!restaurantId) return;
     const ch = supabase
-      .channel(`cashflow-${restaurantId}`)
+      .channel(`cashflow-${restaurantId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "cash_register_sessions", filter: `restaurant_id=eq.${restaurantId}` },
