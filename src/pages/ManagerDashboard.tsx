@@ -301,6 +301,11 @@ export default function ManagerDashboard() {
                 <OrdersPanel restaurantId={restaurant.id} />
               </LazyView>
             )}
+            {view === "cash-flow" && (
+              <LazyView viewKey={view} variant="list">
+                <div className="text-sm text-muted-foreground">Em breve.</div>
+              </LazyView>
+            )}
             {view === "menu" && (
               <LazyView viewKey={view} variant="list">
                 <MenuManager restaurantId={restaurant.id} />
