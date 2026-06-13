@@ -346,6 +346,12 @@ export function PdvDialog({
       toast.error("Selecione uma forma de pagamento");
       return;
     }
+    if (!hasOpenCash) {
+      toast.error("Abra um caixa antes de registrar a venda", {
+        action: { label: "Abrir caixa", onClick: () => setOpenCashDlg(true) },
+      });
+      return;
+    }
     if (loyaltySettings?.enabled) {
       setPendingPrint(alsoPrint);
       setLoyaltyPromptName("");
