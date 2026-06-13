@@ -19,6 +19,9 @@ import { fetchCategories, fetchProducts, menuKeys } from "./MenuManager";
 import { ordersKey } from "./OrdersPanel";
 import { buildTicketHtml, TicketOptionCatalog, TicketRestaurant } from "@/lib/ticket";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCashSession } from "@/hooks/useCashSession";
+import { OpenSessionDialog } from "@/components/dashboard/cashflow/OpenSessionDialog";
 
 type PaymentMethod = "cash" | "pix" | "card_on_delivery";
 
@@ -133,6 +136,9 @@ export function PdvDialog({
 
   const { can } = usePermissions(restaurantId);
   const canApplyDiscount = can("orders.apply_pdv_discount");
+  const { user } = useAuth();
+  const { session: cashSession, isOpen: hasOpenCash } = useCashSession(restaurantId);
+  const [openCashDlg, setOpenCashDlg] = useState(false);
 
 
 
@@ -340,6 +346,12 @@ export function PdvDialog({
       toast.error("Selecione uma forma de pagamento");
       return;
     }
+    if (!hasOpenCash) {
+      toast.error("Abra um caixa antes de registrar a venda", {
+        action: { label: "Abrir caixa", onClick: () => setOpenCashDlg(true) },
+      });
+      return;
+    }
     if (loyaltySettings?.enabled) {
       setPendingPrint(alsoPrint);
       setLoyaltyPromptName("");
@@ -393,6 +405,8 @@ export function PdvDialog({
       delivery_fee: 0,
       total,
       loyalty_opt_in: effOptIn,
+      cash_session_id: cashSession?.id ?? null,
+      created_by: user?.id ?? null,
     };
     try {
       const { data: order, error } = await supabase
@@ -930,6 +944,8 @@ export function PdvDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <OpenSessionDialog open={openCashDlg} onOpenChange={setOpenCashDlg} restaurantId={restaurantId} />
     </>
+
   );
 }

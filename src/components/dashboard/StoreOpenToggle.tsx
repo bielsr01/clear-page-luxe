@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import {
   isOpenNow, isWithinSchedule, ManualOverride, OpeningHours, getEffectiveOverride,
 } from "@/lib/hours";
+import { useCashSession } from "@/hooks/useCashSession";
+import { requestCashflowAction } from "@/lib/cashflowBus";
 
 interface Props {
   restaurantId: string;
@@ -25,6 +27,20 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const ov = getEffectiveOverride(manualOverride);
   const open = isOpenNow(openingHours, ov);
   const withinSchedule = isWithinSchedule(openingHours);
+  const { isOpen: cashOpen } = useCashSession(restaurantId);
+
+  const promptCashAfter = (storeNowOpen: boolean) => {
+    if (storeNowOpen && !cashOpen) {
+      toast.warning("Nenhum caixa aberto. Deseja abrir agora?", {
+        action: { label: "Abrir caixa", onClick: () => requestCashflowAction("open") },
+      });
+    }
+    if (!storeNowOpen && cashOpen) {
+      toast.warning("Há um caixa aberto. Deseja fechar agora?", {
+        action: { label: "Fechar caixa", onClick: () => requestCashflowAction("close") },
+      });
+    }
+  };
 
   const [openDialog, setOpenDialog] = useState(false);
   const [closeDialog, setCloseDialog] = useState(false);
@@ -73,7 +89,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       // Tentando abrir
       if (withinSchedule) {
         // Dentro do horário: limpar override (volta ao automático aberto)
-        persist(null).then(() => toast.success("Loja aberta"));
+        persist(null).then(() => { toast.success("Loja aberta"); promptCashAfter(true); });
       } else {
         setOpenMode("minutes");
         setOpenMinutes("30");
@@ -119,6 +135,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "open", until });
     setOpenDialog(false);
     toast.success("Loja aberta manualmente");
+    promptCashAfter(true);
   };
 
 
@@ -127,6 +144,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
+    promptCashAfter(false);
   };
 
   // Auto-sync: quando override expira ou a janela de horário muda, atualiza is_open no banco
