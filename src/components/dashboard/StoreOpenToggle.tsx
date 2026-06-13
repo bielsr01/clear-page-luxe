@@ -35,9 +35,27 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const [minutes, setMinutes] = useState("30");
   const [untilTime, setUntilTime] = useState("23:00");
 
-  const [openMode, setOpenMode] = useState<"minutes" | "until" | "today">("minutes");
+  const [openMode, setOpenMode] = useState<"minutes" | "until" | "today" | "early">("minutes");
   const [openMinutes, setOpenMinutes] = useState("30");
   const [openUntilTime, setOpenUntilTime] = useState("23:00");
+
+  // Calcula horário de fechamento agendado para hoje
+  const todayScheduledClose = (): Date | null => {
+    if (!openingHours) return null;
+    const now = new Date();
+    const cfg = openingHours[String(now.getDay())];
+    if (!cfg || !cfg.enabled) return null;
+    const [oh, om] = (cfg.open || "00:00").split(":").map(Number);
+    const [ch, cm] = (cfg.close || "00:00").split(":").map(Number);
+    const d = new Date(now);
+    d.setHours(ch, cm, 0, 0);
+    // Cruza meia-noite
+    if (ch * 60 + cm <= oh * 60 + om) d.setDate(d.getDate() + 1);
+    if (d.getTime() <= now.getTime()) return null;
+    return d;
+  };
+  const earlyClose = todayScheduledClose();
+
 
   const persist = async (override: ManualOverride) => {
     setBusy(true);
@@ -88,11 +106,21 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   };
 
   const confirmOpen = async () => {
-    const until = computeUntil(openMode, openMinutes, openUntilTime);
+    let until: string;
+    if (openMode === "early") {
+      if (!earlyClose) {
+        toast.error("Não há horário agendado para hoje");
+        return;
+      }
+      until = earlyClose.toISOString();
+    } else {
+      until = computeUntil(openMode as "minutes" | "until" | "today", openMinutes, openUntilTime);
+    }
     await persist({ type: "open", until });
     setOpenDialog(false);
     toast.success("Loja aberta manualmente");
   };
+
 
   const confirmClose = async () => {
     const until = computeUntil(closeMode, minutes, untilTime);
@@ -186,10 +214,19 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
                 onFocus={() => setOpenMode("until")}
               />
             </div>
+            {earlyClose && (
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="early" id="oe" />
+                <Label htmlFor="oe" className="flex-1">
+                  Abrir mais cedo (fecha às {earlyClose.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })})
+                </Label>
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <RadioGroupItem value="today" id="ot" />
               <Label htmlFor="ot" className="flex-1">Abrir pelo resto do dia</Label>
             </div>
+
           </RadioGroup>
 
           <DialogFooter>
