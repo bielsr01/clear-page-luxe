@@ -25,10 +25,11 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase
         .from("cash_register_sessions")
-        .select("id, opened_at, closed_at, opening_amount, expected_cash, counted_cash, difference, status")
+        .select("id, opened_at, closed_at, opening_amount, expected_cash, counted_cash, difference, status, opening_notes, closing_notes")
         .eq("restaurant_id", restaurantId)
         .order("opened_at", { ascending: false })
         .limit(50);
+
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
