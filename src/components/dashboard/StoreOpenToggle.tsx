@@ -266,14 +266,26 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
           {!cashOpen && (
             <div className="space-y-3 py-2 border rounded-lg p-3 bg-muted/40">
               <div className="text-sm font-medium">Abertura de caixa</div>
+              {prevClose != null && (
+                <div className="text-xs text-muted-foreground">
+                  Sugestão baseada no fechamento anterior: <b>{brl(Number(prevClose))}</b>
+                </div>
+              )}
               <div>
                 <Label>Valor inicial (R$)</Label>
                 <Input type="number" step="0.01" min={0} value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} />
               </div>
               <div>
-                <Label>Observação (opcional)</Label>
-                <Input value={cashNotes} onChange={(e) => setCashNotes(e.target.value)} />
+                <Label>
+                  Observação {cashIsDifferent ? <span className="text-destructive">(obrigatória — valor difere do fechamento anterior)</span> : "(opcional)"}
+                </Label>
+                <Input
+                  value={cashNotes}
+                  onChange={(e) => setCashNotes(e.target.value)}
+                  placeholder={cashIsDifferent ? "Explique o motivo da diferença…" : ""}
+                />
               </div>
+
             </div>
           )}
 
