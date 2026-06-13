@@ -92,7 +92,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
 
         <div className="grid sm:grid-cols-3 gap-3">
           <FieldWithExpected label="Dinheiro" expected={summary?.expected_cash ?? 0} value={countedCash} onChange={setCountedCash} diff={diffCash} fmtDiff={fmtDiff} diffCls={diffCls} />
-          <FieldWithExpected label="Pix" expected={summary?.pix_sales ?? 0} value={countedPix} onChange={setCountedPix} diff={diffPix} fmtDiff={fmtDiff} diffCls={diffCls} />
+          <FieldWithExpected label="Pix" expected={summary?.expected_pix ?? summary?.pix_sales ?? 0} value={countedPix} onChange={setCountedPix} diff={diffPix} fmtDiff={fmtDiff} diffCls={diffCls} />
           <FieldWithExpected label="Cartão" expected={summary?.card_sales ?? 0} value={countedCard} onChange={setCountedCard} diff={diffCard} fmtDiff={fmtDiff} diffCls={diffCls} />
         </div>
 
