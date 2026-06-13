@@ -38,11 +38,13 @@ export type DashboardView =
   | "supply-orders"
   | "stock"
   | "expenses"
-  | "finance";
+  | "finance"
+  | "cash-flow";
 
 const mainItems: { id: DashboardView; title: string; icon: any }[] = [
   { id: "overview", title: "Visão geral", icon: LayoutDashboard },
   { id: "orders", title: "Pedidos", icon: ShoppingBag },
+  { id: "cash-flow", title: "Fluxo de caixa", icon: Wallet },
   { id: "menu", title: "Cardápio", icon: UtensilsCrossed },
   { id: "customers", title: "Clientes", icon: Users },
 ];
