@@ -326,6 +326,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          method: string
           order_id: string | null
           restaurant_id: string
           session_id: string | null
@@ -337,6 +338,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          method?: string
           order_id?: string | null
           restaurant_id: string
           session_id?: string | null
@@ -348,6 +350,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          method?: string
           order_id?: string | null
           restaurant_id?: string
           session_id?: string | null
@@ -2537,8 +2540,13 @@ export type Database = {
           card_sales: number | null
           cash_sales: number | null
           expected_cash: number | null
+          expected_pix: number | null
           manual_in: number | null
+          manual_in_cash: number | null
+          manual_in_pix: number | null
           manual_out: number | null
+          manual_out_cash: number | null
+          manual_out_pix: number | null
           opened_at: string | null
           opened_by: string | null
           opening_amount: number | null

@@ -20,6 +20,7 @@ interface Props {
 export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId, onDone }: Props) {
   const { user } = useAuth();
   const [direction, setDirection] = useState<"in" | "out">("in");
+  const [method, setMethod] = useState<"cash" | "pix">("cash");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
