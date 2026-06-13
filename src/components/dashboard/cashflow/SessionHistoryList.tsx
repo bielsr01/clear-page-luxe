@@ -82,7 +82,13 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                       {r.difference != null ? brl(Number(r.difference)) : "—"}
                     </TableCell>
                     <TableCell>{status}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground max-w-[260px]">
+                      {r.opening_notes && <div><b>Abertura:</b> {r.opening_notes}</div>}
+                      {r.closing_notes && <div><b>Fechamento:</b> {r.closing_notes}</div>}
+                      {!r.opening_notes && !r.closing_notes && "—"}
+                    </TableCell>
                   </TableRow>
+
                 );
               })}
             </TableBody>
