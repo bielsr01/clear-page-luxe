@@ -77,6 +77,19 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
             </div>
           </RadioGroup>
           <div>
+            <Label>Forma</Label>
+            <RadioGroup value={method} onValueChange={(v) => setMethod(v as "cash" | "pix")} className="flex gap-4 mt-1">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="cash" id="mv-cash" />
+                <Label htmlFor="mv-cash">Dinheiro (espécie)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="pix" id="mv-pix" />
+                <Label htmlFor="mv-pix">Pix</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div>
             <Label>Valor (R$)</Label>
             <Input type="number" step="0.01" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
           </div>
