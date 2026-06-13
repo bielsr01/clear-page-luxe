@@ -15,6 +15,7 @@ import {
 } from "@/lib/hours";
 import { useCashSession } from "@/hooks/useCashSession";
 import { requestCashflowAction } from "@/lib/cashflowBus";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   restaurantId: string;
@@ -27,16 +28,16 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const ov = getEffectiveOverride(manualOverride);
   const open = isOpenNow(openingHours, ov);
   const withinSchedule = isWithinSchedule(openingHours);
-  const { isOpen: cashOpen } = useCashSession(restaurantId);
+  const { isOpen: cashOpen, refetch: refetchCash } = useCashSession(restaurantId);
+  const { user } = useAuth();
 
-  const promptCashAfter = (storeNowOpen: boolean) => {
-    if (storeNowOpen && !cashOpen) {
-      toast.warning("Nenhum caixa aberto. Deseja abrir agora?", {
-        action: { label: "Abrir caixa", onClick: () => requestCashflowAction("open") },
-      });
-    }
-    if (!storeNowOpen && cashOpen) {
-      toast.warning("Há um caixa aberto. Deseja fechar agora?", {
+  // Cash opening fields (used inline when opening the store without an open cash session)
+  const [cashAmount, setCashAmount] = useState("0");
+  const [cashNotes, setCashNotes] = useState("");
+
+  const warnCashOnClose = () => {
+    if (cashOpen) {
+      toast.warning("Atenção: o caixa continua aberto. Lembre-se de fechá-lo.", {
         action: { label: "Fechar caixa", onClick: () => requestCashflowAction("close") },
       });
     }
