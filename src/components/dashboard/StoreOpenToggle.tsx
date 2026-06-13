@@ -35,9 +35,27 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const [minutes, setMinutes] = useState("30");
   const [untilTime, setUntilTime] = useState("23:00");
 
-  const [openMode, setOpenMode] = useState<"minutes" | "until" | "today">("minutes");
+  const [openMode, setOpenMode] = useState<"minutes" | "until" | "today" | "early">("minutes");
   const [openMinutes, setOpenMinutes] = useState("30");
   const [openUntilTime, setOpenUntilTime] = useState("23:00");
+
+  // Calcula horário de fechamento agendado para hoje
+  const todayScheduledClose = (): Date | null => {
+    if (!openingHours) return null;
+    const now = new Date();
+    const cfg = openingHours[String(now.getDay())];
+    if (!cfg || !cfg.enabled) return null;
+    const [oh, om] = (cfg.open || "00:00").split(":").map(Number);
+    const [ch, cm] = (cfg.close || "00:00").split(":").map(Number);
+    const d = new Date(now);
+    d.setHours(ch, cm, 0, 0);
+    // Cruza meia-noite
+    if (ch * 60 + cm <= oh * 60 + om) d.setDate(d.getDate() + 1);
+    if (d.getTime() <= now.getTime()) return null;
+    return d;
+  };
+  const earlyClose = todayScheduledClose();
+
 
   const persist = async (override: ManualOverride) => {
     setBusy(true);
