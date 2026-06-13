@@ -83,6 +83,7 @@ export function useCashSession(restaurantId: string | undefined) {
         () => {
           qc.invalidateQueries({ queryKey: cashSessionKey(restaurantId) });
           qc.invalidateQueries({ queryKey: ["cash-history", restaurantId] });
+          qc.invalidateQueries({ queryKey: ["cash-history-recon", restaurantId] });
           qc.invalidateQueries({ queryKey: ["previous-cash-close", restaurantId] });
           if (sessionId) qc.invalidateQueries({ queryKey: cashSummaryKey(sessionId) });
         },
