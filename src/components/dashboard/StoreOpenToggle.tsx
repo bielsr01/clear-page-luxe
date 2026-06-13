@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import {
   isOpenNow, isWithinSchedule, ManualOverride, OpeningHours, getEffectiveOverride,
 } from "@/lib/hours";
+import { useCashSession } from "@/hooks/useCashSession";
+import { requestCashflowAction } from "@/lib/cashflowBus";
 
 interface Props {
   restaurantId: string;
@@ -25,6 +27,20 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const ov = getEffectiveOverride(manualOverride);
   const open = isOpenNow(openingHours, ov);
   const withinSchedule = isWithinSchedule(openingHours);
+  const { isOpen: cashOpen } = useCashSession(restaurantId);
+
+  const promptCashAfter = (storeNowOpen: boolean) => {
+    if (storeNowOpen && !cashOpen) {
+      toast.warning("Nenhum caixa aberto. Deseja abrir agora?", {
+        action: { label: "Abrir caixa", onClick: () => requestCashflowAction("open") },
+      });
+    }
+    if (!storeNowOpen && cashOpen) {
+      toast.warning("Há um caixa aberto. Deseja fechar agora?", {
+        action: { label: "Fechar caixa", onClick: () => requestCashflowAction("close") },
+      });
+    }
+  };
 
   const [openDialog, setOpenDialog] = useState(false);
   const [closeDialog, setCloseDialog] = useState(false);
