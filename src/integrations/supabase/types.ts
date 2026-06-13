@@ -361,6 +361,13 @@ export type Database = {
             referencedRelation: "cash_register_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cash_movements_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_session_summary"
+            referencedColumns: ["session_id"]
+          },
         ]
       }
       cash_register_sessions: {
@@ -458,6 +465,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cash_register_sessions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_withdrawals_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_session_summary"
+            referencedColumns: ["session_id"]
           },
         ]
       }
@@ -1514,9 +1528,11 @@ export type Database = {
           address_number: string | null
           address_state: string | null
           address_street: string | null
+          cash_session_id: string | null
           change_for: number | null
           coupon_code: string | null
           created_at: string
+          created_by: string | null
           customer_name: string
           customer_phone: string
           delivery_distance_km: number | null
@@ -1551,9 +1567,11 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           address_street?: string | null
+          cash_session_id?: string | null
           change_for?: number | null
           coupon_code?: string | null
           created_at?: string
+          created_by?: string | null
           customer_name: string
           customer_phone: string
           delivery_distance_km?: number | null
@@ -1588,9 +1606,11 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           address_street?: string | null
+          cash_session_id?: string | null
           change_for?: number | null
           coupon_code?: string | null
           created_at?: string
+          created_by?: string | null
           customer_name?: string
           customer_phone?: string
           delivery_distance_km?: number | null
@@ -1617,6 +1637,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_cash_session_id_fkey"
+            columns: ["cash_session_id"]
+            isOneToOne: false
+            referencedRelation: "cash_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_cash_session_id_fkey"
+            columns: ["cash_session_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_session_summary"
+            referencedColumns: ["session_id"]
+          },
           {
             foreignKeyName: "orders_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -1670,6 +1704,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cash_register_sessions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reconciliation_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_session_summary"
+            referencedColumns: ["session_id"]
           },
         ]
       }
@@ -2491,7 +2532,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_cash_session_summary: {
+        Row: {
+          card_sales: number | null
+          cash_sales: number | null
+          expected_cash: number | null
+          manual_in: number | null
+          manual_out: number | null
+          opened_at: string | null
+          opened_by: string | null
+          opening_amount: number | null
+          orders_count: number | null
+          other_sales: number | null
+          pix_sales: number | null
+          restaurant_id: string | null
+          session_id: string | null
+          status: Database["public"]["Enums"]["cash_session_status"] | null
+          total_movement: number | null
+          total_sales: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       apply_admin_stock_delta: {
@@ -2514,6 +2575,16 @@ export type Database = {
           _type: Database["public"]["Enums"]["stock_movement_type"]
         }
         Returns: undefined
+      }
+      close_cash_session: {
+        Args: {
+          _counted_card: number
+          _counted_cash: number
+          _counted_pix: number
+          _notes?: string
+          _session_id: string
+        }
+        Returns: Json
       }
       create_loyalty_consultation_code: {
         Args: { _phone: string; _restaurant_id: string }
@@ -2567,6 +2638,7 @@ export type Database = {
         Args: { _member_id: string; _restaurant_id: string; _reward_id: string }
         Returns: string
       }
+      reopen_cash_session: { Args: { _session_id: string }; Returns: undefined }
       upsert_customer_on_order: {
         Args: {
           _address_cep?: string
@@ -2622,7 +2694,14 @@ export type Database = {
         | "cancelled"
         | "awaiting_pickup"
       order_type: "delivery" | "pickup" | "pdv"
-      payment_method: "cash" | "pix" | "card_on_delivery" | "online"
+      payment_method:
+        | "cash"
+        | "pix"
+        | "card_on_delivery"
+        | "online"
+        | "card_debit"
+        | "card_credit"
+        | "mixed"
       stock_movement_type:
         | "supply_delivery"
         | "order_consumption"
@@ -2790,7 +2869,15 @@ export const Constants = {
         "awaiting_pickup",
       ],
       order_type: ["delivery", "pickup", "pdv"],
-      payment_method: ["cash", "pix", "card_on_delivery", "online"],
+      payment_method: [
+        "cash",
+        "pix",
+        "card_on_delivery",
+        "online",
+        "card_debit",
+        "card_credit",
+        "mixed",
+      ],
       stock_movement_type: [
         "supply_delivery",
         "order_consumption",
