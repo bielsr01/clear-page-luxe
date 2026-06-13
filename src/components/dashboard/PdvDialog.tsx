@@ -944,6 +944,8 @@ export function PdvDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <OpenSessionDialog open={openCashDlg} onOpenChange={setOpenCashDlg} restaurantId={restaurantId} />
     </>
+
   );
 }
