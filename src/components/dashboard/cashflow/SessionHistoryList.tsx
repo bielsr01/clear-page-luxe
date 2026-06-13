@@ -120,7 +120,7 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                     Math.abs(cardDiff) > EPS;
                   status = hasDiff
                     ? <Badge variant="destructive">Diferença</Badge>
-                    : <Badge variant="secondary">Sem diferença</Badge>;
+                    : <Badge className="bg-success text-success-foreground">Sem diferença</Badge>;
                 }
 
                 const cell = (counted: number | null | undefined, diff: number) => {
