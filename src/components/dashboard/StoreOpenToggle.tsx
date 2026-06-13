@@ -214,10 +214,19 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
                 onFocus={() => setOpenMode("until")}
               />
             </div>
+            {earlyClose && (
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="early" id="oe" />
+                <Label htmlFor="oe" className="flex-1">
+                  Abrir mais cedo (fecha às {earlyClose.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })})
+                </Label>
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <RadioGroupItem value="today" id="ot" />
               <Label htmlFor="ot" className="flex-1">Abrir pelo resto do dia</Label>
             </div>
+
           </RadioGroup>
 
           <DialogFooter>
