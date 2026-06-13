@@ -234,48 +234,65 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Abrir fora do horário</DialogTitle>
+            <DialogTitle>{withinSchedule ? "Abrir restaurante" : "Abrir fora do horário"}</DialogTitle>
             <DialogDescription>
-              O restaurante está fora do horário de funcionamento configurado. Por quanto tempo deseja manter aberto? Ao expirar, o sistema fecha automaticamente.
+              {withinSchedule
+                ? "Para abrir o restaurante é necessário um caixa aberto."
+                : "O restaurante está fora do horário de funcionamento configurado. Por quanto tempo deseja manter aberto? Ao expirar, o sistema fecha automaticamente."}
             </DialogDescription>
           </DialogHeader>
 
-          <RadioGroup value={openMode} onValueChange={(v) => setOpenMode(v as any)} className="space-y-3 py-2">
-            <div className="flex items-center gap-3">
-              <RadioGroupItem value="minutes" id="om" />
-              <Label htmlFor="om" className="flex-1">Por alguns minutos</Label>
-              <Input
-                type="number" min={1} className="w-24"
-                value={openMinutes}
-                onChange={(e) => setOpenMinutes(e.target.value)}
-                onFocus={() => setOpenMode("minutes")}
-              />
-              <span className="text-sm text-muted-foreground">min</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <RadioGroupItem value="until" id="ou" />
-              <Label htmlFor="ou" className="flex-1">Até um horário específico</Label>
-              <Input
-                type="time" className="w-32"
-                value={openUntilTime}
-                onChange={(e) => setOpenUntilTime(e.target.value)}
-                onFocus={() => setOpenMode("until")}
-              />
-            </div>
-            {earlyClose && (
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="early" id="oe" />
-                <Label htmlFor="oe" className="flex-1">
-                  Abrir mais cedo (fecha às {earlyClose.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })})
-                </Label>
+          {!cashOpen && (
+            <div className="space-y-3 py-2 border rounded-lg p-3 bg-muted/40">
+              <div className="text-sm font-medium">Abertura de caixa</div>
+              <div>
+                <Label>Valor inicial (R$)</Label>
+                <Input type="number" step="0.01" min={0} value={cashAmount} onChange={(e) => setCashAmount(e.target.value)} />
               </div>
-            )}
-            <div className="flex items-center gap-3">
-              <RadioGroupItem value="today" id="ot" />
-              <Label htmlFor="ot" className="flex-1">Abrir pelo resto do dia</Label>
+              <div>
+                <Label>Observação (opcional)</Label>
+                <Input value={cashNotes} onChange={(e) => setCashNotes(e.target.value)} />
+              </div>
             </div>
+          )}
 
-          </RadioGroup>
+          {!withinSchedule && (
+            <RadioGroup value={openMode} onValueChange={(v) => setOpenMode(v as any)} className="space-y-3 py-2">
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="minutes" id="om" />
+                <Label htmlFor="om" className="flex-1">Por alguns minutos</Label>
+                <Input
+                  type="number" min={1} className="w-24"
+                  value={openMinutes}
+                  onChange={(e) => setOpenMinutes(e.target.value)}
+                  onFocus={() => setOpenMode("minutes")}
+                />
+                <span className="text-sm text-muted-foreground">min</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="until" id="ou" />
+                <Label htmlFor="ou" className="flex-1">Até um horário específico</Label>
+                <Input
+                  type="time" className="w-32"
+                  value={openUntilTime}
+                  onChange={(e) => setOpenUntilTime(e.target.value)}
+                  onFocus={() => setOpenMode("until")}
+                />
+              </div>
+              {earlyClose && (
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem value="early" id="oe" />
+                  <Label htmlFor="oe" className="flex-1">
+                    Abrir mais cedo (fecha às {earlyClose.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })})
+                  </Label>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <RadioGroupItem value="today" id="ot" />
+                <Label htmlFor="ot" className="flex-1">Abrir pelo resto do dia</Label>
+              </div>
+            </RadioGroup>
+          )}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancelar</Button>
