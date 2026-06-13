@@ -41,6 +41,7 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
       restaurant_id: restaurantId,
       session_id: sessionId,
       type: (direction === "in" ? "adjustment" : "withdrawal") as any,
+      method: method as any,
       amount: signed,
       description: notes,
       created_by: user?.id ?? null,
