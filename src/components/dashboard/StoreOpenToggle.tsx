@@ -16,6 +16,9 @@ import {
 import { useCashSession } from "@/hooks/useCashSession";
 import { requestCashflowAction } from "@/lib/cashflowBus";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePreviousCashClose } from "@/hooks/usePreviousCashClose";
+import { brl } from "@/lib/format";
+
 
 interface Props {
   restaurantId: string;
