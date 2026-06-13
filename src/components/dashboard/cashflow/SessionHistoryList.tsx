@@ -1,9 +1,13 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import { brl } from "@/lib/format";
+import { SessionDetailsDialog } from "./SessionDetailsDialog";
 
 interface Row {
   id: string;
@@ -18,8 +22,19 @@ interface Row {
   closing_notes: string | null;
 }
 
+interface ReconAgg {
+  cash_diff: number;
+  pix_diff: number;
+  card_diff: number;
+  pix_counted: number;
+  card_counted: number;
+}
+
+const EPS = 0.005;
 
 export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
+  const [detail, setDetail] = useState<{ id: string; opening: number } | null>(null);
+
   const q = useQuery({
     queryKey: ["cash-history", restaurantId],
     queryFn: async (): Promise<Row[]> => {
@@ -29,9 +44,36 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
         .eq("restaurant_id", restaurantId)
         .order("opened_at", { ascending: false })
         .limit(50);
-
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
+    },
+    staleTime: 30_000,
+  });
+
+  const sessionIds = useMemo(() => (q.data ?? []).map((r) => r.id), [q.data]);
+
+  const recon = useQuery({
+    queryKey: ["cash-history-recon", restaurantId, sessionIds],
+    enabled: sessionIds.length > 0,
+    queryFn: async (): Promise<Record<string, ReconAgg>> => {
+      const { data, error } = await supabase
+        .from("payment_reconciliation")
+        .select("session_id, method, gross, net")
+        .eq("platform", "cash_session")
+        .in("session_id", sessionIds);
+      if (error) throw error;
+      const map: Record<string, ReconAgg> = {};
+      for (const r of data ?? []) {
+        const id = (r as any).session_id as string;
+        const m = (r as any).method as string;
+        const gross = Number((r as any).gross ?? 0);
+        const net = Number((r as any).net ?? 0);
+        if (!map[id]) map[id] = { cash_diff: 0, pix_diff: 0, card_diff: 0, pix_counted: 0, card_counted: 0 };
+        if (m === "cash") map[id].cash_diff = net;
+        else if (m === "pix") { map[id].pix_diff = net; map[id].pix_counted = gross; }
+        else if (m === "card") { map[id].card_diff = net; map[id].card_counted = gross; }
+      }
+      return map;
     },
     staleTime: 30_000,
   });
@@ -53,48 +95,86 @@ export function SessionHistoryList({ restaurantId }: { restaurantId: string }) {
                 <TableHead>Aberto em</TableHead>
                 <TableHead>Fechado em</TableHead>
                 <TableHead>Inicial</TableHead>
-                <TableHead>Esperado</TableHead>
-                <TableHead>Contado</TableHead>
-                <TableHead>Diferença</TableHead>
+                <TableHead>Espécie</TableHead>
+                <TableHead>PIX</TableHead>
+                <TableHead>Cartão</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Observações</TableHead>
-
+                <TableHead>Obs.</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {q.data.map((r) => {
-                const diff = r.difference ?? 0;
-                const status = r.status === "open"
-                  ? <Badge className="bg-success text-success-foreground">Aberto</Badge>
-                  : diff === 0
-                    ? <Badge variant="secondary">Sem diferença</Badge>
-                    : diff > 0
-                      ? <Badge className="bg-success text-success-foreground">Sobra</Badge>
-                      : <Badge variant="destructive">Falta</Badge>;
+                const agg = recon.data?.[r.id];
+                const cashDiff = r.difference ?? agg?.cash_diff ?? 0;
+                const pixDiff = agg?.pix_diff ?? 0;
+                const cardDiff = agg?.card_diff ?? 0;
+
+                let status: JSX.Element;
+                if (r.status === "open") {
+                  status = <Badge className="bg-success text-success-foreground">Aberto</Badge>;
+                } else {
+                  const diffs: string[] = [];
+                  if (Math.abs(cashDiff) > EPS) diffs.push("espécie");
+                  if (Math.abs(pixDiff) > EPS) diffs.push("PIX");
+                  if (Math.abs(cardDiff) > EPS) diffs.push("cartão");
+                  if (diffs.length === 0) {
+                    status = <Badge variant="secondary">Sem diferença</Badge>;
+                  } else {
+                    status = <Badge variant="destructive">Diferença {diffs.join(" + ")}</Badge>;
+                  }
+                }
+
+                const cell = (counted: number | null | undefined, diff: number) => {
+                  if (r.status === "open") return <span className="text-muted-foreground">—</span>;
+                  return (
+                    <div className="text-xs">
+                      <div>{brl(Number(counted ?? 0))}</div>
+                      <div className={diff > 0 ? "text-success" : diff < 0 ? "text-destructive" : "text-muted-foreground"}>
+                        {diff === 0 ? "—" : `Δ ${brl(diff)}`}
+                      </div>
+                    </div>
+                  );
+                };
+
                 return (
                   <TableRow key={r.id}>
                     <TableCell>{new Date(r.opened_at).toLocaleString("pt-BR")}</TableCell>
                     <TableCell>{r.closed_at ? new Date(r.closed_at).toLocaleString("pt-BR") : "—"}</TableCell>
                     <TableCell>{brl(Number(r.opening_amount))}</TableCell>
-                    <TableCell>{r.expected_cash != null ? brl(Number(r.expected_cash)) : "—"}</TableCell>
-                    <TableCell>{r.counted_cash != null ? brl(Number(r.counted_cash)) : "—"}</TableCell>
-                    <TableCell className={diff > 0 ? "text-success" : diff < 0 ? "text-destructive" : ""}>
-                      {r.difference != null ? brl(Number(r.difference)) : "—"}
-                    </TableCell>
+                    <TableCell>{cell(r.counted_cash, cashDiff)}</TableCell>
+                    <TableCell>{cell(agg?.pix_counted, pixDiff)}</TableCell>
+                    <TableCell>{cell(agg?.card_counted, cardDiff)}</TableCell>
                     <TableCell>{status}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[260px]">
+                    <TableCell className="text-xs text-muted-foreground max-w-[220px]">
                       {r.opening_notes && <div><b>Abertura:</b> {r.opening_notes}</div>}
                       {r.closing_notes && <div><b>Fechamento:</b> {r.closing_notes}</div>}
                       {!r.opening_notes && !r.closing_notes && "—"}
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDetail({ id: r.id, opening: Number(r.opening_amount) })}
+                        aria-label="Ver detalhes"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-
                 );
               })}
             </TableBody>
           </Table>
         )}
       </CardContent>
+
+      <SessionDetailsDialog
+        open={!!detail}
+        onOpenChange={(o) => !o && setDetail(null)}
+        sessionId={detail?.id ?? null}
+        openingAmount={detail?.opening ?? 0}
+      />
     </Card>
   );
 }
