@@ -89,7 +89,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       // Tentando abrir
       if (withinSchedule) {
         // Dentro do horário: limpar override (volta ao automático aberto)
-        persist(null).then(() => toast.success("Loja aberta"));
+        persist(null).then(() => { toast.success("Loja aberta"); promptCashAfter(true); });
       } else {
         setOpenMode("minutes");
         setOpenMinutes("30");
@@ -135,6 +135,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "open", until });
     setOpenDialog(false);
     toast.success("Loja aberta manualmente");
+    promptCashAfter(true);
   };
 
 
@@ -143,6 +144,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
+    promptCashAfter(false);
   };
 
   // Auto-sync: quando override expira ou a janela de horário muda, atualiza is_open no banco
