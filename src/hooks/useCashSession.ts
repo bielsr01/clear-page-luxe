@@ -82,6 +82,8 @@ export function useCashSession(restaurantId: string | undefined) {
         { event: "*", schema: "public", table: "cash_register_sessions", filter: `restaurant_id=eq.${restaurantId}` },
         () => {
           qc.invalidateQueries({ queryKey: cashSessionKey(restaurantId) });
+          qc.invalidateQueries({ queryKey: ["cash-history", restaurantId] });
+          qc.invalidateQueries({ queryKey: ["previous-cash-close", restaurantId] });
           if (sessionId) qc.invalidateQueries({ queryKey: cashSummaryKey(sessionId) });
         },
       )
