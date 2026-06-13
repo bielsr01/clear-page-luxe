@@ -136,6 +136,9 @@ export function PdvDialog({
 
   const { can } = usePermissions(restaurantId);
   const canApplyDiscount = can("orders.apply_pdv_discount");
+  const { user } = useAuth();
+  const { session: cashSession, isOpen: hasOpenCash } = useCashSession(restaurantId);
+  const [openCashDlg, setOpenCashDlg] = useState(false);
 
 
 
@@ -396,6 +399,8 @@ export function PdvDialog({
       delivery_fee: 0,
       total,
       loyalty_opt_in: effOptIn,
+      cash_session_id: cashSession?.id ?? null,
+      created_by: user?.id ?? null,
     };
     try {
       const { data: order, error } = await supabase
