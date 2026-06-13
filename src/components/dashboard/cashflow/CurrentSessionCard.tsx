@@ -19,7 +19,8 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   const { session, summary, isOpen, refetch } = useCashSession(restaurantId);
   const [openDlg, setOpenDlg] = useState(false);
   const [closeDlg, setCloseDlg] = useState(false);
-  const [movDlg, setMovDlg] = useState(false);
+  const [inDlg, setInDlg] = useState(false);
+  const [outDlg, setOutDlg] = useState(false);
   const [openedByName, setOpenedByName] = useState<string>("");
 
   useEffect(() => {
