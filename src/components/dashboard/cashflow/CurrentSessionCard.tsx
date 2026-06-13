@@ -19,7 +19,8 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   const { session, summary, isOpen, refetch } = useCashSession(restaurantId);
   const [openDlg, setOpenDlg] = useState(false);
   const [closeDlg, setCloseDlg] = useState(false);
-  const [movDlg, setMovDlg] = useState(false);
+  const [inDlg, setInDlg] = useState(false);
+  const [outDlg, setOutDlg] = useState(false);
   const [openedByName, setOpenedByName] = useState<string>("");
 
   useEffect(() => {
@@ -73,9 +74,11 @@ export function CurrentSessionCard({ restaurantId }: Props) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={refetch} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
-            <Button size="sm" variant="secondary" onClick={() => setMovDlg(true)}>
+            <Button size="sm" variant="secondary" onClick={() => setInDlg(true)}>
               <ArrowDownCircle className="w-4 h-4 mr-1" /> Entrada
-              <ArrowUpCircle className="w-4 h-4 ml-2 mr-1" /> Retirada
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setOutDlg(true)}>
+              <ArrowUpCircle className="w-4 h-4 mr-1" /> Retirada
             </Button>
             <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
               <Lock className="w-4 h-4 mr-1" /> Fechar caixa
@@ -99,7 +102,8 @@ export function CurrentSessionCard({ restaurantId }: Props) {
         </CardContent>
       </Card>
 
-      <CashMovementDialog open={movDlg} onOpenChange={setMovDlg} restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
+      <CashMovementDialog open={inDlg} onOpenChange={setInDlg} direction="in" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
+      <CashMovementDialog open={outDlg} onOpenChange={setOutDlg} direction="out" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
       <CloseSessionDialog open={closeDlg} onOpenChange={setCloseDlg} sessionId={session!.id} summary={summary} onClosed={refetch} />
     </>
   );
