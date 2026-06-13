@@ -139,6 +139,8 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       } else {
         setOpenMode(withinSchedule ? "today" : "minutes");
         setOpenMinutes("30");
+        // Se já está dentro do horário, pula direto para o caixa
+        setOpenStep(withinSchedule ? "cash" : "mode");
         setOpenDialog(true);
       }
     } else {
