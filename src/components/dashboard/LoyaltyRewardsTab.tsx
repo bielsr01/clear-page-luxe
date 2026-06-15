@@ -132,7 +132,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
   const openEdit = (r: Reward) => {
     if (!canRewardsEdit) return;
     setEditing(r);
-    setProductId(r.product_id ?? "none");
+    setProductId(r.product_id ?? "");
     setName(r.name);
     setCost(String(r.points_cost));
     setStock(r.stock == null ? "" : String(r.stock));
