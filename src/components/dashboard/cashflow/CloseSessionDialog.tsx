@@ -49,6 +49,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   const diffCard = num(countedCard) - (summary?.card_sales ?? 0);
 
   const submit = async () => {
+    setConfirmOpen(false);
     setBusy(true);
     const { error } = await (supabase.rpc as any)("close_cash_session", {
       _session_id: sessionId,
@@ -57,13 +58,24 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
       _counted_card: num(countedCard),
       _notes: notes || null,
     });
-    setBusy(false);
     if (error) {
+      setBusy(false);
       toast.error(error.message);
       return;
     }
-    toast.success("Caixa fechado");
     const rid = summary?.restaurant_id;
+    // Fecha o restaurante automaticamente
+    if (rid) {
+      const { error: rErr } = await supabase
+        .from("restaurants")
+        .update({ manual_override: { type: "closed" } as any, is_open: false })
+        .eq("id", rid);
+      if (rErr) toast.warning(`Caixa fechado, mas falhou ao fechar o restaurante: ${rErr.message}`);
+      else toast.success("Caixa e restaurante fechados");
+    } else {
+      toast.success("Caixa fechado");
+    }
+    setBusy(false);
     if (rid) {
       await qc.invalidateQueries({ queryKey: cashSessionKey(rid) });
       await qc.invalidateQueries({ queryKey: ["cash-history", rid] });
