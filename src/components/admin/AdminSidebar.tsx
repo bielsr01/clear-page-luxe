@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -36,7 +36,8 @@ export type AdminView =
   | "expenses:admin"
   | "expenses:stores"
   | "finance:admin"
-  | "finance:restaurants";
+  | "finance:restaurants"
+  | "access";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -340,6 +341,17 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={active === "access"}
+                  onClick={() => handleChange("access")}
+                  tooltip="Gestão de acessos"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Gestão de acessos</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
