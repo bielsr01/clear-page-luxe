@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
-import type { CashSessionSummary } from "@/hooks/useCashSession";
+import { useQueryClient } from "@tanstack/react-query";
+import { cashSessionKey, cashSummaryKey, type CashSessionSummary } from "@/hooks/useCashSession";
 
 interface Props {
   open: boolean;
