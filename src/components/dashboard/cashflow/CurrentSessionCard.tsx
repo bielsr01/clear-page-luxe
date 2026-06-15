@@ -19,6 +19,10 @@ interface Props {
 
 export function CurrentSessionCard({ restaurantId }: Props) {
   const { session, summary, isOpen, refetch } = useCashSession(restaurantId);
+  const { can } = usePermissions(restaurantId);
+  const canOpenClose = can("cash_flow.open_close");
+  const canMovements = can("cash_flow.movements");
+  const canMoto = can("cash_flow.pay_motoboy");
   const [openDlg, setOpenDlg] = useState(false);
   const [closeDlg, setCloseDlg] = useState(false);
   const [inDlg, setInDlg] = useState(false);
