@@ -58,6 +58,14 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
       return;
     }
     toast.success("Caixa fechado");
+    const rid = summary?.restaurant_id;
+    if (rid) {
+      await qc.invalidateQueries({ queryKey: cashSessionKey(rid) });
+      await qc.invalidateQueries({ queryKey: ["cash-history", rid] });
+      await qc.invalidateQueries({ queryKey: ["cash-history-recon", rid] });
+      await qc.invalidateQueries({ queryKey: ["previous-cash-close", rid] });
+    }
+    await qc.invalidateQueries({ queryKey: cashSummaryKey(sessionId) });
     onOpenChange(false);
     onClosed?.();
   };
