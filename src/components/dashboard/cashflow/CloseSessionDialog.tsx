@@ -130,9 +130,24 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={busy} variant="destructive">Fechar caixa</Button>
+          <Button onClick={() => setConfirmOpen(true)} disabled={busy} variant="destructive">Fechar caixa</Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fechar restaurante também?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao fechar o caixa, o restaurante será fechado automaticamente e deixará de receber pedidos. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={submit} disabled={busy}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
