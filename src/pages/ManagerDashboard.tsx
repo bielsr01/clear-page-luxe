@@ -342,7 +342,7 @@ export default function ManagerDashboard() {
             {view === "marketing:coupons" && <LazyView viewKey={view} variant="list"><CouponsPanel restaurantId={restaurant.id} /></LazyView>}
             {view === "marketing:loyalty" && <LazyView viewKey={view} variant="list"><LoyaltyPanel restaurantId={restaurant.id} /></LazyView>}
             {view === "marketing:bulk" && <LazyView viewKey={view} variant="list"><BulkCampaignsPanel scope="restaurant" restaurantId={restaurant.id} /></LazyView>}
-            {view === "marketing:manual-send" && <LazyView viewKey={view} variant="form"><ManualSendPanel restaurantId={restaurant.id} /></LazyView>}
+            
             {view === "settings:order-config" && (
               <LazyView viewKey={view} variant="form">
                 <OrderConfigSettings restaurantId={restaurant.id} />
