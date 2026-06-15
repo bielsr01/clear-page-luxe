@@ -42,6 +42,7 @@ import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 import { AutoCloseCashPrompt } from "@/components/dashboard/AutoCloseCashPrompt";
+import { AutoOpenCashPrompt } from "@/components/dashboard/AutoOpenCashPrompt";
 
 interface Restaurant {
   id: string;
@@ -254,6 +255,13 @@ export default function ManagerDashboard() {
         isOpen={restaurant.is_open}
         onGoToCashFlow={() => setView("cash-flow")}
       />
+      <AutoOpenCashPrompt
+        restaurantId={restaurant.id}
+        openingHours={restaurant.opening_hours}
+        manualOverride={restaurant.manual_override}
+        isOpen={restaurant.is_open}
+      />
+
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar
           active={view}
