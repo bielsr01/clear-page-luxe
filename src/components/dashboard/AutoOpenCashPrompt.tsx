@@ -19,15 +19,27 @@ export function AutoOpenCashPrompt({ restaurantId, openingHours, manualOverride,
   const { isOpen: cashOpen, refetch } = useCashSession(restaurantId);
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 30_000);
+    const id = setInterval(() => setTick((t) => t + 1), 5_000);
     return () => clearInterval(id);
   }, []);
 
   const now = new Date();
   const ov = getEffectiveOverride(manualOverride, now);
   const withinSchedule = isWithinSchedule(openingHours, now);
-  const blockedByOverride = ov?.type === "closed";
-  const show = withinSchedule && !cashOpen && !blockedByOverride;
+  // Dentro do horário programado, ignoramos override "closed" — o popup precisa aparecer
+  // para o operador abrir o caixa e iniciar o expediente.
+  const show = withinSchedule && !cashOpen;
+
+  // Debug para diagnosticar quando o popup não aparecer
+  // eslint-disable-next-line no-console
+  console.debug("[AutoOpenCashPrompt]", {
+    now: now.toLocaleTimeString(),
+    withinSchedule,
+    cashOpen,
+    override: ov,
+    openingHoursToday: openingHours?.[String(now.getDay())],
+    show,
+  });
 
   return (
     <>
