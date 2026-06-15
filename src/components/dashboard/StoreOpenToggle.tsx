@@ -148,12 +148,8 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     }
   };
 
-  const computeUntil = (mode: "minutes" | "until" | "today", mins: string, time: string): string => {
+  const computeUntil = (mode: "until" | "today", mins: string, time: string): string => {
     const now = new Date();
-    if (mode === "minutes") {
-      const m = Math.max(1, parseInt(mins) || 0);
-      return new Date(now.getTime() + m * 60_000).toISOString();
-    }
     if (mode === "until") {
       const [h, mi] = time.split(":").map(Number);
       const d = new Date(now);
