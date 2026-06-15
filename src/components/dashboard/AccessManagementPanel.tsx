@@ -105,6 +105,10 @@ const SECTIONS: Array<{ key: keyof Permissions; label: string; rows: Row[] }> = 
     { path: "cash_flow.movements", label: "Entradas e retiradas" },
     { path: "cash_flow.pay_motoboy", label: "Pagar motoboys" },
   ] },
+  { key: "store", label: "Restaurante (status de funcionamento)", rows: [
+    { path: "store.open_close", label: "Abrir / Fechar Restaurante (botão superior)" },
+    { path: "store.view_auto_popups", label: "Ver pop-ups de abertura e fechamento automático" },
+  ] },
   { key: "access_management", label: "Gestão de Acessos", rows: [{ path: "access_management.view", label: "Visualizar e gerenciar usuários" }] },
 ];
 

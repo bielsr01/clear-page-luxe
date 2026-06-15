@@ -50,6 +50,7 @@ export type Permissions = {
   expenses: { view: boolean; edit: boolean };
   finance: { view: boolean; view_fee_breakdown: boolean };
   cash_flow: { view: boolean; open_close: boolean; movements: boolean; pay_motoboy: boolean };
+  store: { open_close: boolean; view_auto_popups: boolean };
   access_management: { view: boolean };
 };
 
@@ -94,6 +95,7 @@ export const FULL_PERMISSIONS: Permissions = {
   expenses: { view: true, edit: true },
   finance: { view: true, view_fee_breakdown: true },
   cash_flow: { view: true, open_close: true, movements: true, pay_motoboy: true },
+  store: { open_close: true, view_auto_popups: true },
   access_management: { view: true },
 };
 
@@ -135,6 +137,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   expenses: { view: false, edit: false },
   finance: { view: false, view_fee_breakdown: false },
   cash_flow: { view: false, open_close: false, movements: false, pay_motoboy: false },
+  store: { open_close: false, view_auto_popups: false },
   access_management: { view: false },
 };
 
@@ -205,6 +208,8 @@ const LEGACY_INHERIT_OVERRIDES: Record<string, string> = {
   "marketing.coupons.metrics": "marketing.coupons.view",
   "marketing.manual_send.view": "marketing.bulk.view",
   "cash_flow.view": "orders.view",
+  "store.open_close": "orders.view",
+  "store.view_auto_popups": "orders.view",
 };
 
 function pathDefined(obj: any, path: string): boolean {
