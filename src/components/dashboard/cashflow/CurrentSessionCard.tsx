@@ -41,10 +41,10 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   // Listen for external prompts (e.g. when the store is opened/closed)
   useEffect(() => {
     return onCashflowRequest((action) => {
-      if (action === "open" && !isOpen) setOpenDlg(true);
-      if (action === "close" && isOpen) setCloseDlg(true);
+      if (action === "open" && !isOpen && canOpenClose) setOpenDlg(true);
+      if (action === "close" && isOpen && canOpenClose) setCloseDlg(true);
     });
-  }, [isOpen]);
+  }, [isOpen, canOpenClose]);
 
   if (!isOpen) {
     return (
