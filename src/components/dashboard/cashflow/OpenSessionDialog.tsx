@@ -27,6 +27,8 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
   const [amount, setAmount] = useState("0");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
 
   // Sugere o valor de fechamento do caixa anterior
   useEffect(() => {
