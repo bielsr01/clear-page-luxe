@@ -82,6 +82,9 @@ export function CurrentSessionCard({ restaurantId }: Props) {
             <Button size="sm" variant="secondary" onClick={() => setOutDlg(true)}>
               <ArrowUpCircle className="w-4 h-4 mr-1" /> Retirada
             </Button>
+            <Button size="sm" variant="secondary" onClick={() => setMotoDlg(true)}>
+              <Bike className="w-4 h-4 mr-1" /> Pagar motoboy
+            </Button>
             <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
               <Lock className="w-4 h-4 mr-1" /> Fechar caixa
             </Button>
