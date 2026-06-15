@@ -96,7 +96,7 @@ export function AppSidebar({
   const visibleMarketing = marketingItems.filter((it) => {
     if (it.id === "marketing:coupons") return !!can("marketing.coupons.view");
     if (it.id === "marketing:bulk") return !!can("marketing.bulk.view");
-    if (it.id === "marketing:manual-send") return !!can("marketing.manual_send.view");
+    return true;
     return true;
   });
   const visibleSettings = settingsItems.filter((it) => {
