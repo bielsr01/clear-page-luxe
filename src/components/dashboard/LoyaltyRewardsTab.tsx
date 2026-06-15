@@ -142,6 +142,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
 
   const save = async () => {
     if (!canRewardsEdit) return toast.error("Sem permissão para salvar recompensa");
+    if (!productId || productId === "none") return toast.error("Selecione um produto do cardápio");
     if (!name.trim()) return toast.error("Informe o nome");
     const payload = {
       restaurant_id: restaurantId,
