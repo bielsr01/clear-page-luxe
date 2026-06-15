@@ -49,6 +49,7 @@ export type Permissions = {
   stock: { view: boolean; edit: boolean };
   expenses: { view: boolean; edit: boolean };
   finance: { view: boolean; view_fee_breakdown: boolean };
+  cash_flow: { view: boolean; open_close: boolean; movements: boolean; pay_motoboy: boolean };
   access_management: { view: boolean };
 };
 
