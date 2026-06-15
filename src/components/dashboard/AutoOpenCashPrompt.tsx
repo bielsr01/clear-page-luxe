@@ -36,8 +36,9 @@ export function AutoOpenCashPrompt({ restaurantId, openingHours, manualOverride,
   const withinSchedule = isWithinSchedule(openingHours, now);
   // Override "closed" ativo significa que o dono fechou manualmente — não exibir popup.
   const blockedByOverride = ov?.type === "closed";
-  // Popup aparece quando: dentro do horário programado, restaurante fechado, sem caixa aberto, sem override "closed".
-  const show = withinSchedule && !isOpen && !cashOpen && !blockedByOverride;
+  // Popup aparece quando: dentro do horário programado, sem caixa aberto, sem override "closed".
+  // (Ignoramos isOpen — se está dentro do horário e sem caixa, precisa abrir o caixa de qualquer forma.)
+  const show = withinSchedule && !cashOpen && !blockedByOverride;
 
   return (
     <>
