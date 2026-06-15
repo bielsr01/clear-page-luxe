@@ -42,6 +42,7 @@ import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 import { AutoCloseCashPrompt } from "@/components/dashboard/AutoCloseCashPrompt";
+import { AutoOpenCashPrompt } from "@/components/dashboard/AutoOpenCashPrompt";
 
 interface Restaurant {
   id: string;
