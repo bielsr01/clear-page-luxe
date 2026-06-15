@@ -117,7 +117,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
   // Reward dialog (create/edit)
   const [dlg, setDlg] = useState(false);
   const [editing, setEditing] = useState<Reward | null>(null);
-  const [productId, setProductId] = useState<string>("none");
+  const [productId, setProductId] = useState<string>("");
   const [name, setName] = useState("");
   const [cost, setCost] = useState("100");
   const [stock, setStock] = useState("");
@@ -126,7 +126,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
   const openCreate = () => {
     if (!canRewardsEdit) return;
     setEditing(null);
-    setProductId("none"); setName(""); setCost("100"); setStock(""); setActive(true);
+    setProductId(""); setName(""); setCost("100"); setStock(""); setActive(true);
     setDlg(true);
   };
   const openEdit = (r: Reward) => {
