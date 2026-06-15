@@ -236,10 +236,15 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
 
   const ovLabel = () => {
     if (!ov) return null;
-    if (ov.type === "open" && !withinSchedule) {
-      if (!ov.until) return "Aberto manualmente";
-      const d = new Date(ov.until);
-      return `Aberto até ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+    if (ov.type === "open") {
+      if (ov.until) {
+        const d = new Date(ov.until);
+        return `Aberto até ${d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+      }
+      // Sem until: usa horário de fechamento programado de hoje, se houver
+      const sched = todayScheduledClose();
+      if (sched) return `Aberto até ${sched.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+      return "Aberto";
     }
     if (ov.type === "closed") {
       if (!ov.until) return "Fechado";
