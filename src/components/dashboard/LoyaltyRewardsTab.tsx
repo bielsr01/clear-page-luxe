@@ -146,7 +146,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
     if (!name.trim()) return toast.error("Informe o nome");
     const payload = {
       restaurant_id: restaurantId,
-      product_id: productId === "none" ? null : productId,
+      product_id: productId,
       name: name.trim(),
       points_cost: Math.max(0, Math.floor(Number(cost) || 0)),
       stock: stock === "" ? null : Math.max(0, Math.floor(Number(stock) || 0)),
