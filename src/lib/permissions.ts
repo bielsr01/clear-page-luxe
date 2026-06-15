@@ -204,6 +204,7 @@ const LEGACY_INHERIT_OVERRIDES: Record<string, string> = {
   "customers.create": "customers.edit",
   "marketing.coupons.metrics": "marketing.coupons.view",
   "marketing.manual_send.view": "marketing.bulk.view",
+  "cash_flow.view": "orders.view",
 };
 
 function pathDefined(obj: any, path: string): boolean {
