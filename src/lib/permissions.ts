@@ -175,6 +175,9 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "stock.edit": "stock.view",
   "expenses.edit": "expenses.view",
   "finance.view_fee_breakdown": "finance.view",
+  "cash_flow.open_close": "cash_flow.view",
+  "cash_flow.movements": "cash_flow.view",
+  "cash_flow.pay_motoboy": "cash_flow.view",
 };
 
 // Chaves adicionadas após o primeiro release. Se o grupo não tiver o campo
