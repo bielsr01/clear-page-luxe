@@ -327,20 +327,24 @@ export default function ManagerDashboard() {
                 <LazyView viewKey={view} variant="list">
                   <OrdersPanel restaurantId={restaurant.id} />
                 </LazyView>
-                <AutoCloseCashPrompt
-                  restaurantId={restaurant.id}
-                  openingHours={restaurant.opening_hours}
-                  manualOverride={restaurant.manual_override}
-                  isOpen={restaurant.is_open}
-                  onGoToCashFlow={() => setView("cash-flow")}
-                />
-                <AutoOpenCashPrompt
-                  restaurantId={restaurant.id}
-                  openingHours={restaurant.opening_hours}
-                  manualOverride={restaurant.manual_override}
-                  isOpen={restaurant.is_open}
-                  onChanged={refetchRestaurant}
-                />
+                {(isFullAccess || !!permissions.store?.view_auto_popups) && (
+                  <>
+                    <AutoCloseCashPrompt
+                      restaurantId={restaurant.id}
+                      openingHours={restaurant.opening_hours}
+                      manualOverride={restaurant.manual_override}
+                      isOpen={restaurant.is_open}
+                      onGoToCashFlow={() => setView("cash-flow")}
+                    />
+                    <AutoOpenCashPrompt
+                      restaurantId={restaurant.id}
+                      openingHours={restaurant.opening_hours}
+                      manualOverride={restaurant.manual_override}
+                      isOpen={restaurant.is_open}
+                      onChanged={refetchRestaurant}
+                    />
+                  </>
+                )}
               </>
             )}
             {view === "cash-flow" && (
