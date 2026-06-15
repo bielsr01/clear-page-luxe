@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
-import { ArrowDownCircle, ArrowUpCircle, LockOpen, Lock, RefreshCw } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, LockOpen, Lock, RefreshCw, Bike } from "lucide-react";
 import { useCashSession } from "@/hooks/useCashSession";
 import { OpenSessionDialog } from "./OpenSessionDialog";
 import { CashMovementDialog } from "./CashMovementDialog";
 import { CloseSessionDialog } from "./CloseSessionDialog";
+import { PayMotoboyDialog } from "./PayMotoboyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { onCashflowRequest } from "@/lib/cashflowBus";
 
@@ -21,6 +22,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   const [closeDlg, setCloseDlg] = useState(false);
   const [inDlg, setInDlg] = useState(false);
   const [outDlg, setOutDlg] = useState(false);
+  const [motoDlg, setMotoDlg] = useState(false);
   const [openedByName, setOpenedByName] = useState<string>("");
 
   useEffect(() => {
@@ -80,6 +82,9 @@ export function CurrentSessionCard({ restaurantId }: Props) {
             <Button size="sm" variant="secondary" onClick={() => setOutDlg(true)}>
               <ArrowUpCircle className="w-4 h-4 mr-1" /> Retirada
             </Button>
+            <Button size="sm" variant="secondary" onClick={() => setMotoDlg(true)}>
+              <Bike className="w-4 h-4 mr-1" /> Pagar motoboy
+            </Button>
             <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
               <Lock className="w-4 h-4 mr-1" /> Fechar caixa
             </Button>
@@ -104,6 +109,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
 
       <CashMovementDialog open={inDlg} onOpenChange={setInDlg} direction="in" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
       <CashMovementDialog open={outDlg} onOpenChange={setOutDlg} direction="out" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
+      <PayMotoboyDialog open={motoDlg} onOpenChange={setMotoDlg} restaurantId={restaurantId} sessionId={session!.id} sessionOpenedAt={session!.opened_at} onDone={refetch} />
       <CloseSessionDialog open={closeDlg} onOpenChange={setCloseDlg} sessionId={session!.id} summary={summary} onClosed={refetch} />
     </>
   );
