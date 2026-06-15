@@ -65,11 +65,11 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
   const [busy, setBusy] = useState(false);
 
   // Modo de duração para abrir/fechar manualmente
-  const [closeMode, setCloseMode] = useState<"minutes" | "until" | "today">("minutes");
+  const [closeMode, setCloseMode] = useState<"until" | "today">("today");
   const [minutes, setMinutes] = useState("30");
   const [untilTime, setUntilTime] = useState("23:00");
 
-  const [openMode, setOpenMode] = useState<"minutes" | "until" | "today" | "early">("minutes");
+  const [openMode, setOpenMode] = useState<"until" | "today" | "early">("today");
   const [openMinutes, setOpenMinutes] = useState("30");
   const [openUntilTime, setOpenUntilTime] = useState("23:00");
 
@@ -137,25 +137,19 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       if (withinSchedule && cashOpen) {
         persist(null).then(() => { toast.success("Loja aberta"); });
       } else {
-        setOpenMode(withinSchedule ? "today" : "minutes");
-        setOpenMinutes("30");
+        setOpenMode(withinSchedule ? "today" : "today");
         // Se já está dentro do horário, pula direto para o caixa
         setOpenStep(withinSchedule ? "cash" : "mode");
         setOpenDialog(true);
       }
     } else {
-      setCloseMode("minutes");
-      setMinutes("30");
+      setCloseMode("today");
       setCloseDialog(true);
     }
   };
 
-  const computeUntil = (mode: "minutes" | "until" | "today", mins: string, time: string): string => {
+  const computeUntil = (mode: "until" | "today", mins: string, time: string): string => {
     const now = new Date();
-    if (mode === "minutes") {
-      const m = Math.max(1, parseInt(mins) || 0);
-      return new Date(now.getTime() + m * 60_000).toISOString();
-    }
     if (mode === "until") {
       const [h, mi] = time.split(":").map(Number);
       const d = new Date(now);
@@ -185,7 +179,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       if (!earlyClose) { toast.error("Não há horário agendado para hoje"); return; }
       until = earlyClose.toISOString();
     } else {
-      until = computeUntil(openMode as "minutes" | "until" | "today", openMinutes, openUntilTime);
+      until = computeUntil(openMode as "until" | "today", openMinutes, openUntilTime);
     }
     await persist({ type: "open", until });
     setOpenDialog(false);
@@ -198,10 +192,8 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
-    if (closeMode === "minutes") {
-      warnCashOnClose();
-    } else if (cashOpen) {
-      // Fechamento prolongado: abre o popup de fechamento de caixa automaticamente
+    if (cashOpen) {
+      // Fechamento: abre o popup de fechamento de caixa automaticamente
       requestCashflowAction("close");
     }
   };
@@ -315,17 +307,6 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
           {openStep === "mode" && !withinSchedule && (
             <RadioGroup value={openMode} onValueChange={(v) => setOpenMode(v as any)} className="space-y-3 py-2">
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="minutes" id="om" />
-                <Label htmlFor="om" className="flex-1">Por alguns minutos</Label>
-                <Input
-                  type="number" min={1} className="w-24"
-                  value={openMinutes}
-                  onChange={(e) => setOpenMinutes(e.target.value)}
-                  onFocus={() => setOpenMode("minutes")}
-                />
-                <span className="text-sm text-muted-foreground">min</span>
-              </div>
-              <div className="flex items-center gap-3">
                 <RadioGroupItem value="until" id="ou" />
                 <Label htmlFor="ou" className="flex-1">Até um horário específico</Label>
                 <Input
@@ -374,17 +355,6 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
           </DialogHeader>
 
           <RadioGroup value={closeMode} onValueChange={(v) => setCloseMode(v as any)} className="space-y-3 py-2">
-            <div className="flex items-center gap-3">
-              <RadioGroupItem value="minutes" id="m" />
-              <Label htmlFor="m" className="flex-1">Por alguns minutos</Label>
-              <Input
-                type="number" min={1} className="w-24"
-                value={minutes}
-                onChange={(e) => setMinutes(e.target.value)}
-                onFocus={() => setCloseMode("minutes")}
-              />
-              <span className="text-sm text-muted-foreground">min</span>
-            </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="until" id="u" />
               <Label htmlFor="u" className="flex-1">Até um horário específico</Label>
