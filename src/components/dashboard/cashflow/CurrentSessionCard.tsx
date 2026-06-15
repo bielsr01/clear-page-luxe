@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
-import { ArrowDownCircle, ArrowUpCircle, LockOpen, Lock, RefreshCw } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, LockOpen, Lock, RefreshCw, Bike } from "lucide-react";
 import { useCashSession } from "@/hooks/useCashSession";
 import { OpenSessionDialog } from "./OpenSessionDialog";
 import { CashMovementDialog } from "./CashMovementDialog";
 import { CloseSessionDialog } from "./CloseSessionDialog";
+import { PayMotoboyDialog } from "./PayMotoboyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { onCashflowRequest } from "@/lib/cashflowBus";
 
