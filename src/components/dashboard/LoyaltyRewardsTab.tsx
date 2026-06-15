@@ -117,7 +117,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
   // Reward dialog (create/edit)
   const [dlg, setDlg] = useState(false);
   const [editing, setEditing] = useState<Reward | null>(null);
-  const [productId, setProductId] = useState<string>("none");
+  const [productId, setProductId] = useState<string>("");
   const [name, setName] = useState("");
   const [cost, setCost] = useState("100");
   const [stock, setStock] = useState("");
@@ -126,13 +126,13 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
   const openCreate = () => {
     if (!canRewardsEdit) return;
     setEditing(null);
-    setProductId("none"); setName(""); setCost("100"); setStock(""); setActive(true);
+    setProductId(""); setName(""); setCost("100"); setStock(""); setActive(true);
     setDlg(true);
   };
   const openEdit = (r: Reward) => {
     if (!canRewardsEdit) return;
     setEditing(r);
-    setProductId(r.product_id ?? "none");
+    setProductId(r.product_id ?? "");
     setName(r.name);
     setCost(String(r.points_cost));
     setStock(r.stock == null ? "" : String(r.stock));
@@ -142,10 +142,11 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
 
   const save = async () => {
     if (!canRewardsEdit) return toast.error("Sem permissão para salvar recompensa");
+    if (!productId || productId === "none") return toast.error("Selecione um produto do cardápio");
     if (!name.trim()) return toast.error("Informe o nome");
     const payload = {
       restaurant_id: restaurantId,
-      product_id: productId === "none" ? null : productId,
+      product_id: productId,
       name: name.trim(),
       points_cost: Math.max(0, Math.floor(Number(cost) || 0)),
       stock: stock === "" ? null : Math.max(0, Math.floor(Number(stock) || 0)),
@@ -333,7 +334,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
           <DialogHeader><DialogTitle>{editing ? "Editar recompensa" : "Nova recompensa"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Produto do cardápio (opcional)</Label>
+              <Label>Produto do cardápio <span className="text-destructive">*</span></Label>
               <Select value={productId} onValueChange={(v) => {
                 setProductId(v);
                 if (v !== "none" && !name.trim()) {
@@ -341,9 +342,8 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
                   if (p) setName(p.name);
                 }
               }}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione um produto" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— Nenhum —</SelectItem>
                   {(productsQ.data ?? []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
