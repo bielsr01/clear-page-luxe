@@ -99,6 +99,12 @@ const SECTIONS: Array<{ key: keyof Permissions; label: string; rows: Row[] }> = 
     { path: "finance.view", label: "Visualizar" },
     { path: "finance.view_fee_breakdown", label: "Ver detalhamento do faturamento (taxas)" },
   ] },
+  { key: "cash_flow", label: "Fluxo de caixa", rows: [
+    { path: "cash_flow.view", label: "Visualizar fluxo de caixa" },
+    { path: "cash_flow.open_close", label: "Abrir e fechar caixa" },
+    { path: "cash_flow.movements", label: "Entradas e retiradas" },
+    { path: "cash_flow.pay_motoboy", label: "Pagar motoboys" },
+  ] },
   { key: "access_management", label: "Gestão de Acessos", rows: [{ path: "access_management.view", label: "Visualizar e gerenciar usuários" }] },
 ];
 
