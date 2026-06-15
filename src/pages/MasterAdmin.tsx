@@ -192,6 +192,7 @@ export default function MasterAdmin() {
     "expenses:stores": "Despesas das lojas",
     "finance:admin": "Receitas - Despesas / Admin",
     "finance:restaurants": "Receitas - Despesas / Restaurantes",
+    "access": "Gestão de acessos",
   };
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
