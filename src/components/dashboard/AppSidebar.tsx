@@ -91,6 +91,7 @@ export function AppSidebar({
     if (it.id === "orders") return !!can("orders.view");
     if (it.id === "menu") return !!can("menu.view");
     if (it.id === "customers") return !!can("customers.view");
+    if (it.id === "cash-flow") return !!can("cash_flow.view");
     return true;
   });
   const visibleMarketing = marketingItems.filter((it) => {
