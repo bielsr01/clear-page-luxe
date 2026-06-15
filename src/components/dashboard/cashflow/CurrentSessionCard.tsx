@@ -57,7 +57,8 @@ export function CurrentSessionCard({ restaurantId }: Props) {
             <p className="text-sm text-muted-foreground">
               Abra um caixa para começar a operar. Vendas de PDV ficam bloqueadas enquanto não houver caixa aberto.
             </p>
-            <Button onClick={() => setOpenDlg(true)}><LockOpen className="w-4 h-4 mr-1" /> Abrir caixa</Button>
+            <Button onClick={() => setOpenDlg(true)} disabled={!canOpenClose}><LockOpen className="w-4 h-4 mr-1" /> Abrir caixa</Button>
+            {!canOpenClose && <p className="text-xs text-muted-foreground">Você não tem permissão para abrir o caixa.</p>}
           </CardContent>
         </Card>
         <OpenSessionDialog open={openDlg} onOpenChange={setOpenDlg} restaurantId={restaurantId} onOpened={refetch} />
