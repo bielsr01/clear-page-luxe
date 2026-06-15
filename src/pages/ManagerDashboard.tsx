@@ -38,7 +38,7 @@ import { CashFlowPanel } from "@/components/dashboard/cashflow/CashFlowPanel";
 import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
-import { ManualSendPanel } from "@/components/dashboard/ManualSendPanel";
+
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 
@@ -180,7 +180,7 @@ export default function ManagerDashboard() {
       customers: !!permissions.customers.view,
       "marketing:coupons": !!permissions.marketing.coupons.view,
       "marketing:bulk": !!permissions.marketing.bulk.view,
-      "marketing:manual-send": !!permissions.marketing.manual_send.view,
+      
       "marketing:loyalty": !!permissions.loyalty.view,
       "settings:order-config": !!permissions.settings.view,
       "settings:business": !!permissions.settings.view,
@@ -231,7 +231,6 @@ export default function ManagerDashboard() {
     "marketing:coupons": "Cupons de desconto",
     "marketing:loyalty": "Programa de fidelidade",
     "marketing:bulk": "Envio em massa",
-    "marketing:manual-send": "Envio Manual",
     "settings:order-config": "Configurações de Pedidos",
     "settings:business": "Informações do negócio",
     "settings:printers": "Impressões",
@@ -343,7 +342,7 @@ export default function ManagerDashboard() {
             {view === "marketing:coupons" && <LazyView viewKey={view} variant="list"><CouponsPanel restaurantId={restaurant.id} /></LazyView>}
             {view === "marketing:loyalty" && <LazyView viewKey={view} variant="list"><LoyaltyPanel restaurantId={restaurant.id} /></LazyView>}
             {view === "marketing:bulk" && <LazyView viewKey={view} variant="list"><BulkCampaignsPanel scope="restaurant" restaurantId={restaurant.id} /></LazyView>}
-            {view === "marketing:manual-send" && <LazyView viewKey={view} variant="form"><ManualSendPanel restaurantId={restaurant.id} /></LazyView>}
+            
             {view === "settings:order-config" && (
               <LazyView viewKey={view} variant="form">
                 <OrderConfigSettings restaurantId={restaurant.id} />
