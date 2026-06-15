@@ -153,9 +153,15 @@ export default function ManagerDashboard() {
       .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `restaurant_id=eq.${restaurant.id}` }, () => {
         qc.invalidateQueries({ queryKey: ["managerStats", restaurant.id] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "restaurants", filter: `id=eq.${restaurant.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ["managerRestaurant", user?.id] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "cash_register_sessions", filter: `restaurant_id=eq.${restaurant.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ["managerRestaurant", user?.id] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [restaurant?.id, qc]);
+  }, [restaurant?.id, qc, user?.id]);
 
   const { notifications, unreadCount, pulse, markAllRead, clear } = useNewOrderNotifications(
     restaurant?.id,
