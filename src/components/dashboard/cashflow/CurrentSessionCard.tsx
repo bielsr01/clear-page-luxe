@@ -22,6 +22,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   const [closeDlg, setCloseDlg] = useState(false);
   const [inDlg, setInDlg] = useState(false);
   const [outDlg, setOutDlg] = useState(false);
+  const [motoDlg, setMotoDlg] = useState(false);
   const [openedByName, setOpenedByName] = useState<string>("");
 
   useEffect(() => {
