@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -25,6 +29,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   const [countedCard, setCountedCard] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (open && summary) {
@@ -44,6 +49,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   const diffCard = num(countedCard) - (summary?.card_sales ?? 0);
 
   const submit = async () => {
+    setConfirmOpen(false);
     setBusy(true);
     const { error } = await (supabase.rpc as any)("close_cash_session", {
       _session_id: sessionId,
@@ -52,13 +58,24 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
       _counted_card: num(countedCard),
       _notes: notes || null,
     });
-    setBusy(false);
     if (error) {
+      setBusy(false);
       toast.error(error.message);
       return;
     }
-    toast.success("Caixa fechado");
     const rid = summary?.restaurant_id;
+    // Fecha o restaurante automaticamente
+    if (rid) {
+      const { error: rErr } = await supabase
+        .from("restaurants")
+        .update({ manual_override: { type: "closed" } as any, is_open: false })
+        .eq("id", rid);
+      if (rErr) toast.warning(`Caixa fechado, mas falhou ao fechar o restaurante: ${rErr.message}`);
+      else toast.success("Caixa e restaurante fechados");
+    } else {
+      toast.success("Caixa fechado");
+    }
+    setBusy(false);
     if (rid) {
       await qc.invalidateQueries({ queryKey: cashSessionKey(rid) });
       await qc.invalidateQueries({ queryKey: ["cash-history", rid] });
@@ -113,9 +130,24 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={busy} variant="destructive">Fechar caixa</Button>
+          <Button onClick={() => setConfirmOpen(true)} disabled={busy} variant="destructive">Fechar caixa</Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fechar restaurante também?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao fechar o caixa, o restaurante será fechado automaticamente e deixará de receber pedidos. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={submit} disabled={busy}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

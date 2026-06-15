@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -23,6 +27,8 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
   const [amount, setAmount] = useState("0");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
 
   // Sugere o valor de fechamento do caixa anterior
   useEffect(() => {
@@ -39,31 +45,43 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
     return Math.abs(value - Number(prevClose)) > 0.001;
   }, [value, prevClose]);
 
-  const handleOpen = async () => {
-    if (!user?.id) return;
-    if (isNaN(value) || value < 0) {
-      toast.error("Valor inicial inválido");
-      return;
-    }
+  const validate = () => {
+    if (!user?.id) return false;
+    if (isNaN(value) || value < 0) { toast.error("Valor inicial inválido"); return false; }
     if (isDifferent && !notes.trim()) {
       toast.error("Informe o motivo da diferença em relação ao fechamento anterior");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const askConfirm = () => { if (validate()) setConfirmOpen(true); };
+
+  const handleOpen = async () => {
+    setConfirmOpen(false);
+    if (!validate()) return;
     setBusy(true);
     const { error } = await supabase.from("cash_register_sessions").insert({
       restaurant_id: restaurantId,
-      opened_by: user.id,
+      opened_by: user!.id,
       opening_amount: value,
       opening_notes: notes || null,
       status: "open" as const,
     } as any);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       if (error.code === "23505") toast.error("Já existe um caixa aberto para esta unidade");
       else toast.error(error.message);
       return;
     }
-    toast.success("Caixa aberto");
+    // Abre o restaurante automaticamente
+    const { error: rErr } = await supabase
+      .from("restaurants")
+      .update({ manual_override: { type: "open" } as any, is_open: true })
+      .eq("id", restaurantId);
+    setBusy(false);
+    if (rErr) toast.warning(`Caixa aberto, mas falhou ao abrir o restaurante: ${rErr.message}`);
+    else toast.success("Caixa e restaurante abertos");
     setAmount("0");
     setNotes("");
     onOpenChange(false);
@@ -100,9 +118,24 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleOpen} disabled={busy}>Abrir caixa</Button>
+          <Button onClick={askConfirm} disabled={busy}>Abrir caixa</Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abrir restaurante também?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao abrir o caixa, o restaurante será aberto automaticamente e passará a receber pedidos. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleOpen} disabled={busy}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
