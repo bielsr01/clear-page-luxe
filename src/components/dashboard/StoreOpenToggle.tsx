@@ -137,15 +137,13 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       if (withinSchedule && cashOpen) {
         persist(null).then(() => { toast.success("Loja aberta"); });
       } else {
-        setOpenMode(withinSchedule ? "today" : "minutes");
-        setOpenMinutes("30");
+        setOpenMode(withinSchedule ? "today" : "today");
         // Se já está dentro do horário, pula direto para o caixa
         setOpenStep(withinSchedule ? "cash" : "mode");
         setOpenDialog(true);
       }
     } else {
-      setCloseMode("minutes");
-      setMinutes("30");
+      setCloseMode("today");
       setCloseDialog(true);
     }
   };
