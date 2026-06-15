@@ -255,6 +255,13 @@ export default function ManagerDashboard() {
         isOpen={restaurant.is_open}
         onGoToCashFlow={() => setView("cash-flow")}
       />
+      <AutoOpenCashPrompt
+        restaurantId={restaurant.id}
+        openingHours={restaurant.opening_hours}
+        manualOverride={restaurant.manual_override}
+        isOpen={restaurant.is_open}
+      />
+
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar
           active={view}
