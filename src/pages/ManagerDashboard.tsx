@@ -247,6 +247,13 @@ export default function ManagerDashboard() {
   return (
     <SidebarProvider>
       {!isMasterAdmin && <IfoodWidgetMount restaurantId={restaurant?.id} />}
+      <AutoCloseCashPrompt
+        restaurantId={restaurant.id}
+        openingHours={restaurant.opening_hours}
+        manualOverride={restaurant.manual_override}
+        isOpen={restaurant.is_open}
+        onGoToCashFlow={() => setView("cash-flow")}
+      />
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar
           active={view}
