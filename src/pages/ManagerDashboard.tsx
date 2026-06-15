@@ -38,7 +38,7 @@ import { CashFlowPanel } from "@/components/dashboard/cashflow/CashFlowPanel";
 import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
-import { ManualSendPanel } from "@/components/dashboard/ManualSendPanel";
+
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 
