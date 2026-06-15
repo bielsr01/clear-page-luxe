@@ -45,31 +45,43 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
     return Math.abs(value - Number(prevClose)) > 0.001;
   }, [value, prevClose]);
 
-  const handleOpen = async () => {
-    if (!user?.id) return;
-    if (isNaN(value) || value < 0) {
-      toast.error("Valor inicial inválido");
-      return;
-    }
+  const validate = () => {
+    if (!user?.id) return false;
+    if (isNaN(value) || value < 0) { toast.error("Valor inicial inválido"); return false; }
     if (isDifferent && !notes.trim()) {
       toast.error("Informe o motivo da diferença em relação ao fechamento anterior");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const askConfirm = () => { if (validate()) setConfirmOpen(true); };
+
+  const handleOpen = async () => {
+    setConfirmOpen(false);
+    if (!validate()) return;
     setBusy(true);
     const { error } = await supabase.from("cash_register_sessions").insert({
       restaurant_id: restaurantId,
-      opened_by: user.id,
+      opened_by: user!.id,
       opening_amount: value,
       opening_notes: notes || null,
       status: "open" as const,
     } as any);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       if (error.code === "23505") toast.error("Já existe um caixa aberto para esta unidade");
       else toast.error(error.message);
       return;
     }
-    toast.success("Caixa aberto");
+    // Abre o restaurante automaticamente
+    const { error: rErr } = await supabase
+      .from("restaurants")
+      .update({ manual_override: { type: "open" } as any, is_open: true })
+      .eq("id", restaurantId);
+    setBusy(false);
+    if (rErr) toast.warning(`Caixa aberto, mas falhou ao abrir o restaurante: ${rErr.message}`);
+    else toast.success("Caixa e restaurante abertos");
     setAmount("0");
     setNotes("");
     onOpenChange(false);
