@@ -11,6 +11,7 @@ import { CloseSessionDialog } from "./CloseSessionDialog";
 import { PayMotoboyDialog } from "./PayMotoboyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { onCashflowRequest } from "@/lib/cashflowBus";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface Props {
   restaurantId: string;
