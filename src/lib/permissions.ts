@@ -49,6 +49,7 @@ export type Permissions = {
   stock: { view: boolean; edit: boolean };
   expenses: { view: boolean; edit: boolean };
   finance: { view: boolean; view_fee_breakdown: boolean };
+  cash_flow: { view: boolean; open_close: boolean; movements: boolean; pay_motoboy: boolean };
   access_management: { view: boolean };
 };
 
@@ -92,6 +93,7 @@ export const FULL_PERMISSIONS: Permissions = {
   stock: { view: true, edit: true },
   expenses: { view: true, edit: true },
   finance: { view: true, view_fee_breakdown: true },
+  cash_flow: { view: true, open_close: true, movements: true, pay_motoboy: true },
   access_management: { view: true },
 };
 
@@ -132,6 +134,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   stock: { view: false, edit: false },
   expenses: { view: false, edit: false },
   finance: { view: false, view_fee_breakdown: false },
+  cash_flow: { view: false, open_close: false, movements: false, pay_motoboy: false },
   access_management: { view: false },
 };
 
@@ -172,6 +175,9 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "stock.edit": "stock.view",
   "expenses.edit": "expenses.view",
   "finance.view_fee_breakdown": "finance.view",
+  "cash_flow.open_close": "cash_flow.view",
+  "cash_flow.movements": "cash_flow.view",
+  "cash_flow.pay_motoboy": "cash_flow.view",
 };
 
 // Chaves adicionadas após o primeiro release. Se o grupo não tiver o campo
@@ -188,6 +194,9 @@ const LEGACY_INHERIT_FROM_PARENT: string[] = [
   "finance.view_fee_breakdown",
   "orders.apply_pdv_discount",
   "orders.view_history",
+  "cash_flow.open_close",
+  "cash_flow.movements",
+  "cash_flow.pay_motoboy",
 ];
 
 // Para chaves legadas onde queremos herdar de outro nó (não o "parent" das dependências).
@@ -195,6 +204,7 @@ const LEGACY_INHERIT_OVERRIDES: Record<string, string> = {
   "customers.create": "customers.edit",
   "marketing.coupons.metrics": "marketing.coupons.view",
   "marketing.manual_send.view": "marketing.bulk.view",
+  "cash_flow.view": "orders.view",
 };
 
 function pathDefined(obj: any, path: string): boolean {

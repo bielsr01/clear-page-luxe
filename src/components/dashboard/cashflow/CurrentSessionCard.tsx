@@ -11,6 +11,7 @@ import { CloseSessionDialog } from "./CloseSessionDialog";
 import { PayMotoboyDialog } from "./PayMotoboyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { onCashflowRequest } from "@/lib/cashflowBus";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface Props {
   restaurantId: string;
@@ -18,6 +19,10 @@ interface Props {
 
 export function CurrentSessionCard({ restaurantId }: Props) {
   const { session, summary, isOpen, refetch } = useCashSession(restaurantId);
+  const { can } = usePermissions(restaurantId);
+  const canOpenClose = can("cash_flow.open_close");
+  const canMovements = can("cash_flow.movements");
+  const canMoto = can("cash_flow.pay_motoboy");
   const [openDlg, setOpenDlg] = useState(false);
   const [closeDlg, setCloseDlg] = useState(false);
   const [inDlg, setInDlg] = useState(false);
@@ -36,10 +41,10 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   // Listen for external prompts (e.g. when the store is opened/closed)
   useEffect(() => {
     return onCashflowRequest((action) => {
-      if (action === "open" && !isOpen) setOpenDlg(true);
-      if (action === "close" && isOpen) setCloseDlg(true);
+      if (action === "open" && !isOpen && canOpenClose) setOpenDlg(true);
+      if (action === "close" && isOpen && canOpenClose) setCloseDlg(true);
     });
-  }, [isOpen]);
+  }, [isOpen, canOpenClose]);
 
   if (!isOpen) {
     return (
@@ -52,7 +57,8 @@ export function CurrentSessionCard({ restaurantId }: Props) {
             <p className="text-sm text-muted-foreground">
               Abra um caixa para começar a operar. Vendas de PDV ficam bloqueadas enquanto não houver caixa aberto.
             </p>
-            <Button onClick={() => setOpenDlg(true)}><LockOpen className="w-4 h-4 mr-1" /> Abrir caixa</Button>
+            <Button onClick={() => setOpenDlg(true)} disabled={!canOpenClose}><LockOpen className="w-4 h-4 mr-1" /> Abrir caixa</Button>
+            {!canOpenClose && <p className="text-xs text-muted-foreground">Você não tem permissão para abrir o caixa.</p>}
           </CardContent>
         </Card>
         <OpenSessionDialog open={openDlg} onOpenChange={setOpenDlg} restaurantId={restaurantId} onOpened={refetch} />
@@ -76,18 +82,26 @@ export function CurrentSessionCard({ restaurantId }: Props) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={refetch} title="Atualizar"><RefreshCw className="w-4 h-4" /></Button>
-            <Button size="sm" variant="secondary" onClick={() => setInDlg(true)}>
-              <ArrowDownCircle className="w-4 h-4 mr-1" /> Entrada
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setOutDlg(true)}>
-              <ArrowUpCircle className="w-4 h-4 mr-1" /> Retirada
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setMotoDlg(true)}>
-              <Bike className="w-4 h-4 mr-1" /> Pagar motoboy
-            </Button>
-            <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
-              <Lock className="w-4 h-4 mr-1" /> Fechar caixa
-            </Button>
+            {canMovements && (
+              <Button size="sm" variant="secondary" onClick={() => setInDlg(true)}>
+                <ArrowDownCircle className="w-4 h-4 mr-1" /> Entrada
+              </Button>
+            )}
+            {canMovements && (
+              <Button size="sm" variant="secondary" onClick={() => setOutDlg(true)}>
+                <ArrowUpCircle className="w-4 h-4 mr-1" /> Retirada
+              </Button>
+            )}
+            {canMoto && (
+              <Button size="sm" variant="secondary" onClick={() => setMotoDlg(true)}>
+                <Bike className="w-4 h-4 mr-1" /> Pagar motoboy
+              </Button>
+            )}
+            {canOpenClose && (
+              <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
+                <Lock className="w-4 h-4 mr-1" /> Fechar caixa
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>

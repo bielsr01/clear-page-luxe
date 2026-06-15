@@ -99,6 +99,12 @@ const SECTIONS: Array<{ key: keyof Permissions; label: string; rows: Row[] }> = 
     { path: "finance.view", label: "Visualizar" },
     { path: "finance.view_fee_breakdown", label: "Ver detalhamento do faturamento (taxas)" },
   ] },
+  { key: "cash_flow", label: "Fluxo de caixa", rows: [
+    { path: "cash_flow.view", label: "Visualizar fluxo de caixa" },
+    { path: "cash_flow.open_close", label: "Abrir e fechar caixa" },
+    { path: "cash_flow.movements", label: "Entradas e retiradas" },
+    { path: "cash_flow.pay_motoboy", label: "Pagar motoboys" },
+  ] },
   { key: "access_management", label: "Gestão de Acessos", rows: [{ path: "access_management.view", label: "Visualizar e gerenciar usuários" }] },
 ];
 
@@ -148,6 +154,9 @@ const PERMISSION_DEPENDENCIES: Record<string, string> = {
   "supply_orders.edit": "supply_orders.view",
   "stock.edit": "stock.view",
   "expenses.edit": "expenses.view",
+  "cash_flow.open_close": "cash_flow.view",
+  "cash_flow.movements": "cash_flow.view",
+  "cash_flow.pay_motoboy": "cash_flow.view",
   ...Object.fromEntries(PDV_STATUSES.map((s) => [`orders.statuses.pdv.${s}`, "orders.channels.pdv"])),
   ...Object.fromEntries(DELIVERY_STATUSES.map((s) => [`orders.statuses.delivery.${s}`, "orders.channels.delivery"])),
   ...Object.fromEntries(IFOOD_STATUSES.map((s) => [`orders.statuses.ifood.${s}`, "orders.channels.ifood"])),

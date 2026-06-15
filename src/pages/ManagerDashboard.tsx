@@ -193,7 +193,7 @@ export default function ManagerDashboard() {
       stock: !!permissions.stock.view,
       expenses: !!permissions.expenses.view,
       finance: !!permissions.finance.view,
-      "cash-flow": true,
+      "cash-flow": !!permissions.cash_flow.view,
     };
     if (!allowed[view]) {
       const fallback = (Object.keys(allowed) as DashboardView[]).find((k) => allowed[k]);
