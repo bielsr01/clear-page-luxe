@@ -208,21 +208,27 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
 
   // Auto-sync: quando override expira ou a janela de horário muda, atualiza is_open no banco
   const lastSyncedRef = useRef<boolean>(open);
+  const cashOpenRef = useRef<boolean>(cashOpen);
   useEffect(() => { lastSyncedRef.current = open; }, []);
+  useEffect(() => { cashOpenRef.current = cashOpen; }, [cashOpen]);
   useEffect(() => {
     const tick = async () => {
       const computed = isOpenNow(openingHours, manualOverride);
       const ovNow = getEffectiveOverride(manualOverride);
       // Se o override expirou (ainda existe no banco mas já passou), limpar
       if (manualOverride && !ovNow) {
+        // Só reabre automaticamente se houver caixa aberto.
+        const nextIsOpen = isWithinSchedule(openingHours) && cashOpenRef.current;
         await supabase
           .from("restaurants")
-          .update({ manual_override: null, is_open: isWithinSchedule(openingHours) })
+          .update({ manual_override: null, is_open: nextIsOpen })
           .eq("id", restaurantId);
         onChanged();
         return;
       }
       if (computed !== lastSyncedRef.current) {
+        // Bloqueia abertura automática sem caixa aberto — o popup AutoOpenCashPrompt cuidará disso.
+        if (computed && !cashOpenRef.current) return;
         lastSyncedRef.current = computed;
         await supabase.from("restaurants").update({ is_open: computed }).eq("id", restaurantId);
         onChanged();
