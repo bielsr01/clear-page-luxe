@@ -179,7 +179,7 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
       if (!earlyClose) { toast.error("Não há horário agendado para hoje"); return; }
       until = earlyClose.toISOString();
     } else {
-      until = computeUntil(openMode as "minutes" | "until" | "today", openMinutes, openUntilTime);
+      until = computeUntil(openMode as "until" | "today", openMinutes, openUntilTime);
     }
     await persist({ type: "open", until });
     setOpenDialog(false);
@@ -192,10 +192,8 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
     await persist({ type: "closed", until });
     setCloseDialog(false);
     toast.success("Loja fechada");
-    if (closeMode === "minutes") {
-      warnCashOnClose();
-    } else if (cashOpen) {
-      // Fechamento prolongado: abre o popup de fechamento de caixa automaticamente
+    if (cashOpen) {
+      // Fechamento: abre o popup de fechamento de caixa automaticamente
       requestCashflowAction("close");
     }
   };
