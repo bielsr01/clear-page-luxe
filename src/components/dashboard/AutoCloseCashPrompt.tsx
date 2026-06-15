@@ -24,7 +24,6 @@ export function AutoCloseCashPrompt({ restaurantId, openingHours, manualOverride
   const qc = useQueryClient();
   const [, setTick] = useState(0);
   const [show, setShow] = useState(false);
-  const [dismissedSession, setDismissedSession] = useState<string | null>(null);
 
   // Re-avalia a cada 30s
   useEffect(() => {
@@ -70,22 +69,22 @@ export function AutoCloseCashPrompt({ restaurantId, openingHours, manualOverride
   const closedBySchedule = !scheduledOpen && !hasManualOverride;
 
   useEffect(() => {
-    if (closedBySchedule && openSession?.id && isOpen && dismissedSession !== openSession.id) {
-      // Fecha o restaurante automaticamente
-      (async () => {
-        try {
-          await supabase.from("restaurants").update({ is_open: false }).eq("id", restaurantId);
-        } catch {}
-      })();
+    if (closedBySchedule && openSession?.id) {
+      if (isOpen) {
+        // Fecha o restaurante automaticamente, mas mantém o caixa aberto até o fechamento manual definitivo.
+        (async () => {
+          try {
+            await supabase.from("restaurants").update({ is_open: false }).eq("id", restaurantId);
+          } catch {}
+        })();
+      }
       setShow(true);
     } else if (!openSession?.id) {
       setShow(false);
     }
-  }, [closedBySchedule, openSession?.id, isOpen, restaurantId, dismissedSession]);
+  }, [closedBySchedule, openSession?.id, isOpen, restaurantId]);
 
   const handleGo = () => {
-    if (openSession?.id) setDismissedSession(openSession.id);
-    setShow(false);
     onGoToCashFlow();
     setTimeout(() => requestCashflowAction("close"), 300);
   };
