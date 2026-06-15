@@ -95,6 +95,7 @@ export const FULL_PERMISSIONS: Permissions = {
   expenses: { view: true, edit: true },
   finance: { view: true, view_fee_breakdown: true },
   cash_flow: { view: true, open_close: true, movements: true, pay_motoboy: true },
+  store: { open_close: true, view_auto_popups: true },
   access_management: { view: true },
 };
 
