@@ -91,8 +91,13 @@ export function AutoCloseCashPrompt({ restaurantId, openingHours, manualOverride
   };
 
   return (
-    <Dialog open={show} onOpenChange={(o) => { if (!o && openSession?.id) setDismissedSession(openSession.id); setShow(o); }}>
-      <DialogContent className="max-w-lg">
+    <Dialog open={show}>
+      <DialogContent
+        className="max-w-lg [&>button]:hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <div className="mx-auto mb-2 w-14 h-14 rounded-full bg-destructive/10 grid place-items-center">
             <AlertTriangle className="w-8 h-8 text-destructive" />
