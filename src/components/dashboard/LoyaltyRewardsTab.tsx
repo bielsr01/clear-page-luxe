@@ -333,7 +333,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
           <DialogHeader><DialogTitle>{editing ? "Editar recompensa" : "Nova recompensa"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Produto do cardápio (opcional)</Label>
+              <Label>Produto do cardápio <span className="text-destructive">*</span></Label>
               <Select value={productId} onValueChange={(v) => {
                 setProductId(v);
                 if (v !== "none" && !name.trim()) {
@@ -341,9 +341,8 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
                   if (p) setName(p.name);
                 }
               }}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Selecione um produto" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">— Nenhum —</SelectItem>
                   {(productsQ.data ?? []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
