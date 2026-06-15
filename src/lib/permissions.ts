@@ -137,6 +137,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   expenses: { view: false, edit: false },
   finance: { view: false, view_fee_breakdown: false },
   cash_flow: { view: false, open_close: false, movements: false, pay_motoboy: false },
+  store: { open_close: false, view_auto_popups: false },
   access_management: { view: false },
 };
 
