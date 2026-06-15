@@ -84,36 +84,26 @@ export function AutoCloseCashPrompt({ restaurantId, openingHours, manualOverride
     }
   }, [closedBySchedule, openSession?.id, isOpen, restaurantId]);
 
-  const handleGo = () => {
-    onGoToCashFlow();
-    setTimeout(() => requestCashflowAction("close"), 300);
-  };
+  if (!show) return null;
 
   return (
-    <Dialog open={show}>
-      <DialogContent
-        className="max-w-lg [&>button]:hidden"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <div className="mx-auto mb-2 w-14 h-14 rounded-full bg-destructive/10 grid place-items-center">
-            <AlertTriangle className="w-8 h-8 text-destructive" />
-          </div>
-          <DialogTitle className="text-center text-2xl">Restaurante fechado</DialogTitle>
-          <DialogDescription className="text-center text-base pt-2">
-            O restaurante foi fechado automaticamente pelo horário programado, mas o caixa ainda está aberto.
-            <br /><br />
-            <strong>É necessário fechar o caixa manualmente.</strong>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="sm:justify-center">
-          <Button size="lg" onClick={handleGo} className="w-full sm:w-auto">
+    <div className="absolute inset-0 z-40 bg-background/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-lg rounded-lg border bg-background shadow-lg p-6">
+        <div className="mx-auto mb-2 w-14 h-14 rounded-full bg-destructive/10 grid place-items-center">
+          <AlertTriangle className="w-8 h-8 text-destructive" />
+        </div>
+        <h2 className="text-center text-2xl font-semibold">Restaurante fechado</h2>
+        <p className="text-center text-base pt-2 text-muted-foreground">
+          O restaurante foi fechado automaticamente pelo horário programado, mas o caixa ainda está aberto.
+          <br /><br />
+          <strong className="text-foreground">É necessário fechar o caixa manualmente.</strong>
+        </p>
+        <div className="flex justify-center pt-6">
+          <Button size="lg" onClick={onGoToCashFlow}>
             Ir para Fluxo de Caixa
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }
