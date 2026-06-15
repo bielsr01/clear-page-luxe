@@ -341,6 +341,17 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={active === "access"}
+                  onClick={() => handleChange("access")}
+                  tooltip="Gestão de acessos"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Gestão de acessos</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
