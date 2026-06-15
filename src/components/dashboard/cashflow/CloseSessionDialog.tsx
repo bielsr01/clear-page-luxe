@@ -19,6 +19,7 @@ interface Props {
 }
 
 export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onClosed }: Props) {
+  const qc = useQueryClient();
   const [countedCash, setCountedCash] = useState("");
   const [countedPix, setCountedPix] = useState("");
   const [countedCard, setCountedCard] = useState("");
