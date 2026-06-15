@@ -248,23 +248,6 @@ export default function ManagerDashboard() {
   return (
     <SidebarProvider>
       {!isMasterAdmin && <IfoodWidgetMount restaurantId={restaurant?.id} />}
-      {view === "orders" && (
-        <>
-          <AutoCloseCashPrompt
-            restaurantId={restaurant.id}
-            openingHours={restaurant.opening_hours}
-            manualOverride={restaurant.manual_override}
-            isOpen={restaurant.is_open}
-            onGoToCashFlow={() => setView("cash-flow")}
-          />
-          <AutoOpenCashPrompt
-            restaurantId={restaurant.id}
-            openingHours={restaurant.opening_hours}
-            manualOverride={restaurant.manual_override}
-            isOpen={restaurant.is_open}
-          />
-        </>
-      )}
 
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar
@@ -330,7 +313,7 @@ export default function ManagerDashboard() {
             </div>
           </header>
 
-          <main className="flex-1 p-4 sm:p-6">
+          <main className="flex-1 p-4 sm:p-6 relative">
             {view === "overview" && (
               <LazyView viewKey={view} variant="stats">
                 <OverviewPanel restaurantId={restaurant.id} />
@@ -338,9 +321,25 @@ export default function ManagerDashboard() {
             )}
 
             {view === "orders" && (
-              <LazyView viewKey={view} variant="list">
-                <OrdersPanel restaurantId={restaurant.id} />
-              </LazyView>
+              <>
+                <LazyView viewKey={view} variant="list">
+                  <OrdersPanel restaurantId={restaurant.id} />
+                </LazyView>
+                <AutoCloseCashPrompt
+                  restaurantId={restaurant.id}
+                  openingHours={restaurant.opening_hours}
+                  manualOverride={restaurant.manual_override}
+                  isOpen={restaurant.is_open}
+                  onGoToCashFlow={() => setView("cash-flow")}
+                />
+                <AutoOpenCashPrompt
+                  restaurantId={restaurant.id}
+                  openingHours={restaurant.opening_hours}
+                  manualOverride={restaurant.manual_override}
+                  isOpen={restaurant.is_open}
+                  onChanged={refetchRestaurant}
+                />
+              </>
             )}
             {view === "cash-flow" && (
               <LazyView viewKey={view} variant="stats">
