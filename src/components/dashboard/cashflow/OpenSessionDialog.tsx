@@ -118,9 +118,24 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleOpen} disabled={busy}>Abrir caixa</Button>
+          <Button onClick={askConfirm} disabled={busy}>Abrir caixa</Button>
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Abrir restaurante também?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao abrir o caixa, o restaurante será aberto automaticamente e passará a receber pedidos. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleOpen} disabled={busy}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
