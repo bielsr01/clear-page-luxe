@@ -29,7 +29,6 @@ export type DashboardView =
   | "marketing:coupons"
   | "marketing:loyalty"
   | "marketing:bulk"
-  | "marketing:manual-send"
   | "settings:order-config"
   | "settings:business"
   | "settings:printers"
