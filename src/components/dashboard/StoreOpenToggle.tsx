@@ -356,17 +356,6 @@ export function StoreOpenToggle({ restaurantId, openingHours, manualOverride, on
 
           <RadioGroup value={closeMode} onValueChange={(v) => setCloseMode(v as any)} className="space-y-3 py-2">
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="minutes" id="m" />
-              <Label htmlFor="m" className="flex-1">Por alguns minutos</Label>
-              <Input
-                type="number" min={1} className="w-24"
-                value={minutes}
-                onChange={(e) => setMinutes(e.target.value)}
-                onFocus={() => setCloseMode("minutes")}
-              />
-              <span className="text-sm text-muted-foreground">min</span>
-            </div>
-            <div className="flex items-center gap-3">
               <RadioGroupItem value="until" id="u" />
               <Label htmlFor="u" className="flex-1">Até um horário específico</Label>
               <Input
