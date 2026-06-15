@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
-import type { CashSessionSummary } from "@/hooks/useCashSession";
+import { useQueryClient } from "@tanstack/react-query";
+import { cashSessionKey, cashSummaryKey, type CashSessionSummary } from "@/hooks/useCashSession";
 
 interface Props {
   open: boolean;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onClosed }: Props) {
+  const qc = useQueryClient();
   const [countedCash, setCountedCash] = useState("");
   const [countedPix, setCountedPix] = useState("");
   const [countedCard, setCountedCard] = useState("");
@@ -56,6 +58,14 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
       return;
     }
     toast.success("Caixa fechado");
+    const rid = summary?.restaurant_id;
+    if (rid) {
+      await qc.invalidateQueries({ queryKey: cashSessionKey(rid) });
+      await qc.invalidateQueries({ queryKey: ["cash-history", rid] });
+      await qc.invalidateQueries({ queryKey: ["cash-history-recon", rid] });
+      await qc.invalidateQueries({ queryKey: ["previous-cash-close", rid] });
+    }
+    await qc.invalidateQueries({ queryKey: cashSummaryKey(sessionId) });
     onOpenChange(false);
     onClosed?.();
   };
