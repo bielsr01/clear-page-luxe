@@ -74,10 +74,32 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
       else toast.error(error.message);
       return;
     }
-    // Abre o restaurante automaticamente
+    // Abre o restaurante automaticamente até o horário de fechamento de hoje
+    const { data: rest } = await supabase
+      .from("restaurants")
+      .select("opening_hours")
+      .eq("id", restaurantId)
+      .maybeSingle();
+    const computeUntil = (): string => {
+      const now = new Date();
+      const oh: any = (rest as any)?.opening_hours;
+      const cfg = oh?.[String(now.getDay())];
+      if (cfg?.enabled && cfg?.open && cfg?.close) {
+        const [openH, openM] = String(cfg.open).split(":").map(Number);
+        const [ch, cm] = String(cfg.close).split(":").map(Number);
+        const d = new Date(now);
+        d.setHours(ch, cm, 0, 0);
+        if (ch * 60 + cm <= openH * 60 + openM) d.setDate(d.getDate() + 1);
+        if (d.getTime() > now.getTime()) return d.toISOString();
+      }
+      const d = new Date(now);
+      d.setHours(23, 59, 59, 999);
+      return d.toISOString();
+    };
+    const until = computeUntil();
     const { error: rErr } = await supabase
       .from("restaurants")
-      .update({ manual_override: { type: "open" } as any, is_open: true })
+      .update({ manual_override: { type: "open", until } as any, is_open: true })
       .eq("id", restaurantId);
     setBusy(false);
     if (rErr) toast.warning(`Caixa aberto, mas falhou ao abrir o restaurante: ${rErr.message}`);
