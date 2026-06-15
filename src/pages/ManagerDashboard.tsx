@@ -231,7 +231,6 @@ export default function ManagerDashboard() {
     "marketing:coupons": "Cupons de desconto",
     "marketing:loyalty": "Programa de fidelidade",
     "marketing:bulk": "Envio em massa",
-    "marketing:manual-send": "Envio Manual",
     "settings:order-config": "Configurações de Pedidos",
     "settings:business": "Informações do negócio",
     "settings:printers": "Impressões",
