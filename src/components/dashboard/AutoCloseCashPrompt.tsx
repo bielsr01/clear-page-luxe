@@ -75,7 +75,9 @@ export function AutoCloseCashPrompt({ restaurantId, openingHours, manualOverride
         (async () => {
           try {
             await supabase.from("restaurants").update({ is_open: false }).eq("id", restaurantId);
-          } catch {}
+          } catch (error) {
+            console.error("Falha ao fechar restaurante automaticamente", error);
+          }
         })();
       }
       setShow(true);
