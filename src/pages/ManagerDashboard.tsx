@@ -180,7 +180,7 @@ export default function ManagerDashboard() {
       customers: !!permissions.customers.view,
       "marketing:coupons": !!permissions.marketing.coupons.view,
       "marketing:bulk": !!permissions.marketing.bulk.view,
-      "marketing:manual-send": !!permissions.marketing.manual_send.view,
+      
       "marketing:loyalty": !!permissions.loyalty.view,
       "settings:order-config": !!permissions.settings.view,
       "settings:business": !!permissions.settings.view,
