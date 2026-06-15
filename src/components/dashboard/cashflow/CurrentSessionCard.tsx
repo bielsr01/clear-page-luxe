@@ -109,6 +109,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
 
       <CashMovementDialog open={inDlg} onOpenChange={setInDlg} direction="in" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
       <CashMovementDialog open={outDlg} onOpenChange={setOutDlg} direction="out" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
+      <PayMotoboyDialog open={motoDlg} onOpenChange={setMotoDlg} restaurantId={restaurantId} sessionId={session!.id} sessionOpenedAt={session!.opened_at} onDone={refetch} />
       <CloseSessionDialog open={closeDlg} onOpenChange={setCloseDlg} sessionId={session!.id} summary={summary} onClosed={refetch} />
     </>
   );
