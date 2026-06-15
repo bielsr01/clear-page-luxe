@@ -29,6 +29,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
   const [countedCard, setCountedCard] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (open && summary) {
