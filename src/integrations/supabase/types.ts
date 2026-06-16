@@ -869,6 +869,75 @@ export type Database = {
           },
         ]
       }
+      external_stock_logs: {
+        Row: {
+          created_at: string
+          external_order_number: string | null
+          id: string
+          matched_product_id: string | null
+          matched_product_name: string | null
+          notes: string | null
+          order_id: string | null
+          order_item_name: string
+          order_item_quantity: number
+          quantity_debited: number
+          restaurant_id: string
+          source: string
+          status: string
+          stock_group_id: string | null
+          stock_group_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          external_order_number?: string | null
+          id?: string
+          matched_product_id?: string | null
+          matched_product_name?: string | null
+          notes?: string | null
+          order_id?: string | null
+          order_item_name: string
+          order_item_quantity?: number
+          quantity_debited?: number
+          restaurant_id: string
+          source: string
+          status: string
+          stock_group_id?: string | null
+          stock_group_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          external_order_number?: string | null
+          id?: string
+          matched_product_id?: string | null
+          matched_product_name?: string | null
+          notes?: string | null
+          order_id?: string | null
+          order_item_name?: string
+          order_item_quantity?: number
+          quantity_debited?: number
+          restaurant_id?: string
+          source?: string
+          status?: string
+          stock_group_id?: string | null
+          stock_group_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_stock_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_stock_logs_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ifood_fee_settings: {
         Row: {
           anticipation_enabled: boolean
@@ -1021,6 +1090,7 @@ export type Database = {
       }
       ihub_integrations: {
         Row: {
+          auto_stock_enabled: boolean
           created_at: string
           domain: string
           enabled: boolean
@@ -1034,6 +1104,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_stock_enabled?: boolean
           created_at?: string
           domain: string
           enabled?: boolean
@@ -1047,6 +1118,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_stock_enabled?: boolean
           created_at?: string
           domain?: string
           enabled?: boolean
@@ -1953,6 +2025,7 @@ export type Database = {
       }
       quero_integrations: {
         Row: {
+          auto_stock_enabled: boolean
           created_at: string
           enabled: boolean
           id: string
@@ -1967,6 +2040,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_stock_enabled?: boolean
           created_at?: string
           enabled?: boolean
           id?: string
@@ -1981,6 +2055,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_stock_enabled?: boolean
           created_at?: string
           enabled?: boolean
           id?: string
@@ -2607,6 +2682,10 @@ export type Database = {
         }[]
       }
       credit_loyalty_points: { Args: { _tx_id: string }; Returns: undefined }
+      debit_external_order_stock: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
       find_or_create_loyalty_member: {
         Args: { _name: string; _phone: string; _restaurant_id: string }
         Returns: string
@@ -2630,7 +2709,12 @@ export type Database = {
         Args: { _restaurant_id: string; _user_id: string }
         Returns: boolean
       }
+      match_product_by_name: {
+        Args: { _name: string; _restaurant_id: string }
+        Returns: string
+      }
       normalize_br_phone: { Args: { _phone: string }; Returns: string }
+      normalize_product_name: { Args: { _n: string }; Returns: string }
       quero_poll_burst: { Args: never; Returns: undefined }
       recompute_order_stock: { Args: { _order_id: string }; Returns: undefined }
       record_loyalty_earn: {
