@@ -21,7 +21,7 @@ export type Database = {
           is_default: boolean
           name: string
           permissions: Json
-          restaurant_id: string
+          restaurant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -30,7 +30,7 @@ export type Database = {
           is_default?: boolean
           name: string
           permissions?: Json
-          restaurant_id: string
+          restaurant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -39,7 +39,7 @@ export type Database = {
           is_default?: boolean
           name?: string
           permissions?: Json
-          restaurant_id?: string
+          restaurant_id?: string | null
           updated_at?: string
         }
         Relationships: []

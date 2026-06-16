@@ -187,16 +187,15 @@ function applyDependencies(perms: any, path: string, value: boolean) {
 
 export function AccessManagementPanel({ restaurantId }: Props) {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, isMasterAdmin } = useAuth();
 
   const groupsQ = useQuery({
-    queryKey: ["accessGroups", restaurantId],
-    enabled: !!restaurantId,
+    queryKey: ["accessGroups", "global"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("access_groups")
         .select("id,name,permissions,is_default")
-        .eq("restaurant_id", restaurantId)
+        .is("restaurant_id", null)
         .order("created_at");
       if (error) throw error;
       return data as AccessGroup[];
@@ -270,19 +269,19 @@ export function AccessManagementPanel({ restaurantId }: Props) {
       if (error) { toast.error(error.message); return; }
     } else {
       const { error } = await supabase.from("access_groups")
-        .insert({ restaurant_id: restaurantId, name: groupName.trim(), permissions: perms as any });
+        .insert({ restaurant_id: null, name: groupName.trim(), permissions: perms as any });
       if (error) { toast.error(error.message); return; }
     }
     toast.success("Grupo salvo");
     setGroupDialog({ open: false });
-    qc.invalidateQueries({ queryKey: ["accessGroups", restaurantId] });
+    qc.invalidateQueries({ queryKey: ["accessGroups", "global"] });
   }
   async function deleteGroup(g: AccessGroup) {
     if (!confirm(`Excluir grupo "${g.name}"? Usuários nesse grupo voltarão a ser gestores totais.`)) return;
     const { error } = await supabase.from("access_groups").delete().eq("id", g.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Grupo excluído");
-    qc.invalidateQueries({ queryKey: ["accessGroups", restaurantId] });
+    qc.invalidateQueries({ queryKey: ["accessGroups", "global"] });
     qc.invalidateQueries({ queryKey: ["restaurantMembersFull", restaurantId] });
   }
 
@@ -355,18 +354,20 @@ export function AccessManagementPanel({ restaurantId }: Props) {
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Grupos de acesso</CardTitle>
-          <Button size="sm" onClick={openGroupCreate}><Plus className="w-4 h-4" /> Cadastrar grupo</Button>
+          <CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Grupos de acesso {!isMasterAdmin && <span className="text-xs font-normal text-muted-foreground">(globais — somente o admin pode editar)</span>}</CardTitle>
+          {isMasterAdmin && <Button size="sm" onClick={openGroupCreate}><Plus className="w-4 h-4" /> Cadastrar grupo</Button>}
         </CardHeader>
         <CardContent className="space-y-2">
-          {groups.length === 0 && <p className="text-sm text-muted-foreground">Nenhum grupo cadastrado. Usuários sem grupo têm acesso total (Gestor).</p>}
+          {groups.length === 0 && <p className="text-sm text-muted-foreground">Nenhum grupo cadastrado.</p>}
           {groups.map((g) => (
             <div key={g.id} className="flex items-center justify-between border rounded p-3">
               <div className="font-medium">{g.name}</div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => openGroupEdit(g)}><Pencil className="w-4 h-4" /></Button>
-                <Button size="sm" variant="destructive" onClick={() => deleteGroup(g)}><Trash2 className="w-4 h-4" /></Button>
-              </div>
+              {isMasterAdmin && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openGroupEdit(g)}><Pencil className="w-4 h-4" /></Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteGroup(g)}><Trash2 className="w-4 h-4" /></Button>
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
