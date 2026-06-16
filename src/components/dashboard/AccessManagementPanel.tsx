@@ -187,16 +187,15 @@ function applyDependencies(perms: any, path: string, value: boolean) {
 
 export function AccessManagementPanel({ restaurantId }: Props) {
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, isMasterAdmin } = useAuth();
 
   const groupsQ = useQuery({
-    queryKey: ["accessGroups", restaurantId],
-    enabled: !!restaurantId,
+    queryKey: ["accessGroups", "global"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("access_groups")
         .select("id,name,permissions,is_default")
-        .eq("restaurant_id", restaurantId)
+        .is("restaurant_id", null)
         .order("created_at");
       if (error) throw error;
       return data as AccessGroup[];
