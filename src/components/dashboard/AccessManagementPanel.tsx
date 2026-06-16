@@ -354,18 +354,20 @@ export function AccessManagementPanel({ restaurantId }: Props) {
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Grupos de acesso</CardTitle>
-          <Button size="sm" onClick={openGroupCreate}><Plus className="w-4 h-4" /> Cadastrar grupo</Button>
+          <CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Grupos de acesso {!isMasterAdmin && <span className="text-xs font-normal text-muted-foreground">(globais — somente o admin pode editar)</span>}</CardTitle>
+          {isMasterAdmin && <Button size="sm" onClick={openGroupCreate}><Plus className="w-4 h-4" /> Cadastrar grupo</Button>}
         </CardHeader>
         <CardContent className="space-y-2">
-          {groups.length === 0 && <p className="text-sm text-muted-foreground">Nenhum grupo cadastrado. Usuários sem grupo têm acesso total (Gestor).</p>}
+          {groups.length === 0 && <p className="text-sm text-muted-foreground">Nenhum grupo cadastrado.</p>}
           {groups.map((g) => (
             <div key={g.id} className="flex items-center justify-between border rounded p-3">
               <div className="font-medium">{g.name}</div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => openGroupEdit(g)}><Pencil className="w-4 h-4" /></Button>
-                <Button size="sm" variant="destructive" onClick={() => deleteGroup(g)}><Trash2 className="w-4 h-4" /></Button>
-              </div>
+              {isMasterAdmin && (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openGroupEdit(g)}><Pencil className="w-4 h-4" /></Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteGroup(g)}><Trash2 className="w-4 h-4" /></Button>
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
