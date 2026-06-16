@@ -20,10 +20,12 @@ type Mode = "all" | "items";
 
 interface Cat { id: string; name: string; sort_order: number; is_active: boolean }
 interface Prod { id: string; category_id: string | null; name: string; description: string | null; price: number; image_url: string | null; is_active: boolean; sort_order: number }
-interface Grp { id: string; name: string; min_select: number; max_select: number; sort_order: number; is_active: boolean }
-interface Item { id: string; group_id: string; name: string; extra_price: number; sort_order: number; is_active: boolean }
+interface Grp { id: string; name: string; min_select: number; max_select: number; sort_order: number; is_active: boolean; image_url: string | null; allow_repeat: boolean }
+interface Item { id: string; group_id: string; name: string; extra_price: number; sort_order: number; is_active: boolean; image_url: string | null; stock_group_id: string | null; stock_quantity_per_unit: number | null }
 interface POG { product_id: string; group_id: string; sort_order: number; min_select_override: number | null; max_select_override: number | null }
 interface PSC { product_id: string; group_id: string; quantity_per_unit: number }
+
+const normName = (s: string) => (s ?? "").trim().toLowerCase();
 
 export function AdminMenuClonerDialog({ destRestaurantId, open, onOpenChange }: { destRestaurantId: string; open: boolean; onOpenChange: (v: boolean) => void }) {
   const qc = useQueryClient();
@@ -146,39 +148,56 @@ export function AdminMenuClonerDialog({ destRestaurantId, open, onOpenChange }: 
 
       const { data: destGrpsData } = await sb.from("option_groups").select("id,name").eq("restaurant_id", destRestaurantId);
       const destGrpByName = new Map<string, string>();
-      (destGrpsData ?? []).forEach((g: any) => destGrpByName.set(g.name.toLowerCase(), g.id));
+      (destGrpsData ?? []).forEach((g: any) => destGrpByName.set(normName(g.name), g.id));
 
       const grpMap = new Map<string, string>();
       const grpsToInsert = grps.filter((g) => neededGrpIds.has(g.id));
       for (const g of grpsToInsert) {
-        const existing = destGrpByName.get(g.name.toLowerCase());
+        const existing = destGrpByName.get(normName(g.name));
+        let destGrpId: string;
         if (existing) {
-          grpMap.set(g.id, existing);
-          continue;
+          destGrpId = existing;
+        } else {
+          const { data, error } = await sb.from("option_groups").insert({
+            restaurant_id: destRestaurantId,
+            name: g.name,
+            min_select: g.min_select,
+            max_select: g.max_select,
+            sort_order: g.sort_order,
+            is_active: g.is_active,
+            image_url: g.image_url,
+            allow_repeat: g.allow_repeat,
+          }).select("id").single();
+          if (error) throw error;
+          destGrpId = data.id;
+          destGrpByName.set(normName(g.name), destGrpId);
         }
-        const { data, error } = await sb.from("option_groups").insert({
-          restaurant_id: destRestaurantId,
-          name: g.name,
-          min_select: g.min_select,
-          max_select: g.max_select,
-          sort_order: g.sort_order,
-          is_active: g.is_active,
-        }).select("id").single();
-        if (error) throw error;
-        grpMap.set(g.id, data.id);
+        grpMap.set(g.id, destGrpId);
 
+        // Sync option_items: insert any item missing in destination (matched by name).
         const groupItems = items.filter((i) => i.group_id === g.id);
         if (groupItems.length) {
-          const { error: ie } = await sb.from("option_items").insert(
-            groupItems.map((i) => ({
-              group_id: data.id,
+          const { data: destItemsData } = await sb
+            .from("option_items").select("name").eq("group_id", destGrpId);
+          const destItemNames = new Set<string>(
+            (destItemsData ?? []).map((it: any) => normName(it.name))
+          );
+          const itemsToInsert = groupItems
+            .filter((i) => !destItemNames.has(normName(i.name)))
+            .map((i) => ({
+              group_id: destGrpId,
               name: i.name,
               extra_price: i.extra_price,
               sort_order: i.sort_order,
               is_active: i.is_active,
-            }))
-          );
-          if (ie) throw ie;
+              image_url: i.image_url,
+              stock_group_id: i.stock_group_id,
+              stock_quantity_per_unit: i.stock_quantity_per_unit,
+            }));
+          if (itemsToInsert.length) {
+            const { error: ie } = await sb.from("option_items").insert(itemsToInsert);
+            if (ie) throw ie;
+          }
         }
       }
 
