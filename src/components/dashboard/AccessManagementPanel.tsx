@@ -269,12 +269,12 @@ export function AccessManagementPanel({ restaurantId }: Props) {
       if (error) { toast.error(error.message); return; }
     } else {
       const { error } = await supabase.from("access_groups")
-        .insert({ restaurant_id: restaurantId, name: groupName.trim(), permissions: perms as any });
+        .insert({ restaurant_id: null, name: groupName.trim(), permissions: perms as any });
       if (error) { toast.error(error.message); return; }
     }
     toast.success("Grupo salvo");
     setGroupDialog({ open: false });
-    qc.invalidateQueries({ queryKey: ["accessGroups", restaurantId] });
+    qc.invalidateQueries({ queryKey: ["accessGroups", "global"] });
   }
   async function deleteGroup(g: AccessGroup) {
     if (!confirm(`Excluir grupo "${g.name}"? Usuários nesse grupo voltarão a ser gestores totais.`)) return;
