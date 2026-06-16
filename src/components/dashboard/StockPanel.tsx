@@ -153,9 +153,11 @@ export function StockPanel({ restaurantId }: { restaurantId: string }) {
 
   return (
     <Tabs defaultValue="balance" className="space-y-4">
-      <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex">
+      <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:grid-cols-4 sm:flex">
         <TabsTrigger value="balance"><Package className="w-4 h-4 mr-2" />Saldo atual</TabsTrigger>
         <TabsTrigger value="history"><History className="w-4 h-4 mr-2" />Histórico</TabsTrigger>
+        <TabsTrigger value="ifood"><Utensils className="w-4 h-4 mr-2" />Estoque iFood</TabsTrigger>
+        <TabsTrigger value="quero"><ShoppingBag className="w-4 h-4 mr-2" />Estoque Quero</TabsTrigger>
       </TabsList>
 
       <TabsContent value="balance" className="space-y-4">
@@ -208,7 +210,120 @@ export function StockPanel({ restaurantId }: { restaurantId: string }) {
           describe={describeMovement}
         />
       </TabsContent>
+
+      <TabsContent value="ifood" className="space-y-3">
+        <ExternalStockTab restaurantId={restaurantId} source="ifood" canEdit={canEdit} />
+      </TabsContent>
+      <TabsContent value="quero" className="space-y-3">
+        <ExternalStockTab restaurantId={restaurantId} source="quero" canEdit={canEdit} />
+      </TabsContent>
     </Tabs>
+  );
+}
+
+function ExternalStockTab({
+  restaurantId, source, canEdit,
+}: { restaurantId: string; source: ExternalSource; canEdit: boolean }) {
+  const qc = useQueryClient();
+  const table = source === "ifood" ? "ihub_integrations" : "quero_integrations";
+  const label = source === "ifood" ? "iFood" : "Quero Delivery";
+
+  const { data: integration, isLoading } = useQuery({
+    queryKey: [table, restaurantId, "auto_stock"],
+    queryFn: async () => {
+      const { data } = await supabase.from(table as any).select("id, auto_stock_enabled, enabled").eq("restaurant_id", restaurantId).maybeSingle();
+      return data as { id: string; auto_stock_enabled: boolean; enabled: boolean } | null;
+    },
+  });
+
+  const { data: logs = [] } = useQuery({
+    queryKey: ["external_stock_logs", restaurantId, source],
+    queryFn: async () => {
+      const { data } = await supabase.from("external_stock_logs")
+        .select("*").eq("restaurant_id", restaurantId).eq("source", source)
+        .order("created_at", { ascending: false }).limit(200);
+      return (data ?? []) as ExternalLog[];
+    },
+  });
+
+  const toggleAuto = async (next: boolean) => {
+    if (!integration) {
+      toast.error(`Configure a integração ${label} primeiro.`);
+      return;
+    }
+    const { error } = await supabase.from(table as any).update({ auto_stock_enabled: next }).eq("id", integration.id);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Estoque automático ativado" : "Estoque automático desativado");
+    qc.invalidateQueries({ queryKey: [table, restaurantId, "auto_stock"] });
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Estoque automático — {label}</CardTitle></CardHeader>
+        <CardContent className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
+          <div className="text-sm text-muted-foreground">
+            Quando ativado, o sistema busca cada item dos pedidos {label} entregues no cardápio
+            (comparando pelo nome) e debita automaticamente os grupos de estoque vinculados.
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm">{integration?.auto_stock_enabled ? "Ativo" : "Inativo"}</span>
+            <Switch
+              checked={!!integration?.auto_stock_enabled}
+              onCheckedChange={toggleAuto}
+              disabled={!canEdit || isLoading || !integration}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Logs de débito ({logs.length})</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          {logs.length === 0 ? (
+            <div className="py-10 text-center text-muted-foreground text-sm">
+              Sem registros ainda. Eles aparecerão aqui quando pedidos {label} forem marcados como entregues.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {logs.map(l => (
+                <div key={l.id} className="p-3 text-sm space-y-1">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="font-medium">
+                      Pedido #{l.external_order_number ?? "—"} ·{" "}
+                      <span className="text-muted-foreground font-normal">
+                        {new Date(l.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                      </span>
+                    </div>
+                    <Badge variant={externalStatusVariant[l.status] ?? "secondary"}>
+                      {externalStatusLabel[l.status] ?? l.status}
+                    </Badge>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-muted-foreground">Item do pedido:</span>{" "}
+                    <span className="font-medium">{l.order_item_quantity}x {l.order_item_name}</span>
+                  </div>
+                  {l.matched_product_name && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Produto do cardápio:</span>{" "}
+                      <span>{l.matched_product_name}</span>
+                    </div>
+                  )}
+                  {l.status === "debited" && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Debitado:</span>{" "}
+                      <span className="font-bold text-destructive">−{l.quantity_debited}</span>{" "}
+                      do grupo <span className="font-medium">{l.stock_group_name}</span>
+                    </div>
+                  )}
+                  {l.notes && <div className="text-xs italic text-muted-foreground">{l.notes}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
