@@ -281,7 +281,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
     const { error } = await supabase.from("access_groups").delete().eq("id", g.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Grupo excluído");
-    qc.invalidateQueries({ queryKey: ["accessGroups", restaurantId] });
+    qc.invalidateQueries({ queryKey: ["accessGroups", "global"] });
     qc.invalidateQueries({ queryKey: ["restaurantMembersFull", restaurantId] });
   }
 
