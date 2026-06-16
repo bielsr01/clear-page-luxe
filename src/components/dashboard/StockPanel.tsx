@@ -10,8 +10,40 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Package, History, Settings2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { AlertTriangle, Package, History, Settings2, Utensils, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
+
+type ExternalSource = "ifood" | "quero";
+type ExternalLog = {
+  id: string;
+  source: ExternalSource;
+  order_id: string | null;
+  external_order_number: string | null;
+  order_item_name: string;
+  order_item_quantity: number;
+  matched_product_name: string | null;
+  stock_group_name: string | null;
+  quantity_debited: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+};
+
+const externalStatusLabel: Record<string, string> = {
+  debited: "Debitado",
+  no_product_match: "Sem produto correspondente",
+  no_stock_link: "Produto sem grupo de estoque",
+  skipped: "Ignorado (desativado)",
+  error: "Erro",
+};
+const externalStatusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  debited: "default",
+  no_product_match: "destructive",
+  no_stock_link: "secondary",
+  skipped: "outline",
+  error: "destructive",
+};
 
 type StockGroup = { id: string; name: string; is_active: boolean; allow_add: boolean; allow_subtract: boolean; allow_set: boolean };
 type StockRow = { id: string; group_id: string; quantity: number; updated_at: string };
