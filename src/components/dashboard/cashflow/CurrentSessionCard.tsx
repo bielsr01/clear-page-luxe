@@ -134,6 +134,33 @@ export function CurrentSessionCard({ restaurantId }: Props) {
       <CashMovementDialog open={outDlg} onOpenChange={setOutDlg} direction="out" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
       <PayMotoboyDialog open={motoDlg} onOpenChange={setMotoDlg} restaurantId={restaurantId} sessionId={session!.id} sessionOpenedAt={session!.opened_at} onDone={refetch} />
       <CloseSessionDialog open={closeDlg} onOpenChange={setCloseDlg} sessionId={session!.id} summary={summary} onClosed={refetch} />
+
+      <AlertDialog open={closeWarn} onOpenChange={setCloseWarn}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Antes de fechar o caixa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Não esqueça de fazer o pagamento do motoboy antes de fechar o caixa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            {canMoto && (
+              <Button
+                variant="secondary"
+                onClick={() => { setCloseWarn(false); setMotoDlg(true); }}
+              >
+                <Bike className="w-4 h-4 mr-1" /> Pagar motoboy
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              onClick={() => { setCloseWarn(false); setCloseDlg(true); }}
+            >
+              <Lock className="w-4 h-4 mr-1" /> Prosseguir com fechamento
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
