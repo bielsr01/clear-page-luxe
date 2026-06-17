@@ -150,7 +150,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
       body.style.touchAction = previousBodyTouchAction;
       if (appRoot) {
         appRoot.style.display = previousRootDisplay;
-        if (previousRootAriaHidden === null) appRoot.removeAttribute("aria-hidden");
+        if (previousRootAriaHidden == null) appRoot.removeAttribute("aria-hidden");
         else appRoot.setAttribute("aria-hidden", previousRootAriaHidden);
       }
       window.requestAnimationFrame(() => window.scrollTo(0, previousScrollYRef.current));
