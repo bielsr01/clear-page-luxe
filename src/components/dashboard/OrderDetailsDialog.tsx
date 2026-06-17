@@ -124,13 +124,20 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
 
     const html = document.documentElement;
     const body = document.body;
+    const appRoot = document.getElementById("root");
     const previousHtmlOverflowY = html.style.overflowY;
     const previousBodyOverflowY = body.style.overflowY;
     const previousBodyTouchAction = body.style.touchAction;
+    const previousRootDisplay = appRoot?.style.display ?? "";
+    const previousRootAriaHidden = appRoot?.getAttribute("aria-hidden");
 
     html.style.overflowY = "auto";
     body.style.overflowY = "auto";
     body.style.touchAction = "pan-y";
+    if (appRoot) {
+      appRoot.style.display = "none";
+      appRoot.setAttribute("aria-hidden", "true");
+    }
 
     const frame = window.requestAnimationFrame(() => {
       documentSurfaceRef.current?.scrollIntoView({ block: "start" });
@@ -141,6 +148,11 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
       html.style.overflowY = previousHtmlOverflowY;
       body.style.overflowY = previousBodyOverflowY;
       body.style.touchAction = previousBodyTouchAction;
+      if (appRoot) {
+        appRoot.style.display = previousRootDisplay;
+        if (previousRootAriaHidden === null) appRoot.removeAttribute("aria-hidden");
+        else appRoot.setAttribute("aria-hidden", previousRootAriaHidden);
+      }
       window.requestAnimationFrame(() => window.scrollTo(0, previousScrollYRef.current));
     };
   }, [useDocumentScroll]);
