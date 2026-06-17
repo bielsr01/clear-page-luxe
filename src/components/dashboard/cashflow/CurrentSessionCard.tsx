@@ -33,6 +33,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   const canMoto = can("cash_flow.pay_motoboy");
   const [openDlg, setOpenDlg] = useState(false);
   const [closeDlg, setCloseDlg] = useState(false);
+  const [closeWarn, setCloseWarn] = useState(false);
   const [inDlg, setInDlg] = useState(false);
   const [outDlg, setOutDlg] = useState(false);
   const [motoDlg, setMotoDlg] = useState(false);
