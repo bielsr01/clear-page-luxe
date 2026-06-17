@@ -335,13 +335,7 @@ export function OrderHistoryDialog({
 
   return (
     <>
-      <Dialog open={historyDialogOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle>Histórico de pedidos</DialogTitle>
-            <DialogDescription>Todos os pedidos do período selecionado.</DialogDescription>
-          </DialogHeader>
-
+      <OrderHistorySurface open={historyDialogOpen} onClose={() => onOpenChange(false)}>
           <div className="space-y-3 min-w-0">
             <Tabs value={channel} onValueChange={(v) => setChannel(v as Channel)}>
               <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1">
@@ -498,8 +492,7 @@ export function OrderHistoryDialog({
               {filtered.length} pedido(s) • {brl(filtered.reduce((s, o) => s + Number(o.total), 0))}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+      </OrderHistorySurface>
 
       <OrderDetailsDialog
         order={detailsTarget as any}
