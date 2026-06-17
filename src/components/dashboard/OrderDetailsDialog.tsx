@@ -119,41 +119,57 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
   const documentSurfaceRef = useRef<HTMLDivElement | null>(null);
   const previousScrollYRef = useRef(typeof window !== "undefined" ? window.scrollY : 0);
 
+  // Always release any scroll/pointer locks that a parent Radix Dialog may have
+  // applied to <html>/<body> (react-remove-scroll adds overflow:hidden,
+  // touch-action:none, and pointer-events:none which break our portal).
   useEffect(() => {
-    if (!useDocumentScroll) return;
-
     const html = document.documentElement;
     const body = document.body;
     const appRoot = document.getElementById("root");
-    const previousHtmlOverflowY = html.style.overflowY;
-    const previousBodyOverflowY = body.style.overflowY;
-    const previousBodyTouchAction = body.style.touchAction;
-    const previousRootDisplay = appRoot?.style.display ?? "";
-    const previousRootAriaHidden = appRoot?.getAttribute("aria-hidden");
 
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      htmlOverflowY: html.style.overflowY,
+      htmlTouchAction: html.style.touchAction,
+      bodyOverflow: body.style.overflow,
+      bodyOverflowY: body.style.overflowY,
+      bodyTouchAction: body.style.touchAction,
+      bodyPointerEvents: body.style.pointerEvents,
+      rootDisplay: appRoot?.style.display ?? "",
+      rootAriaHidden: appRoot?.getAttribute("aria-hidden") ?? null,
+    };
+
+    html.style.overflow = "auto";
     html.style.overflowY = "auto";
+    html.style.touchAction = "pan-y";
+    body.style.overflow = "auto";
     body.style.overflowY = "auto";
     body.style.touchAction = "pan-y";
-    if (appRoot) {
+    body.style.pointerEvents = "auto";
+    if (useDocumentScroll && appRoot) {
       appRoot.style.display = "none";
       appRoot.setAttribute("aria-hidden", "true");
     }
 
     const frame = window.requestAnimationFrame(() => {
-      documentSurfaceRef.current?.scrollIntoView({ block: "start" });
+      if (useDocumentScroll) documentSurfaceRef.current?.scrollIntoView({ block: "start" });
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
-      html.style.overflowY = previousHtmlOverflowY;
-      body.style.overflowY = previousBodyOverflowY;
-      body.style.touchAction = previousBodyTouchAction;
-      if (appRoot) {
-        appRoot.style.display = previousRootDisplay;
-        if (previousRootAriaHidden == null) appRoot.removeAttribute("aria-hidden");
-        else appRoot.setAttribute("aria-hidden", previousRootAriaHidden);
+      html.style.overflow = prev.htmlOverflow;
+      html.style.overflowY = prev.htmlOverflowY;
+      html.style.touchAction = prev.htmlTouchAction;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.overflowY = prev.bodyOverflowY;
+      body.style.touchAction = prev.bodyTouchAction;
+      body.style.pointerEvents = prev.bodyPointerEvents;
+      if (useDocumentScroll && appRoot) {
+        appRoot.style.display = prev.rootDisplay;
+        if (prev.rootAriaHidden == null) appRoot.removeAttribute("aria-hidden");
+        else appRoot.setAttribute("aria-hidden", prev.rootAriaHidden);
+        window.requestAnimationFrame(() => window.scrollTo(0, previousScrollYRef.current));
       }
-      window.requestAnimationFrame(() => window.scrollTo(0, previousScrollYRef.current));
     };
   }, [useDocumentScroll]);
 
@@ -161,8 +177,8 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
     return createPortal(
       <div
         ref={documentSurfaceRef}
-        className="relative z-[9999] min-h-[100dvh] w-full bg-background"
-        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="relative z-[9999] min-h-[100dvh] w-full bg-background pointer-events-auto"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <article
           role="dialog"
@@ -193,10 +209,10 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80" role="presentation">
+    <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80 pointer-events-auto" role="presentation" style={{ pointerEvents: "auto" }}>
       <div
-        className="h-[100dvh] w-full overflow-y-auto overscroll-contain bg-background sm:bg-transparent"
-        style={{ WebkitOverflowScrolling: "touch", paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="h-[100dvh] w-full overflow-y-auto overscroll-contain bg-background sm:bg-transparent pointer-events-auto"
+        style={{ WebkitOverflowScrolling: "touch", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose();
         }}
