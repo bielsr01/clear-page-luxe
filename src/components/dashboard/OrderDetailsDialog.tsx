@@ -205,12 +205,6 @@ export function OrderDetailsDialog({
     },
   });
 
-  if (!order) return null;
-
-  const optionsLoading = items.length > 0 && optionsQuery.isLoading;
-  const historyLoading = historyQuery.isLoading;
-  const isLoading = optionsLoading || historyLoading;
-
   useEffect(() => {
     if (!order) return;
     const previousOverflow = document.body.style.overflow;
@@ -224,6 +218,12 @@ export function OrderDetailsDialog({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [order, onClose]);
+
+  if (!order) return null;
+
+  const optionsLoading = items.length > 0 && optionsQuery.isLoading;
+  const historyLoading = historyQuery.isLoading;
+  const isLoading = optionsLoading || historyLoading;
 
   if (isLoading) {
     return (
