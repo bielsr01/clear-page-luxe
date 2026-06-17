@@ -12,6 +12,14 @@ import { PayMotoboyDialog } from "./PayMotoboyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { onCashflowRequest } from "@/lib/cashflowBus";
 import { usePermissions } from "@/hooks/usePermissions";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   restaurantId: string;
