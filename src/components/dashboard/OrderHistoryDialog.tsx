@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CalendarIcon, Eye, Search } from "lucide-react";
+import { CalendarIcon, Eye, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,6 +52,134 @@ const STATUS_FILTERS = [
   { value: "delivered", label: "Entregues" },
   { value: "cancelled", label: "Cancelados" },
 ];
+
+function shouldUseDocumentScrollSurface() {
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator;
+  const ua = nav.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (nav.platform === "MacIntel" && nav.maxTouchPoints > 1);
+  return isIOS && window.matchMedia("(max-width: 767px)").matches;
+}
+
+function OrderHistorySurface({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
+  const useDocumentScroll = shouldUseDocumentScrollSurface();
+  const documentSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const previousScrollYRef = useRef(typeof window !== "undefined" ? window.scrollY : 0);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const active = document.activeElement as HTMLElement | null;
+    active?.blur?.();
+
+    const html = document.documentElement;
+    const body = document.body;
+    const appRoot = document.getElementById("root");
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      htmlOverflowY: html.style.overflowY,
+      htmlTouchAction: html.style.touchAction,
+      bodyOverflow: body.style.overflow,
+      bodyOverflowY: body.style.overflowY,
+      bodyTouchAction: body.style.touchAction,
+      bodyPointerEvents: body.style.pointerEvents,
+      rootDisplay: appRoot?.style.display ?? "",
+      rootAriaHidden: appRoot?.getAttribute("aria-hidden") ?? null,
+    };
+
+    html.style.overflow = "auto";
+    html.style.overflowY = "auto";
+    html.style.touchAction = "pan-y";
+    body.style.overflow = "auto";
+    body.style.overflowY = "auto";
+    body.style.touchAction = "pan-y";
+    body.style.pointerEvents = "auto";
+    if (useDocumentScroll && appRoot) {
+      appRoot.style.display = "none";
+      appRoot.setAttribute("aria-hidden", "true");
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      if (useDocumentScroll) documentSurfaceRef.current?.scrollIntoView({ block: "start" });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      html.style.overflow = prev.htmlOverflow;
+      html.style.overflowY = prev.htmlOverflowY;
+      html.style.touchAction = prev.htmlTouchAction;
+      body.style.overflow = prev.bodyOverflow;
+      body.style.overflowY = prev.bodyOverflowY;
+      body.style.touchAction = prev.bodyTouchAction;
+      body.style.pointerEvents = prev.bodyPointerEvents;
+      if (useDocumentScroll && appRoot) {
+        appRoot.style.display = prev.rootDisplay;
+        if (prev.rootAriaHidden == null) appRoot.removeAttribute("aria-hidden");
+        else appRoot.setAttribute("aria-hidden", prev.rootAriaHidden);
+        window.requestAnimationFrame(() => window.scrollTo(0, previousScrollYRef.current));
+      }
+    };
+  }, [open, useDocumentScroll]);
+
+  if (!open) return null;
+
+  if (useDocumentScroll) {
+    return createPortal(
+      <div
+        ref={documentSurfaceRef}
+        className="relative z-[9999] min-h-[100dvh] w-full bg-background pointer-events-auto"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <article role="dialog" aria-modal="true" aria-labelledby="order-history-title" className="mx-auto min-h-[100dvh] w-full max-w-5xl bg-background">
+          <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur">
+            <div className="min-w-0 space-y-1">
+              <h2 id="order-history-title" className="text-lg font-semibold leading-snug">Histórico de pedidos</h2>
+              <p className="text-sm text-muted-foreground">Todos os pedidos do período selecionado.</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Fechar histórico de pedidos"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </header>
+          <div className="min-w-0 space-y-3 overflow-x-hidden px-4 pb-6 pt-4">{children}</div>
+        </article>
+      </div>,
+      document.body,
+    );
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80 pointer-events-auto" role="presentation" style={{ pointerEvents: "auto" }}>
+      <div
+        className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden overscroll-contain bg-background sm:bg-transparent pointer-events-auto"
+        style={{ WebkitOverflowScrolling: "touch", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <article role="dialog" aria-modal="true" aria-labelledby="order-history-title" className="mx-auto min-h-[100dvh] w-full max-w-5xl bg-background sm:my-6 sm:min-h-0 sm:max-h-[90vh] sm:overflow-y-auto sm:rounded-lg sm:border sm:shadow-lg">
+          <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur sm:rounded-t-lg sm:px-6">
+            <div className="min-w-0 space-y-1">
+              <h2 id="order-history-title" className="text-lg font-semibold leading-snug">Histórico de pedidos</h2>
+              <p className="text-sm text-muted-foreground">Todos os pedidos do período selecionado.</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Fechar histórico de pedidos"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </header>
+          <div className="min-w-0 space-y-3 overflow-x-hidden px-4 pb-6 pt-4 sm:px-6">{children}</div>
+        </article>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 /** Resolve YYYY-MM-DD components of a Date in Brasília (GMT-3, sem DST). */
 function brasiliaYMD(date: Date): { y: number; m: number; d: number } {
@@ -207,13 +335,7 @@ export function OrderHistoryDialog({
 
   return (
     <>
-      <Dialog open={historyDialogOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle>Histórico de pedidos</DialogTitle>
-            <DialogDescription>Todos os pedidos do período selecionado.</DialogDescription>
-          </DialogHeader>
-
+      <OrderHistorySurface open={historyDialogOpen} onClose={() => onOpenChange(false)}>
           <div className="space-y-3 min-w-0">
             <Tabs value={channel} onValueChange={(v) => setChannel(v as Channel)}>
               <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1">
@@ -370,8 +492,7 @@ export function OrderHistoryDialog({
               {filtered.length} pedido(s) • {brl(filtered.reduce((s, o) => s + Number(o.total), 0))}
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+      </OrderHistorySurface>
 
       <OrderDetailsDialog
         order={detailsTarget as any}
