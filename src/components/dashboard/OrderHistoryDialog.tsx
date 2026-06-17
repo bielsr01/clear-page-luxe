@@ -207,7 +207,7 @@ export function OrderHistoryDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[90dvh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Histórico de pedidos</DialogTitle>
             <DialogDescription>Todos os pedidos do período selecionado.</DialogDescription>

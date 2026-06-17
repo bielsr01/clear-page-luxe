@@ -1,6 +1,6 @@
-import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, formatIfoodPhone, displayOrderNumber } from "@/lib/format";
@@ -77,46 +77,6 @@ const STATUS_FLOW: Record<string, string[]> = {
   pickup: ["pending", "preparing", "awaiting_pickup", "delivered"],
   pdv: ["preparing", "delivered"],
 };
-
-type OrderFlowType = "delivery" | "pickup" | "pdv";
-
-const toOrderFlowType = (value: string): OrderFlowType => (
-  value === "pickup" || value === "pdv" ? value : "delivery"
-);
-
-type QueroFeeSettingsQueryClient = {
-  from: (table: "quero_fee_settings") => {
-    select: (columns: string) => {
-      eq: (column: "restaurant_id", value: string) => {
-        maybeSingle: () => Promise<{ data: QueroFeeSettings | null }>;
-      };
-    };
-  };
-};
-
-function OrderDetailsOverlay({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center sm:items-center" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
-      <div className="relative z-10 flex h-[100dvh] max-h-[100dvh] w-screen flex-col overflow-hidden border bg-background shadow-lg sm:h-auto sm:max-h-[90dvh] sm:w-full sm:max-w-2xl sm:rounded-lg">
-        <div className="shrink-0 border-b px-4 py-3 pr-14 sm:px-6 sm:py-4">
-          <h2 className="text-lg font-semibold leading-tight tracking-tight">{title}</h2>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 rounded-md p-2 opacity-80 ring-offset-background transition-opacity hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          aria-label="Fechar detalhes do pedido"
-        >
-          <X className="h-6 w-6" />
-        </button>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function statusTimeline(o: OrderLike) {
   const flow = STATUS_FLOW[o.order_type] ?? STATUS_FLOW.delivery;
@@ -196,7 +156,7 @@ export function OrderDetailsDialog({
     queryKey: ["quero-fee-settings", order?.restaurant_id],
     enabled: !!order && isQuero && !!order?.restaurant_id,
     queryFn: async () => {
-      const { data } = await (supabase as unknown as QueroFeeSettingsQueryClient)
+      const { data } = await (supabase as any)
         .from("quero_fee_settings")
         .select("enabled,commission_enabled,commission_pct,online_payment_enabled,online_payment_pct")
         .eq("restaurant_id", order!.restaurant_id!)
@@ -204,20 +164,6 @@ export function OrderDetailsDialog({
       return (data ?? DEFAULT_QUERO_FEES) as QueroFeeSettings;
     },
   });
-
-  useEffect(() => {
-    if (!order) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [order, onClose]);
 
   if (!order) return null;
 
@@ -227,19 +173,24 @@ export function OrderDetailsDialog({
 
   if (isLoading) {
     return (
-      <OrderDetailsOverlay title={`Carregando pedido #${displayOrderNumber(order)}…`} onClose={onClose}>
-        <div className="space-y-3 py-4">
-          <div className="h-20 rounded-lg bg-muted animate-pulse" />
-          <div className="grid md:grid-cols-2 gap-3">
-            <div className="h-40 rounded-lg bg-muted animate-pulse" />
-            <div className="h-40 rounded-lg bg-muted animate-pulse" />
+      <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Carregando pedido #{displayOrderNumber(order)}…</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <div className="h-20 rounded-lg bg-muted animate-pulse" />
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="h-40 rounded-lg bg-muted animate-pulse" />
+              <div className="h-40 rounded-lg bg-muted animate-pulse" />
+            </div>
+            <div className="h-28 rounded-lg bg-muted animate-pulse" />
           </div>
-          <div className="h-28 rounded-lg bg-muted animate-pulse" />
-        </div>
-      </OrderDetailsOverlay>
+        </DialogContent>
+      </Dialog>
     );
   }
-  const next = getNextStatus(order.status, toOrderFlowType(order.order_type));
+  const next = getNextStatus(order.status, order.order_type as any);
   const isPdv = order.order_type === "pdv";
   const isPickup = order.order_type === "pickup";
   const hasCoords = order.delivery_latitude != null && order.delivery_longitude != null;
@@ -267,7 +218,12 @@ export function OrderDetailsDialog({
   const wa = waLink(order.customer_phone);
 
   return (
-    <OrderDetailsOverlay title={`Detalhes Completos do Pedido #${displayOrderNumber(order)}`} onClose={onClose}>
+    <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
+        </DialogHeader>
+
         <div className="space-y-4">
           {/* Cliente */}
           <section className="rounded-lg border p-3 space-y-2">
@@ -349,7 +305,7 @@ export function OrderDetailsDialog({
 
                   // Fallback: parse notes string when no structured options exist (legacy iFood orders)
                   type ParsedOpt = { id: string; group_name: string; item_name: string; extra_price: number };
-                  const parsedFromNotes: ParsedOpt[] = [];
+                  let parsedFromNotes: ParsedOpt[] = [];
                   if (opts.length === 0 && it.notes && !/^obs\s*:/i.test(it.notes.trim())) {
                     const parts = String(it.notes).split(/\n|\s+•\s+/);
                     parts.forEach((raw, i) => {
@@ -637,6 +593,7 @@ export function OrderDetailsDialog({
             )}
           </div>
         </div>
-    </OrderDetailsOverlay>
+      </DialogContent>
+    </Dialog>
   );
 }
