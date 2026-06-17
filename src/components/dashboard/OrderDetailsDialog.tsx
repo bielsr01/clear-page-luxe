@@ -219,7 +219,7 @@ export function OrderDetailsDialog({
 
   return (
     <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
         <DialogHeader>
           <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
         </DialogHeader>
