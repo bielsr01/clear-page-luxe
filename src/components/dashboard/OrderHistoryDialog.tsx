@@ -174,6 +174,7 @@ export function OrderHistoryDialog({
   const orders = data?.orders ?? [];
   const items = data?.items ?? {};
   const detailsTarget = detailsId ? orders.find((o) => o.id === detailsId) ?? null : null;
+  const historyDialogOpen = open && !detailsTarget;
 
   const channelOrders = orders.filter((o) => {
     if (channel === "all") return true;
@@ -206,7 +207,7 @@ export function OrderHistoryDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={historyDialogOpen} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Histórico de pedidos</DialogTitle>
