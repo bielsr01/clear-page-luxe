@@ -78,6 +78,22 @@ const STATUS_FLOW: Record<string, string[]> = {
   pdv: ["preparing", "delivered"],
 };
 
+type OrderFlowType = "delivery" | "pickup" | "pdv";
+
+const toOrderFlowType = (value: string): OrderFlowType => (
+  value === "pickup" || value === "pdv" ? value : "delivery"
+);
+
+type QueroFeeSettingsQueryClient = {
+  from: (table: "quero_fee_settings") => {
+    select: (columns: string) => {
+      eq: (column: "restaurant_id", value: string) => {
+        maybeSingle: () => Promise<{ data: QueroFeeSettings | null }>;
+      };
+    };
+  };
+};
+
 function statusTimeline(o: OrderLike) {
   const flow = STATUS_FLOW[o.order_type] ?? STATUS_FLOW.delivery;
   const cancelled = o.status === "cancelled";
@@ -156,7 +172,7 @@ export function OrderDetailsDialog({
     queryKey: ["quero-fee-settings", order?.restaurant_id],
     enabled: !!order && isQuero && !!order?.restaurant_id,
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data } = await (supabase as unknown as QueroFeeSettingsQueryClient)
         .from("quero_fee_settings")
         .select("enabled,commission_enabled,commission_pct,online_payment_enabled,online_payment_pct")
         .eq("restaurant_id", order!.restaurant_id!)
@@ -190,7 +206,7 @@ export function OrderDetailsDialog({
       </Dialog>
     );
   }
-  const next = getNextStatus(order.status, order.order_type as any);
+  const next = getNextStatus(order.status, toOrderFlowType(order.order_type));
   const isPdv = order.order_type === "pdv";
   const isPickup = order.order_type === "pickup";
   const hasCoords = order.delivery_latitude != null && order.delivery_longitude != null;
@@ -219,12 +235,12 @@ export function OrderDetailsDialog({
 
   return (
     <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" }}>
-        <DialogHeader>
+      <DialogContent className="left-0 top-0 right-0 bottom-0 h-[100dvh] max-h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden p-0 grid-rows-[auto_minmax(0,1fr)] sm:left-[50%] sm:top-[50%] sm:right-auto sm:bottom-auto sm:h-auto sm:max-h-[90dvh] sm:w-full sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:p-6">
+        <DialogHeader className="shrink-0 border-b px-4 py-3 pr-14 sm:border-b-0 sm:p-0 sm:pr-10">
           <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="min-h-0 space-y-4 overflow-y-scroll overscroll-contain px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:overflow-y-auto sm:p-0" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
           {/* Cliente */}
           <section className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -305,7 +321,7 @@ export function OrderDetailsDialog({
 
                   // Fallback: parse notes string when no structured options exist (legacy iFood orders)
                   type ParsedOpt = { id: string; group_name: string; item_name: string; extra_price: number };
-                  let parsedFromNotes: ParsedOpt[] = [];
+                  const parsedFromNotes: ParsedOpt[] = [];
                   if (opts.length === 0 && it.notes && !/^obs\s*:/i.test(it.notes.trim())) {
                     const parts = String(it.notes).split(/\n|\s+•\s+/);
                     parts.forEach((raw, i) => {
