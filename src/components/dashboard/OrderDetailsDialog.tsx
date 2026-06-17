@@ -209,10 +209,10 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80" role="presentation">
+    <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80 pointer-events-auto" role="presentation" style={{ pointerEvents: "auto" }}>
       <div
-        className="h-[100dvh] w-full overflow-y-auto overscroll-contain bg-background sm:bg-transparent"
-        style={{ WebkitOverflowScrolling: "touch", paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="h-[100dvh] w-full overflow-y-auto overscroll-contain bg-background sm:bg-transparent pointer-events-auto"
+        style={{ WebkitOverflowScrolling: "touch", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose();
         }}
