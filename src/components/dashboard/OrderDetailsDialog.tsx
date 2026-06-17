@@ -211,23 +211,27 @@ export function OrderDetailsDialog({
   const historyLoading = historyQuery.isLoading;
   const isLoading = optionsLoading || historyLoading;
 
+  useEffect(() => {
+    if (!order) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [order, onClose]);
+
   if (isLoading) {
     return (
-      <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Carregando pedido #{displayOrderNumber(order)}…</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            <div className="h-20 rounded-lg bg-muted animate-pulse" />
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="h-40 rounded-lg bg-muted animate-pulse" />
-              <div className="h-40 rounded-lg bg-muted animate-pulse" />
-            </div>
-            <div className="h-28 rounded-lg bg-muted animate-pulse" />
+      <OrderDetailsSurface title={`Carregando pedido #${displayOrderNumber(order)}…`} onClose={onClose}>
+        <div className="space-y-3">
+          <div className="h-20 rounded-lg bg-muted animate-pulse" />
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="h-40 rounded-lg bg-muted animate-pulse" />
+            <div className="h-40 rounded-lg bg-muted animate-pulse" />
           </div>
-        </DialogContent>
-      </Dialog>
+          <div className="h-28 rounded-lg bg-muted animate-pulse" />
+        </div>
+      </OrderDetailsSurface>
     );
   }
   const next = getNextStatus(order.status, order.order_type as any);
@@ -256,15 +260,6 @@ export function OrderDetailsDialog({
   const handlePrint = () => { onPrint(order); };
 
   const wa = waLink(order.customer_phone);
-
-  useEffect(() => {
-    if (!order) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [order, onClose]);
 
   return (
     <OrderDetailsSurface title={`Detalhes Completos do Pedido #${displayOrderNumber(order)}`} onClose={onClose}>
