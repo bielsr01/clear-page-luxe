@@ -98,6 +98,7 @@ export const FULL_PERMISSIONS: Permissions = {
   cash_flow: { view: true, open_close: true, movements: true, pay_motoboy: true },
   store: { open_close: true, view_auto_popups: true },
   access_management: { view: true },
+  ifood_widget: { view: true },
 };
 
 export const EMPTY_PERMISSIONS: Permissions = {
