@@ -141,6 +141,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   cash_flow: { view: false, open_close: false, movements: false, pay_motoboy: false },
   store: { open_close: false, view_auto_popups: false },
   access_management: { view: false },
+  ifood_widget: { view: false },
 };
 
 const PERMISSION_DEPENDENCIES: Record<string, string> = {
