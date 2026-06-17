@@ -1,6 +1,6 @@
+import { useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, formatIfoodPhone, displayOrderNumber } from "@/lib/format";
@@ -94,6 +94,30 @@ type QueroFeeSettingsQueryClient = {
   };
 };
 
+function OrderDetailsOverlay({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-stretch justify-center sm:items-center" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
+      <div className="relative z-10 flex h-[100dvh] max-h-[100dvh] w-screen flex-col overflow-hidden border bg-background shadow-lg sm:h-auto sm:max-h-[90dvh] sm:w-full sm:max-w-2xl sm:rounded-lg">
+        <div className="shrink-0 border-b px-4 py-3 pr-14 sm:px-6 sm:py-4">
+          <h2 className="text-lg font-semibold leading-tight tracking-tight">{title}</h2>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 rounded-md p-2 opacity-80 ring-offset-background transition-opacity hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          aria-label="Fechar detalhes do pedido"
+        >
+          <X className="h-6 w-6" />
+        </button>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:px-6" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function statusTimeline(o: OrderLike) {
   const flow = STATUS_FLOW[o.order_type] ?? STATUS_FLOW.delivery;
   const cancelled = o.status === "cancelled";
@@ -181,6 +205,20 @@ export function OrderDetailsDialog({
     },
   });
 
+  useEffect(() => {
+    if (!order) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [order, onClose]);
+
   if (!order) return null;
 
   const optionsLoading = items.length > 0 && optionsQuery.isLoading;
@@ -189,21 +227,16 @@ export function OrderDetailsDialog({
 
   if (isLoading) {
     return (
-      <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Carregando pedido #{displayOrderNumber(order)}…</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-4">
-            <div className="h-20 rounded-lg bg-muted animate-pulse" />
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="h-40 rounded-lg bg-muted animate-pulse" />
-              <div className="h-40 rounded-lg bg-muted animate-pulse" />
-            </div>
-            <div className="h-28 rounded-lg bg-muted animate-pulse" />
+      <OrderDetailsOverlay title={`Carregando pedido #${displayOrderNumber(order)}…`} onClose={onClose}>
+        <div className="space-y-3 py-4">
+          <div className="h-20 rounded-lg bg-muted animate-pulse" />
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="h-40 rounded-lg bg-muted animate-pulse" />
+            <div className="h-40 rounded-lg bg-muted animate-pulse" />
           </div>
-        </DialogContent>
-      </Dialog>
+          <div className="h-28 rounded-lg bg-muted animate-pulse" />
+        </div>
+      </OrderDetailsOverlay>
     );
   }
   const next = getNextStatus(order.status, toOrderFlowType(order.order_type));
@@ -234,13 +267,8 @@ export function OrderDetailsDialog({
   const wa = waLink(order.customer_phone);
 
   return (
-    <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="left-0 top-0 right-0 bottom-0 h-[100dvh] max-h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden p-0 grid-rows-[auto_minmax(0,1fr)] sm:left-[50%] sm:top-[50%] sm:right-auto sm:bottom-auto sm:h-auto sm:max-h-[90dvh] sm:w-full sm:max-w-2xl sm:translate-x-[-50%] sm:translate-y-[-50%] sm:p-6">
-        <DialogHeader className="shrink-0 border-b px-4 py-3 pr-14 sm:border-b-0 sm:p-0 sm:pr-10">
-          <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
-        </DialogHeader>
-
-        <div className="min-h-0 space-y-4 overflow-y-scroll overscroll-contain px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:overflow-y-auto sm:p-0" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
+    <OrderDetailsOverlay title={`Detalhes Completos do Pedido #${displayOrderNumber(order)}`} onClose={onClose}>
+        <div className="space-y-4">
           {/* Cliente */}
           <section className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -609,7 +637,6 @@ export function OrderDetailsDialog({
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </OrderDetailsOverlay>
   );
 }
