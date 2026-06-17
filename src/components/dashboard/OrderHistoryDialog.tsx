@@ -214,9 +214,9 @@ export function OrderHistoryDialog({
             <DialogDescription>Todos os pedidos do período selecionado.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
+          <div className="space-y-3 min-w-0">
             <Tabs value={channel} onValueChange={(v) => setChannel(v as Channel)}>
-              <TabsList className="flex-wrap h-auto">
+              <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1">
                 <TabsTrigger value="all">Todos</TabsTrigger>
                 <TabsTrigger value="pdv">PDV</TabsTrigger>
                 <TabsTrigger value="delivery">Delivery / Retirada</TabsTrigger>
@@ -226,7 +226,7 @@ export function OrderHistoryDialog({
             </Tabs>
 
             <Tabs value={status} onValueChange={setStatus}>
-              <TabsList className="flex-wrap h-auto">
+              <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1">
                 {STATUS_FILTERS.map((f) => (
                   <TabsTrigger key={f.value} value={f.value}>{f.label}</TabsTrigger>
                 ))}
@@ -234,8 +234,8 @@ export function OrderHistoryDialog({
             </Tabs>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Tabs value={dateKind} onValueChange={(v) => setDateKind(v as DateRange)}>
-                <TabsList>
+              <Tabs value={dateKind} onValueChange={(v) => setDateKind(v as DateRange)} className="w-full sm:w-auto">
+                <TabsList className="flex flex-wrap h-auto w-full sm:w-auto justify-start gap-1">
                   <TabsTrigger value="7d">Últimos 7 dias</TabsTrigger>
                   <TabsTrigger value="30d">Últimos 30 dias</TabsTrigger>
                   <TabsTrigger value="month">Este mês</TabsTrigger>
@@ -244,7 +244,7 @@ export function OrderHistoryDialog({
               </Tabs>
 
               {dateKind === "custom" && (
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-wrap">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("gap-2", !customFrom && "text-muted-foreground")}>
@@ -271,13 +271,13 @@ export function OrderHistoryDialog({
                 </div>
               )}
 
-              <div className="relative ml-auto">
+              <div className="relative w-full sm:w-64 sm:ml-auto">
                 <Search className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar nº, cliente, telefone…"
-                  className="pl-8 h-9 w-64"
+                  className="pl-8 h-9 w-full"
                 />
               </div>
             </div>
