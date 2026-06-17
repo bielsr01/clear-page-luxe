@@ -128,3 +128,21 @@
     animation: draw-stroke 0.7s ease-out 0.9s forwards;
   }
 }
+
+/* iFood widget: force fixed positioning on mobile, raise above bottom edge */
+@media (max-width: 767px) {
+  .embeddables-iframe,
+  .embeddables-focus-wrapper,
+  [data-embdd-hit-region-id],
+  iframe[src*="widgets.ifood"],
+  iframe[src*="ifood"] {
+    position: fixed !important;
+    bottom: 80px !important;
+    right: 12px !important;
+    top: auto !important;
+    left: auto !important;
+    z-index: 2147483000 !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
