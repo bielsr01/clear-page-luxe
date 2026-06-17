@@ -208,7 +208,7 @@ export function OrderHistoryDialog({
   return (
     <>
       <Dialog open={historyDialogOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Histórico de pedidos</DialogTitle>
             <DialogDescription>Todos os pedidos do período selecionado.</DialogDescription>
