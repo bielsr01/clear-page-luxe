@@ -12,6 +12,14 @@ import { PayMotoboyDialog } from "./PayMotoboyDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { onCashflowRequest } from "@/lib/cashflowBus";
 import { usePermissions } from "@/hooks/usePermissions";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
 
 interface Props {
   restaurantId: string;
@@ -25,6 +33,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   const canMoto = can("cash_flow.pay_motoboy");
   const [openDlg, setOpenDlg] = useState(false);
   const [closeDlg, setCloseDlg] = useState(false);
+  const [closeWarn, setCloseWarn] = useState(false);
   const [inDlg, setInDlg] = useState(false);
   const [outDlg, setOutDlg] = useState(false);
   const [motoDlg, setMotoDlg] = useState(false);
@@ -42,7 +51,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   useEffect(() => {
     return onCashflowRequest((action) => {
       if (action === "open" && !isOpen && canOpenClose) setOpenDlg(true);
-      if (action === "close" && isOpen && canOpenClose) setCloseDlg(true);
+      if (action === "close" && isOpen && canOpenClose) setCloseWarn(true);
     });
   }, [isOpen, canOpenClose]);
 
@@ -98,7 +107,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
               </Button>
             )}
             {canOpenClose && (
-              <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
+              <Button size="sm" variant="destructive" onClick={() => setCloseWarn(true)}>
                 <Lock className="w-4 h-4 mr-1" /> Fechar caixa
               </Button>
             )}
@@ -125,6 +134,33 @@ export function CurrentSessionCard({ restaurantId }: Props) {
       <CashMovementDialog open={outDlg} onOpenChange={setOutDlg} direction="out" restaurantId={restaurantId} sessionId={session!.id} onDone={refetch} />
       <PayMotoboyDialog open={motoDlg} onOpenChange={setMotoDlg} restaurantId={restaurantId} sessionId={session!.id} sessionOpenedAt={session!.opened_at} onDone={refetch} />
       <CloseSessionDialog open={closeDlg} onOpenChange={setCloseDlg} sessionId={session!.id} summary={summary} onClosed={refetch} />
+
+      <AlertDialog open={closeWarn} onOpenChange={setCloseWarn}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Antes de fechar o caixa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Não esqueça de fazer o pagamento do motoboy antes de fechar o caixa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            {canMoto && (
+              <Button
+                variant="secondary"
+                onClick={() => { setCloseWarn(false); setMotoDlg(true); }}
+              >
+                <Bike className="w-4 h-4 mr-1" /> Pagar motoboy
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              onClick={() => { setCloseWarn(false); setCloseDlg(true); }}
+            >
+              <Lock className="w-4 h-4 mr-1" /> Prosseguir com fechamento
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
