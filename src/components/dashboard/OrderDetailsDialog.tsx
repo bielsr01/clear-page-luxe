@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl, orderStatusLabel, getNextStatus, paymentLabel, paymentLabelFor, formatPhone, formatIfoodPhone, displayOrderNumber } from "@/lib/format";
@@ -103,6 +104,45 @@ interface Props {
   canEditOrders: boolean;
   canCancelFinalized?: boolean;
   canViewFeeBreakdown?: boolean;
+}
+
+function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; onClose: () => void; children: ReactNode }) {
+  return createPortal(
+    <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80" role="presentation">
+      <div
+        className="h-[100dvh] w-full overflow-y-auto overscroll-contain bg-background sm:bg-transparent"
+        style={{ WebkitOverflowScrolling: "touch", paddingBottom: "env(safe-area-inset-bottom)" }}
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <article
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="order-details-title"
+          className="mx-auto min-h-[100dvh] w-full max-w-2xl bg-background sm:my-6 sm:min-h-0 sm:rounded-lg sm:border sm:shadow-lg"
+        >
+          <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur sm:rounded-t-lg sm:px-6">
+            <h2 id="order-details-title" className="min-w-0 text-lg font-semibold leading-snug">
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Fechar detalhes do pedido"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </header>
+          <div className="space-y-4 px-4 pb-6 pt-4 sm:px-6">
+            {children}
+          </div>
+        </article>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 export function OrderDetailsDialog({
@@ -217,28 +257,17 @@ export function OrderDetailsDialog({
 
   const wa = waLink(order.customer_phone);
 
-  return (
-    <Dialog open={!!order} modal={false} onOpenChange={(o) => !o && onClose()}>
-      {/* Overlay manual: como modal={false} desativa o react-remove-scroll
-          (que quebra o scroll interno no Safari iOS por aplicar touch-action:none
-          no body e preventDefault em touchmove), renderizamos nosso próprio backdrop. */}
-      <div
-        className="fixed inset-0 z-50 bg-black/80 animate-in fade-in-0"
-        onClick={() => onClose()}
-      />
-      <DialogContent
-        onInteractOutside={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0"
-      >
-        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
-          <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
-        </DialogHeader>
+  useEffect(() => {
+    if (!order) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [order, onClose]);
 
-        <div
-          className="space-y-4 overflow-y-auto overscroll-contain px-6 pb-6 pt-2 flex-1 min-h-0"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
+  return (
+    <OrderDetailsSurface title={`Detalhes Completos do Pedido #${displayOrderNumber(order)}`} onClose={onClose}>
           {/* Cliente */}
           <section className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -606,8 +635,6 @@ export function OrderDetailsDialog({
               </Button>
             )}
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    </OrderDetailsSurface>
   );
 }
