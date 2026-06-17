@@ -52,6 +52,7 @@ export type Permissions = {
   cash_flow: { view: boolean; open_close: boolean; movements: boolean; pay_motoboy: boolean };
   store: { open_close: boolean; view_auto_popups: boolean };
   access_management: { view: boolean };
+  ifood_widget: { view: boolean };
 };
 
 const buildStatusMap = <T extends readonly string[]>(keys: T, value: boolean): StatusMap<T> =>
@@ -97,6 +98,7 @@ export const FULL_PERMISSIONS: Permissions = {
   cash_flow: { view: true, open_close: true, movements: true, pay_motoboy: true },
   store: { open_close: true, view_auto_popups: true },
   access_management: { view: true },
+  ifood_widget: { view: true },
 };
 
 export const EMPTY_PERMISSIONS: Permissions = {
@@ -139,6 +141,7 @@ export const EMPTY_PERMISSIONS: Permissions = {
   cash_flow: { view: false, open_close: false, movements: false, pay_motoboy: false },
   store: { open_close: false, view_auto_popups: false },
   access_management: { view: false },
+  ifood_widget: { view: false },
 };
 
 const PERMISSION_DEPENDENCIES: Record<string, string> = {
@@ -210,6 +213,7 @@ const LEGACY_INHERIT_OVERRIDES: Record<string, string> = {
   "cash_flow.view": "orders.view",
   "store.open_close": "orders.view",
   "store.view_auto_popups": "orders.view",
+  "ifood_widget.view": "overview.view",
 };
 
 function pathDefined(obj: any, path: string): boolean {

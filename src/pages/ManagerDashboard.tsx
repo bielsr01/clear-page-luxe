@@ -247,7 +247,7 @@ export default function ManagerDashboard() {
 
   return (
     <SidebarProvider>
-      {!isMasterAdmin && <IfoodWidgetMount restaurantId={restaurant?.id} />}
+      {!isMasterAdmin && (isFullAccess || !!permissions.ifood_widget?.view) && <IfoodWidgetMount restaurantId={restaurant?.id} />}
 
       <div className="min-h-screen flex w-full bg-muted/30">
         <AppSidebar
