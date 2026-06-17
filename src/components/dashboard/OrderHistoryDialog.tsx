@@ -208,7 +208,7 @@ export function OrderHistoryDialog({
   return (
     <>
       <Dialog open={historyDialogOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Histórico de pedidos</DialogTitle>
             <DialogDescription>Todos os pedidos do período selecionado.</DialogDescription>
@@ -283,7 +283,7 @@ export function OrderHistoryDialog({
             </div>
 
             <div className="border rounded-md overflow-hidden">
-              <div className="grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 bg-muted/50 text-xs font-semibold text-muted-foreground">
+              <div className="hidden md:grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 bg-muted/50 text-xs font-semibold text-muted-foreground">
                 <div>Pedido</div>
                 <div>Data</div>
                 <div>Cliente</div>
@@ -307,28 +307,57 @@ export function OrderHistoryDialog({
                       : o.order_type === "pickup" ? "Retirada"
                       : "Delivery";
                     const phoneFmt = o.external_source === "ifood" ? formatIfoodPhone(o.customer_phone) : formatPhone(o.customer_phone);
+                    const dateStr = new Date(o.created_at).toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE });
+                    const timeStr = new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit" });
                     return (
-                    <div key={o.id} className="grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 items-center text-sm hover:bg-accent/30">
-                      <div className="font-mono">#{displayOrderNumber(o)}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })}<br />
-                        {new Date(o.created_at).toLocaleTimeString("pt-BR", { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit" })}
+                    <div key={o.id}>
+                      {/* Desktop row */}
+                      <div className="hidden md:grid grid-cols-[90px_130px_1fr_120px_110px_110px_50px] gap-2 px-3 py-2 items-center text-sm hover:bg-accent/30">
+                        <div className="font-mono">#{displayOrderNumber(o)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {dateStr}<br />
+                          {timeStr}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{o.customer_name}</div>
+                          <div className="text-xs text-muted-foreground truncate">{phoneFmt}</div>
+                        </div>
+                        <div>
+                          <Badge variant="outline" className="text-xs">{origem}</Badge>
+                        </div>
+                        <div>
+                          <Badge className={statusColor(o.status)}>{orderStatusLabel[o.status as keyof typeof orderStatusLabel]}</Badge>
+                        </div>
+                        <div className="text-right font-semibold">{brl(Number(o.total))}</div>
+                        <div className="text-right">
+                          <Button size="icon" variant="ghost" onClick={() => setDetailsId(o.id)} title="Ver detalhes">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">{o.customer_name}</div>
-                        <div className="text-xs text-muted-foreground truncate">{phoneFmt}</div>
-                      </div>
-                      <div>
-                        <Badge variant="outline" className="text-xs">{origem}</Badge>
-                      </div>
-                      <div>
-                        <Badge className={statusColor(o.status)}>{orderStatusLabel[o.status as keyof typeof orderStatusLabel]}</Badge>
-                      </div>
-                      <div className="text-right font-semibold">{brl(Number(o.total))}</div>
-                      <div className="text-right">
-                        <Button size="icon" variant="ghost" onClick={() => setDetailsId(o.id)} title="Ver detalhes">
-                          <Eye className="w-4 h-4" />
-                        </Button>
+
+                      {/* Mobile card */}
+                      <div className="md:hidden p-3 hover:bg-accent/30">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono font-semibold text-sm">#{displayOrderNumber(o)}</span>
+                              <Badge variant="outline" className="text-[10px]">{origem}</Badge>
+                            </div>
+                            <div className="font-medium text-sm truncate mt-1">{o.customer_name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{phoneFmt}</div>
+                          </div>
+                          <Button size="icon" variant="ghost" onClick={() => setDetailsId(o.id)} title="Ver detalhes" className="shrink-0">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <Badge className={cn(statusColor(o.status), "text-[10px]")}>
+                            {orderStatusLabel[o.status as keyof typeof orderStatusLabel]}
+                          </Badge>
+                          <div className="text-xs text-muted-foreground">{dateStr} {timeStr}</div>
+                          <div className="font-semibold text-sm">{brl(Number(o.total))}</div>
+                        </div>
                       </div>
                     </div>
                     );
