@@ -52,6 +52,7 @@ export type Permissions = {
   cash_flow: { view: boolean; open_close: boolean; movements: boolean; pay_motoboy: boolean };
   store: { open_close: boolean; view_auto_popups: boolean };
   access_management: { view: boolean };
+  ifood_widget: { view: boolean };
 };
 
 const buildStatusMap = <T extends readonly string[]>(keys: T, value: boolean): StatusMap<T> =>
