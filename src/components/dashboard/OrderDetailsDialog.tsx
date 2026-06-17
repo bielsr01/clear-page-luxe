@@ -205,12 +205,6 @@ export function OrderDetailsDialog({
     },
   });
 
-  if (!order) return null;
-
-  const optionsLoading = items.length > 0 && optionsQuery.isLoading;
-  const historyLoading = historyQuery.isLoading;
-  const isLoading = optionsLoading || historyLoading;
-
   useEffect(() => {
     if (!order) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -219,6 +213,13 @@ export function OrderDetailsDialog({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [order, onClose]);
+
+  if (!order) return null;
+
+  const optionsLoading = items.length > 0 && optionsQuery.isLoading;
+  const historyLoading = historyQuery.isLoading;
+  const isLoading = optionsLoading || historyLoading;
+
 
   if (isLoading) {
     return (
