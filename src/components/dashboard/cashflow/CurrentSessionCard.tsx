@@ -51,7 +51,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   useEffect(() => {
     return onCashflowRequest((action) => {
       if (action === "open" && !isOpen && canOpenClose) setOpenDlg(true);
-      if (action === "close" && isOpen && canOpenClose) setCloseDlg(true);
+      if (action === "close" && isOpen && canOpenClose) setCloseWarn(true);
     });
   }, [isOpen, canOpenClose]);
 
