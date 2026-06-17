@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -106,7 +106,92 @@ interface Props {
   canViewFeeBreakdown?: boolean;
 }
 
+function shouldUseDocumentScrollSurface() {
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator;
+  const ua = nav.userAgent || "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (nav.platform === "MacIntel" && nav.maxTouchPoints > 1);
+  return isIOS && window.matchMedia("(max-width: 767px)").matches;
+}
+
 function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; onClose: () => void; children: ReactNode }) {
+  const useDocumentScroll = shouldUseDocumentScrollSurface();
+  const documentSurfaceRef = useRef<HTMLDivElement | null>(null);
+  const previousScrollYRef = useRef(typeof window !== "undefined" ? window.scrollY : 0);
+
+  useEffect(() => {
+    if (!useDocumentScroll) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const appRoot = document.getElementById("root");
+    const previousHtmlOverflowY = html.style.overflowY;
+    const previousBodyOverflowY = body.style.overflowY;
+    const previousBodyTouchAction = body.style.touchAction;
+    const previousRootDisplay = appRoot?.style.display ?? "";
+    const previousRootAriaHidden = appRoot?.getAttribute("aria-hidden");
+
+    html.style.overflowY = "auto";
+    body.style.overflowY = "auto";
+    body.style.touchAction = "pan-y";
+    if (appRoot) {
+      appRoot.style.display = "none";
+      appRoot.setAttribute("aria-hidden", "true");
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      documentSurfaceRef.current?.scrollIntoView({ block: "start" });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      html.style.overflowY = previousHtmlOverflowY;
+      body.style.overflowY = previousBodyOverflowY;
+      body.style.touchAction = previousBodyTouchAction;
+      if (appRoot) {
+        appRoot.style.display = previousRootDisplay;
+        if (previousRootAriaHidden == null) appRoot.removeAttribute("aria-hidden");
+        else appRoot.setAttribute("aria-hidden", previousRootAriaHidden);
+      }
+      window.requestAnimationFrame(() => window.scrollTo(0, previousScrollYRef.current));
+    };
+  }, [useDocumentScroll]);
+
+  if (useDocumentScroll) {
+    return createPortal(
+      <div
+        ref={documentSurfaceRef}
+        className="relative z-[9999] min-h-[100dvh] w-full bg-background"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <article
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="order-details-title"
+          className="mx-auto min-h-[100dvh] w-full max-w-2xl bg-background"
+        >
+          <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur">
+            <h2 id="order-details-title" className="min-w-0 text-lg font-semibold leading-snug">
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Fechar detalhes do pedido"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </header>
+          <div className="space-y-4 px-4 pb-6 pt-4">
+            {children}
+          </div>
+        </article>
+      </div>,
+      document.body,
+    );
+  }
+
   return createPortal(
     <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80" role="presentation">
       <div
