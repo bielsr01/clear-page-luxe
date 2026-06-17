@@ -219,12 +219,15 @@ export function OrderDetailsDialog({
 
   return (
     <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div
+          className="space-y-4 overflow-y-auto overscroll-contain touch-pan-y px-6 pb-6 pt-2 flex-1 min-h-0 [-webkit-overflow-scrolling:touch]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {/* Cliente */}
           <section className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
