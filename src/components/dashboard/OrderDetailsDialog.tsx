@@ -218,14 +218,25 @@ export function OrderDetailsDialog({
   const wa = waLink(order.customer_phone);
 
   return (
-    <Dialog open={!!order} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+    <Dialog open={!!order} modal={false} onOpenChange={(o) => !o && onClose()}>
+      {/* Overlay manual: como modal={false} desativa o react-remove-scroll
+          (que quebra o scroll interno no Safari iOS por aplicar touch-action:none
+          no body e preventDefault em touchmove), renderizamos nosso próprio backdrop. */}
+      <div
+        className="fixed inset-0 z-50 bg-black/80 animate-in fade-in-0"
+        onClick={() => onClose()}
+      />
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden p-0"
+      >
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle>Detalhes Completos do Pedido #{displayOrderNumber(order)}</DialogTitle>
         </DialogHeader>
 
         <div
-          className="space-y-4 overflow-y-auto overscroll-contain touch-pan-y px-6 pb-6 pt-2 flex-1 min-h-0 [-webkit-overflow-scrolling:touch]"
+          className="space-y-4 overflow-y-auto overscroll-contain px-6 pb-6 pt-2 flex-1 min-h-0"
           style={{ WebkitOverflowScrolling: "touch" }}
         >
           {/* Cliente */}
