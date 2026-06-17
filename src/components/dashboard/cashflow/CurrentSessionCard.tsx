@@ -107,7 +107,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
               </Button>
             )}
             {canOpenClose && (
-              <Button size="sm" variant="destructive" onClick={() => setCloseDlg(true)}>
+              <Button size="sm" variant="destructive" onClick={() => setCloseWarn(true)}>
                 <Lock className="w-4 h-4 mr-1" /> Fechar caixa
               </Button>
             )}
