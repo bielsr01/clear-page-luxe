@@ -41,6 +41,7 @@ type Coupon = {
   service_pickup: boolean;
   show_on_menu: boolean;
   is_active: boolean;
+  covers_delivery_fee: boolean;
   uses_count: number;
 };
 
@@ -60,6 +61,7 @@ const emptyForm = () => ({
   service_pickup: true,
   show_on_menu: true,
   is_active: true,
+  covers_delivery_fee: false,
   scope: "all" as "all" | "specific", // applies to all restaurants or selected
   target_ids: [] as string[],
 });
