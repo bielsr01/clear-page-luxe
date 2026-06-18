@@ -313,7 +313,7 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
   // Calcula desconto aplicado
   const discount = (() => {
     if (!coupon) return 0;
-    if (coupon.covers_delivery_fee) return 0;
+    if (!Number(coupon.discount_value)) return 0;
     let base = subtotal;
     if (coupon.apply_to === "items") {
       const ids: string[] = coupon.product_ids ?? [];
