@@ -135,6 +135,7 @@ export function AdminCouponsPanel() {
       service_pickup: c.service_pickup,
       show_on_menu: c.show_on_menu,
       is_active: c.is_active,
+      covers_delivery_fee: !!(c as any).covers_delivery_fee,
       scope: "specific",
       target_ids: [c.restaurant_id],
     });
