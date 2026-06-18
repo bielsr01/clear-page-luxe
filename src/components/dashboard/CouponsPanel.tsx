@@ -188,7 +188,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {canMetrics && <Button variant="outline" onClick={() => setShowMetrics(true)} className="gap-2 flex-1 sm:flex-none"><BarChart3 className="w-4 h-4" /> Métricas</Button>}
-            {canEdit && <Button onClick={openNew} className="gap-2 flex-1 sm:flex-none"><Plus className="w-4 h-4" /> Novo cupom</Button>}
+            {canEdit && allowCreate && <Button onClick={openNew} className="gap-2 flex-1 sm:flex-none"><Plus className="w-4 h-4" /> Novo cupom</Button>}
           </div>
         </CardHeader>
         <CardContent>
