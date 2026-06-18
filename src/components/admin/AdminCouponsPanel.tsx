@@ -13,12 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pencil, Trash2, Plus, Ticket } from "lucide-react";
+import { Pencil, Trash2, Plus, Ticket, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
 import { RestaurantMultiSelect, useRestaurants } from "./RestaurantMultiSelect";
+import { CouponMetrics } from "@/components/dashboard/CouponMetrics";
 
 const sb = supabase as any;
+
 
 type Coupon = {
   id: string;
