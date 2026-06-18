@@ -106,6 +106,25 @@ export function AdminCouponsPanel() {
     },
   });
 
+  const { data: allowFlags } = useQuery({
+    queryKey: ["admin-restaurants-allow-coupon", idsKey],
+    enabled: selected.length > 0,
+    queryFn: async () => {
+      const { data } = await sb.from("restaurants").select("id, allow_coupon_creation").in("id", selected);
+      const map: Record<string, boolean> = {};
+      (data ?? []).forEach((r: any) => { map[r.id] = r.allow_coupon_creation !== false; });
+      return map;
+    },
+  });
+
+  const toggleAllowCreate = async (rid: string, value: boolean) => {
+    const { error } = await sb.from("restaurants").update({ allow_coupon_creation: value }).eq("id", rid);
+    if (error) return toast.error(error.message);
+    toast.success(value ? "Cadastro de cupons ativado" : "Cadastro de cupons desativado");
+    qc.invalidateQueries({ queryKey: ["admin-restaurants-allow-coupon"] });
+    qc.invalidateQueries({ queryKey: ["restaurant-coupon-flag"] });
+  };
+
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
     all.forEach((r) => m.set(r.id, r.name));
