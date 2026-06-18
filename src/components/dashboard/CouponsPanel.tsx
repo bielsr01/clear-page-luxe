@@ -414,6 +414,13 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
 
               {/* Toggles finais */}
               <div className="space-y-3 border-t pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label className="font-semibold">Cobrir taxa de entrega</Label>
+                    <p className="text-xs text-muted-foreground">Se ativado, a entrega fica grátis ao aplicar o cupom.</p>
+                  </div>
+                  <Switch checked={!!editing.covers_delivery_fee} onCheckedChange={(v) => setEditing({ ...editing, covers_delivery_fee: v, service_delivery: v ? true : editing.service_delivery })} />
+                </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="font-semibold">Mostrar este desconto no menu digital</Label>
