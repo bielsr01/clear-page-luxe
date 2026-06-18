@@ -13,12 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Pencil, Trash2, Plus, Ticket } from "lucide-react";
+import { Pencil, Trash2, Plus, Ticket, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
 import { RestaurantMultiSelect, useRestaurants } from "./RestaurantMultiSelect";
+import { CouponMetrics } from "@/components/dashboard/CouponMetrics";
 
 const sb = supabase as any;
+
 
 type Coupon = {
   id: string;
@@ -85,6 +87,8 @@ export function AdminCouponsPanel() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<(ReturnType<typeof emptyForm> & { id?: string; restaurant_id?: string }) | null>(null);
   const [toDelete, setToDelete] = useState<Coupon | null>(null);
+  const [metricsFor, setMetricsFor] = useState<string | null>(null);
+
 
   const { data: coupons, isLoading } = useQuery({
     queryKey: ["admin-coupons", idsKey],
@@ -194,6 +198,10 @@ export function AdminCouponsPanel() {
 
   const formatDiscount = (c: Coupon) => c.discount_type === "percent" ? `${Number(c.discount_value)}%` : brl(Number(c.discount_value));
 
+  if (metricsFor) {
+    return <CouponMetrics restaurantId={metricsFor} onBack={() => setMetricsFor(null)} />;
+  }
+
   return (
     <div className="space-y-4">
       <Card><CardContent className="p-4"><RestaurantMultiSelect all={all} selected={selected} onChange={setSelected} /></CardContent></Card>
@@ -204,8 +212,20 @@ export function AdminCouponsPanel() {
             <CardTitle className="flex items-center gap-2"><Ticket className="w-5 h-5" /> Cupons de desconto</CardTitle>
             <CardDescription>Gerencie cupons de todas as lojas selecionadas.</CardDescription>
           </div>
-          <Button onClick={openNew} disabled={all.length === 0} className="gap-2 w-full sm:w-auto"><Plus className="w-4 h-4" /> Novo cupom</Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => selected[0] && setMetricsFor(selected[0])}
+              disabled={selected.length !== 1}
+              title={selected.length !== 1 ? "Selecione exatamente 1 restaurante" : ""}
+              className="gap-2 w-full sm:w-auto"
+            >
+              <BarChart3 className="w-4 h-4" /> Métricas
+            </Button>
+            <Button onClick={openNew} disabled={all.length === 0} className="gap-2 w-full sm:w-auto"><Plus className="w-4 h-4" /> Novo cupom</Button>
+          </div>
         </CardHeader>
+
         <CardContent>
           {selected.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">Selecione ao menos um restaurante.</div>
