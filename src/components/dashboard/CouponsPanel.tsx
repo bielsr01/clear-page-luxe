@@ -41,6 +41,7 @@ type Coupon = {
   service_pickup: boolean;
   show_on_menu: boolean;
   is_active: boolean;
+  covers_delivery_fee: boolean;
   uses_count: number;
 };
 
