@@ -62,6 +62,7 @@ const empty = (rid: string): Partial<Coupon> => ({
   service_pickup: true,
   show_on_menu: true,
   is_active: true,
+  covers_delivery_fee: false,
 });
 
 const toLocalInput = (iso: string | null) => {
