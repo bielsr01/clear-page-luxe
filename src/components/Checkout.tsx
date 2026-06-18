@@ -304,12 +304,16 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
     } catch { toast.error("Falha ao buscar CEP"); }
   };
 
-  const fee = isPickup ? 0 : (delivery?.fee ?? 0);
+  const baseFee = isPickup ? 0 : (delivery?.fee ?? 0);
+  const coversDelivery = !!(coupon && coupon.covers_delivery_fee && !isPickup);
+  const fee = coversDelivery ? 0 : baseFee;
+  const deliveryFeeCovered = coversDelivery ? baseFee : 0;
   const subtotal = cart.total;
 
   // Calcula desconto aplicado
   const discount = (() => {
     if (!coupon) return 0;
+    if (coupon.covers_delivery_fee) return 0;
     let base = subtotal;
     if (coupon.apply_to === "items") {
       const ids: string[] = coupon.product_ids ?? [];
