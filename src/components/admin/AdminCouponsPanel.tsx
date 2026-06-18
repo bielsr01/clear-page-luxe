@@ -87,6 +87,8 @@ export function AdminCouponsPanel() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<(ReturnType<typeof emptyForm> & { id?: string; restaurant_id?: string }) | null>(null);
   const [toDelete, setToDelete] = useState<Coupon | null>(null);
+  const [metricsFor, setMetricsFor] = useState<string | null>(null);
+
 
   const { data: coupons, isLoading } = useQuery({
     queryKey: ["admin-coupons", idsKey],
