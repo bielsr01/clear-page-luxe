@@ -106,6 +106,15 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
     },
   });
 
+  const { data: restaurantFlags } = useQuery({
+    queryKey: ["restaurant-coupon-flag", restaurantId],
+    queryFn: async () => {
+      const { data } = await supabase.from("restaurants").select("allow_coupon_creation" as any).eq("id", restaurantId).maybeSingle();
+      return data as any;
+    },
+  });
+  const allowCreate = restaurantFlags?.allow_coupon_creation !== false;
+
   const openNew = () => { setEditing(empty(restaurantId)); setOpen(true); };
   const openEdit = (c: Coupon) => { setEditing({ ...c }); setOpen(true); };
 
