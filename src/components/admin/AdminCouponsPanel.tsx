@@ -41,6 +41,7 @@ type Coupon = {
   service_pickup: boolean;
   show_on_menu: boolean;
   is_active: boolean;
+  covers_delivery_fee: boolean;
   uses_count: number;
 };
 
@@ -60,6 +61,7 @@ const emptyForm = () => ({
   service_pickup: true,
   show_on_menu: true,
   is_active: true,
+  covers_delivery_fee: false,
   scope: "all" as "all" | "specific", // applies to all restaurants or selected
   target_ids: [] as string[],
 });
@@ -104,6 +106,25 @@ export function AdminCouponsPanel() {
     },
   });
 
+  const { data: allowFlags } = useQuery({
+    queryKey: ["admin-restaurants-allow-coupon", idsKey],
+    enabled: selected.length > 0,
+    queryFn: async () => {
+      const { data } = await sb.from("restaurants").select("id, allow_coupon_creation").in("id", selected);
+      const map: Record<string, boolean> = {};
+      (data ?? []).forEach((r: any) => { map[r.id] = r.allow_coupon_creation !== false; });
+      return map;
+    },
+  });
+
+  const toggleAllowCreate = async (rid: string, value: boolean) => {
+    const { error } = await sb.from("restaurants").update({ allow_coupon_creation: value }).eq("id", rid);
+    if (error) return toast.error(error.message);
+    toast.success(value ? "Cadastro de cupons ativado" : "Cadastro de cupons desativado");
+    qc.invalidateQueries({ queryKey: ["admin-restaurants-allow-coupon"] });
+    qc.invalidateQueries({ queryKey: ["restaurant-coupon-flag"] });
+  };
+
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
     all.forEach((r) => m.set(r.id, r.name));
@@ -133,6 +154,7 @@ export function AdminCouponsPanel() {
       service_pickup: c.service_pickup,
       show_on_menu: c.show_on_menu,
       is_active: c.is_active,
+      covers_delivery_fee: !!(c as any).covers_delivery_fee,
       scope: "specific",
       target_ids: [c.restaurant_id],
     });
@@ -165,6 +187,7 @@ export function AdminCouponsPanel() {
       service_pickup: e.service_pickup,
       show_on_menu: e.show_on_menu,
       is_active: e.is_active,
+      covers_delivery_fee: !!e.covers_delivery_fee,
     };
 
     if (e.id) {
@@ -205,6 +228,26 @@ export function AdminCouponsPanel() {
   return (
     <div className="space-y-4">
       <Card><CardContent className="p-4"><RestaurantMultiSelect all={all} selected={selected} onChange={setSelected} /></CardContent></Card>
+
+      {selected.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Permitir cadastro de novos cupons</CardTitle>
+            <CardDescription>Quando desativado, o painel do restaurante não mostra o botão "Novo cupom".</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {selected.map((rid) => (
+              <div key={rid} className="flex items-center justify-between border rounded-md p-2">
+                <span className="text-sm">{nameById.get(rid) ?? rid}</span>
+                <Switch
+                  checked={allowFlags?.[rid] !== false}
+                  onCheckedChange={(v) => toggleAllowCreate(rid, v)}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -383,6 +426,13 @@ export function AdminCouponsPanel() {
               </div>
 
               <div className="space-y-3 border-t pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label className="font-semibold">Cobrir taxa de entrega</Label>
+                    <p className="text-xs text-muted-foreground">Se ativado, a entrega fica grátis ao aplicar o cupom.</p>
+                  </div>
+                  <Switch checked={!!editing.covers_delivery_fee} onCheckedChange={(v) => setEditing({ ...editing, covers_delivery_fee: v, service_delivery: v ? true : editing.service_delivery })} />
+                </div>
                 <div className="flex items-center justify-between">
                   <Label className="font-semibold">Mostrar no menu digital</Label>
                   <Switch checked={editing.show_on_menu} onCheckedChange={(v) => setEditing({ ...editing, show_on_menu: v })} />

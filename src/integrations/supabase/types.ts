@@ -517,6 +517,7 @@ export type Database = {
         Row: {
           apply_to: string
           code: string
+          covers_delivery_fee: boolean
           created_at: string
           customer_type: string
           discount_type: string
@@ -540,6 +541,7 @@ export type Database = {
         Insert: {
           apply_to?: string
           code: string
+          covers_delivery_fee?: boolean
           created_at?: string
           customer_type?: string
           discount_type?: string
@@ -563,6 +565,7 @@ export type Database = {
         Update: {
           apply_to?: string
           code?: string
+          covers_delivery_fee?: boolean
           created_at?: string
           customer_type?: string
           discount_type?: string
@@ -2154,6 +2157,7 @@ export type Database = {
           address_number: string | null
           address_state: string | null
           address_street: string | null
+          allow_coupon_creation: boolean
           bulk_campaigns_enabled: boolean
           cover_url: string | null
           cover_urls: Json
@@ -2194,6 +2198,7 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           address_street?: string | null
+          allow_coupon_creation?: boolean
           bulk_campaigns_enabled?: boolean
           cover_url?: string | null
           cover_urls?: Json
@@ -2234,6 +2239,7 @@ export type Database = {
           address_number?: string | null
           address_state?: string | null
           address_street?: string | null
+          allow_coupon_creation?: boolean
           bulk_campaigns_enabled?: boolean
           cover_url?: string | null
           cover_urls?: Json

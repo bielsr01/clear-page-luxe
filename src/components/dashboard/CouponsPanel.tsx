@@ -41,6 +41,7 @@ type Coupon = {
   service_pickup: boolean;
   show_on_menu: boolean;
   is_active: boolean;
+  covers_delivery_fee: boolean;
   uses_count: number;
 };
 
@@ -62,6 +63,7 @@ const empty = (rid: string): Partial<Coupon> => ({
   service_pickup: true,
   show_on_menu: true,
   is_active: true,
+  covers_delivery_fee: false,
 });
 
 const toLocalInput = (iso: string | null) => {
@@ -104,6 +106,15 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
     },
   });
 
+  const { data: restaurantFlags } = useQuery({
+    queryKey: ["restaurant-coupon-flag", restaurantId],
+    queryFn: async () => {
+      const { data } = await supabase.from("restaurants").select("allow_coupon_creation" as any).eq("id", restaurantId).maybeSingle();
+      return data as any;
+    },
+  });
+  const allowCreate = restaurantFlags?.allow_coupon_creation !== false;
+
   const openNew = () => { setEditing(empty(restaurantId)); setOpen(true); };
   const openEdit = (c: Coupon) => { setEditing({ ...c }); setOpen(true); };
 
@@ -136,6 +147,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
       service_pickup: !!e.service_pickup,
       show_on_menu: !!e.show_on_menu,
       is_active: !!e.is_active,
+      covers_delivery_fee: !!e.covers_delivery_fee,
     };
 
     const { error } = e.id
@@ -176,7 +188,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
           </div>
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {canMetrics && <Button variant="outline" onClick={() => setShowMetrics(true)} className="gap-2 flex-1 sm:flex-none"><BarChart3 className="w-4 h-4" /> Métricas</Button>}
-            {canEdit && <Button onClick={openNew} className="gap-2 flex-1 sm:flex-none"><Plus className="w-4 h-4" /> Novo cupom</Button>}
+            {canEdit && allowCreate && <Button onClick={openNew} className="gap-2 flex-1 sm:flex-none"><Plus className="w-4 h-4" /> Novo cupom</Button>}
           </div>
         </CardHeader>
         <CardContent>
@@ -402,6 +414,13 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
 
               {/* Toggles finais */}
               <div className="space-y-3 border-t pt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Label className="font-semibold">Cobrir taxa de entrega</Label>
+                    <p className="text-xs text-muted-foreground">Se ativado, a entrega fica grátis ao aplicar o cupom.</p>
+                  </div>
+                  <Switch checked={!!editing.covers_delivery_fee} onCheckedChange={(v) => setEditing({ ...editing, covers_delivery_fee: v, service_delivery: v ? true : editing.service_delivery })} />
+                </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="font-semibold">Mostrar este desconto no menu digital</Label>

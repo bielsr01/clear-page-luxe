@@ -1,0 +1,2 @@
+ALTER TABLE public.restaurants ADD COLUMN IF NOT EXISTS allow_coupon_creation boolean NOT NULL DEFAULT true;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS covers_delivery_fee boolean NOT NULL DEFAULT false;

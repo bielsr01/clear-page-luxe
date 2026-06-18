@@ -304,12 +304,16 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
     } catch { toast.error("Falha ao buscar CEP"); }
   };
 
-  const fee = isPickup ? 0 : (delivery?.fee ?? 0);
+  const baseFee = isPickup ? 0 : (delivery?.fee ?? 0);
+  const coversDelivery = !!(coupon && coupon.covers_delivery_fee && !isPickup);
+  const fee = coversDelivery ? 0 : baseFee;
+  const deliveryFeeCovered = coversDelivery ? baseFee : 0;
   const subtotal = cart.total;
 
   // Calcula desconto aplicado
   const discount = (() => {
     if (!coupon) return 0;
+    if (coupon.covers_delivery_fee) return 0;
     let base = subtotal;
     if (coupon.apply_to === "items") {
       const ids: string[] = coupon.product_ids ?? [];
@@ -943,7 +947,14 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
                 <div className="border-t pt-2 space-y-1 text-sm">
                   <div className="flex justify-between"><span>Subtotal</span><span>{brl(subtotal)}</span></div>
                   {!isPickup && (
-                    <div className="flex justify-between"><span>Entrega</span><span>{fee > 0 ? brl(fee) : (hasZones ? "—" : "Grátis")}</span></div>
+                    <div className="flex justify-between">
+                      <span>Entrega</span>
+                      {coversDelivery ? (
+                        <span className="text-success">Grátis <span className="line-through text-muted-foreground ml-1">{brl(deliveryFeeCovered)}</span></span>
+                      ) : (
+                        <span>{fee > 0 ? brl(fee) : (hasZones ? "—" : "Grátis")}</span>
+                      )}
+                    </div>
                   )}
                   {isPickup && (
                     <div className="flex justify-between text-muted-foreground"><span>Retirada na loja</span><span>Sem taxa</span></div>
