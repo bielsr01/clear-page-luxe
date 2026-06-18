@@ -229,6 +229,26 @@ export function AdminCouponsPanel() {
     <div className="space-y-4">
       <Card><CardContent className="p-4"><RestaurantMultiSelect all={all} selected={selected} onChange={setSelected} /></CardContent></Card>
 
+      {selected.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Permitir cadastro de novos cupons</CardTitle>
+            <CardDescription>Quando desativado, o painel do restaurante não mostra o botão "Novo cupom".</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {selected.map((rid) => (
+              <div key={rid} className="flex items-center justify-between border rounded-md p-2">
+                <span className="text-sm">{nameById.get(rid) ?? rid}</span>
+                <Switch
+                  checked={allowFlags?.[rid] !== false}
+                  onCheckedChange={(v) => toggleAllowCreate(rid, v)}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
           <div className="min-w-0">
