@@ -138,6 +138,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
       service_pickup: !!e.service_pickup,
       show_on_menu: !!e.show_on_menu,
       is_active: !!e.is_active,
+      covers_delivery_fee: !!e.covers_delivery_fee,
     };
 
     const { error } = e.id
