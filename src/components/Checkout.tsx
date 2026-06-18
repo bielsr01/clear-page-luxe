@@ -947,7 +947,14 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
                 <div className="border-t pt-2 space-y-1 text-sm">
                   <div className="flex justify-between"><span>Subtotal</span><span>{brl(subtotal)}</span></div>
                   {!isPickup && (
-                    <div className="flex justify-between"><span>Entrega</span><span>{fee > 0 ? brl(fee) : (hasZones ? "—" : "Grátis")}</span></div>
+                    <div className="flex justify-between">
+                      <span>Entrega</span>
+                      {coversDelivery ? (
+                        <span className="text-success">Grátis <span className="line-through text-muted-foreground ml-1">{brl(deliveryFeeCovered)}</span></span>
+                      ) : (
+                        <span>{fee > 0 ? brl(fee) : (hasZones ? "—" : "Grátis")}</span>
+                      )}
+                    </div>
                   )}
                   {isPickup && (
                     <div className="flex justify-between text-muted-foreground"><span>Retirada na loja</span><span>Sem taxa</span></div>
