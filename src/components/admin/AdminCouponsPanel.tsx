@@ -198,6 +198,10 @@ export function AdminCouponsPanel() {
 
   const formatDiscount = (c: Coupon) => c.discount_type === "percent" ? `${Number(c.discount_value)}%` : brl(Number(c.discount_value));
 
+  if (metricsFor) {
+    return <CouponMetrics restaurantId={metricsFor} onBack={() => setMetricsFor(null)} />;
+  }
+
   return (
     <div className="space-y-4">
       <Card><CardContent className="p-4"><RestaurantMultiSelect all={all} selected={selected} onChange={setSelected} /></CardContent></Card>
@@ -208,8 +212,20 @@ export function AdminCouponsPanel() {
             <CardTitle className="flex items-center gap-2"><Ticket className="w-5 h-5" /> Cupons de desconto</CardTitle>
             <CardDescription>Gerencie cupons de todas as lojas selecionadas.</CardDescription>
           </div>
-          <Button onClick={openNew} disabled={all.length === 0} className="gap-2 w-full sm:w-auto"><Plus className="w-4 h-4" /> Novo cupom</Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => selected[0] && setMetricsFor(selected[0])}
+              disabled={selected.length !== 1}
+              title={selected.length !== 1 ? "Selecione exatamente 1 restaurante" : ""}
+              className="gap-2 w-full sm:w-auto"
+            >
+              <BarChart3 className="w-4 h-4" /> Métricas
+            </Button>
+            <Button onClick={openNew} disabled={all.length === 0} className="gap-2 w-full sm:w-auto"><Plus className="w-4 h-4" /> Novo cupom</Button>
+          </div>
         </CardHeader>
+
         <CardContent>
           {selected.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">Selecione ao menos um restaurante.</div>
