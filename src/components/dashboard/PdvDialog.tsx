@@ -556,7 +556,12 @@ export function PdvDialog({
     const grs = groupsByProduct[pickProduct.id] ?? [];
     for (const g of grs) {
       const cnt = (pickSelected[g.id] ?? []).length;
-      if (cnt < g.min_select) { toast.error(`Selecione ao menos ${g.min_select} em "${g.name}"`); return; }
+      if (cnt < g.min_select) {
+        const el = pickGroupRefs.current[g.id];
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        triggerShake(g.id);
+        return;
+      }
     }
     const opts: { groupName: string; itemName: string; extraPrice: number; optionItemId?: string }[] = [];
     grs.forEach((g) => {
