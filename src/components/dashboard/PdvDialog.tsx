@@ -890,7 +890,7 @@ export function PdvDialog({
                   : g.min_select === g.max_select ? `Escolha ${g.min_select}`
                   : `Mín ${g.min_select} • Máx ${g.max_select}`;
                 return (
-                  <div key={g.id} className="border rounded-md">
+                  <div key={g.id} ref={(el) => { pickGroupRefs.current[g.id] = el; }} className="border rounded-md scroll-mt-4">
                     <div className={`px-3 py-2 bg-muted/50 flex items-center justify-between ${shakeGroupId === g.id ? "animate-shake" : ""}`}>
                       <div className="font-medium text-sm">{g.name}</div>
                       <Badge variant={g.min_select > 0 ? "default" : "outline"} className={`text-[10px] ${shakeGroupId === g.id ? "bg-destructive text-destructive-foreground" : ""}`}>{rule}</Badge>
