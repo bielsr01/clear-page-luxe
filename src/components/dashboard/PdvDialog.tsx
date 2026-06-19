@@ -154,6 +154,7 @@ export function PdvDialog({
   const [pickSelected, setPickSelected] = useState<Record<string, string[]>>({});
   const [pickQty, setPickQty] = useState(1);
   const [shakeGroupId, setShakeGroupId] = useState<string | null>(null);
+  const pickGroupRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const triggerShake = (gid: string) => {
     setShakeGroupId(gid);
     setTimeout(() => setShakeGroupId(null), 600);
