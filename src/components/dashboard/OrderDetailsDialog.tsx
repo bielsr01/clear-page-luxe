@@ -715,6 +715,11 @@ export function OrderDetailsDialog({
                 {pending ? "Enviando…" : order.status === "pending" ? "✓ Aceitar pedido" : `→ ${orderStatusLabel[next]}`}
               </Button>
             )}
+            {order.external_source === "ifood" && order.status === "out_for_delivery" && order.order_type !== "pickup" && canChangeStatus && onIfoodConfirmDelivery && (
+              <Button size="sm" className="flex-1 min-w-[180px]" onClick={() => onIfoodConfirmDelivery(order)} disabled={pending}>
+                📦 Confirmar entrega
+              </Button>
+            )}
             {!["delivered", "cancelled"].includes(order.status) && canChangeStatus && (
               <Button size="sm" variant="outline" onClick={handleCancel} disabled={pending} className="gap-1">
                 <X className="w-4 h-4" /> Cancelar
