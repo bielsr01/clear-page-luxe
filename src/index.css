@@ -146,3 +146,9 @@
     will-change: auto !important;
   }
 }
+
+/* Sonner toasts must always render above dialogs/modals (incl. iFood code modal at z-[10050]) */
+[data-sonner-toaster] {
+  z-index: 2147483600 !important;
+}
+
