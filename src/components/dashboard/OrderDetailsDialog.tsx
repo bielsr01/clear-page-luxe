@@ -248,7 +248,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
 }
 
 export function OrderDetailsDialog({
-  order, items, onClose, onAdvance, onCancel, onDelete, onPrint,
+  order, items, onClose, onAdvance, onCancel, onDelete, onPrint, onIfoodConfirmDelivery,
   pending, canChangeStatus, canEditOrders, canCancelFinalized = false, canViewFeeBreakdown = true,
 }: Props) {
   const optionsQuery = useQuery({
