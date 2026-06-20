@@ -159,12 +159,14 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
   const [ifoodCodeTarget, setIfoodCodeTarget] = useState<Order | null>(null);
   const [ifoodCodeValue, setIfoodCodeValue] = useState("");
   const [ifoodCodeSubmitting, setIfoodCodeSubmitting] = useState(false);
+  const [ifoodCodeError, setIfoodCodeError] = useState<string | null>(null);
 
   const confirmIfoodDelivery = async () => {
     if (!ifoodCodeTarget) return;
     const targetOrderId = ifoodCodeTarget.id;
     const code = ifoodCodeValue.trim();
-    if (!code) { toast.error("Informe o código de entrega"); return; }
+    setIfoodCodeError(null);
+    if (!code) { setIfoodCodeError("Informe o código de entrega"); return; }
     setIfoodCodeSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke("ihub-link", {
@@ -182,14 +184,18 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       patchOrder(targetOrderId, { status: "delivered" });
       setIfoodCodeTarget(null);
       setIfoodCodeValue("");
+      setIfoodCodeError(null);
       setDetailsTarget(null);
       await qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      const msg = e instanceof Error ? e.message : "Erro ao confirmar entrega";
+      setIfoodCodeError(msg);
+      toast.error(msg);
     } finally {
       setIfoodCodeSubmitting(false);
     }
   };
+
 
   const setPending = (id: string, v: boolean) =>
     setPendingAction((m) => ({ ...m, [id]: v }));
