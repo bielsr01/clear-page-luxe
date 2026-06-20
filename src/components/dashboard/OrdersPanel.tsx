@@ -159,12 +159,14 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
   const [ifoodCodeTarget, setIfoodCodeTarget] = useState<Order | null>(null);
   const [ifoodCodeValue, setIfoodCodeValue] = useState("");
   const [ifoodCodeSubmitting, setIfoodCodeSubmitting] = useState(false);
+  const [ifoodCodeError, setIfoodCodeError] = useState<string | null>(null);
 
   const confirmIfoodDelivery = async () => {
     if (!ifoodCodeTarget) return;
     const targetOrderId = ifoodCodeTarget.id;
     const code = ifoodCodeValue.trim();
-    if (!code) { toast.error("Informe o código de entrega"); return; }
+    setIfoodCodeError(null);
+    if (!code) { setIfoodCodeError("Informe o código de entrega"); return; }
     setIfoodCodeSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke("ihub-link", {
@@ -182,14 +184,18 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       patchOrder(targetOrderId, { status: "delivered" });
       setIfoodCodeTarget(null);
       setIfoodCodeValue("");
+      setIfoodCodeError(null);
       setDetailsTarget(null);
       await qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Erro");
+      const msg = e instanceof Error ? e.message : "Erro ao confirmar entrega";
+      setIfoodCodeError(msg);
+      toast.error(msg);
     } finally {
       setIfoodCodeSubmitting(false);
     }
   };
+
 
   const setPending = (id: string, v: boolean) =>
     setPendingAction((m) => ({ ...m, [id]: v }));
@@ -1219,21 +1225,27 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               <Input
                 id="ifood-delivery-code"
                 value={ifoodCodeValue}
-                onChange={(e) => setIfoodCodeValue(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => { setIfoodCodeValue(e.target.value.replace(/\D/g, "")); if (ifoodCodeError) setIfoodCodeError(null); }}
                 placeholder="Ex: 9999"
                 inputMode="numeric"
                 autoFocus
                 onKeyDown={(e) => { if (e.key === "Enter" && !ifoodCodeSubmitting) confirmIfoodDelivery(); }}
               />
+              {ifoodCodeError && (
+                <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                  {ifoodCodeError}
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setIfoodCodeTarget(null); setIfoodCodeValue(""); }} disabled={ifoodCodeSubmitting}>
+              <Button variant="outline" onClick={() => { setIfoodCodeTarget(null); setIfoodCodeValue(""); setIfoodCodeError(null); }} disabled={ifoodCodeSubmitting}>
                 Cancelar
               </Button>
               <Button onClick={confirmIfoodDelivery} disabled={ifoodCodeSubmitting || !ifoodCodeValue.trim()}>
                 {ifoodCodeSubmitting ? "Confirmando…" : "Confirmar entrega"}
               </Button>
             </div>
+
           </div>
         </div>,
         document.body,
