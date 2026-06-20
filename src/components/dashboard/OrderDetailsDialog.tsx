@@ -199,7 +199,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
               <X className="h-5 w-5" />
             </button>
           </header>
-          <div className="space-y-4 px-4 pb-6 pt-4">
+          <div className="min-w-0 space-y-4 overflow-x-hidden px-4 pb-6 pt-4">
             {children}
           </div>
         </article>
@@ -211,7 +211,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
   return createPortal(
     <div className="fixed inset-0 z-50 bg-background sm:bg-foreground/80 pointer-events-auto" role="presentation" style={{ pointerEvents: "auto" }}>
       <div
-        className="h-[100dvh] w-full overflow-y-auto overscroll-contain bg-background sm:bg-transparent pointer-events-auto"
+        className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden overscroll-contain bg-background sm:bg-transparent pointer-events-auto"
         style={{ WebkitOverflowScrolling: "touch", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose();
@@ -221,7 +221,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
           role="dialog"
           aria-modal="true"
           aria-labelledby="order-details-title"
-          className="mx-auto min-h-[100dvh] w-full max-w-2xl bg-background sm:my-6 sm:min-h-0 sm:rounded-lg sm:border sm:shadow-lg"
+          className="mx-auto min-h-[100dvh] w-full max-w-2xl bg-background sm:my-6 sm:min-h-0 sm:max-h-[90vh] sm:overflow-y-auto sm:rounded-lg sm:border sm:shadow-lg"
         >
           <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur sm:rounded-t-lg sm:px-6">
             <h2 id="order-details-title" className="min-w-0 text-lg font-semibold leading-snug">
@@ -236,7 +236,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
               <X className="h-5 w-5" />
             </button>
           </header>
-          <div className="space-y-4 px-4 pb-6 pt-4 sm:px-6">
+          <div className="min-w-0 space-y-4 overflow-x-hidden px-4 pb-6 pt-4 sm:px-6">
             {children}
           </div>
         </article>
