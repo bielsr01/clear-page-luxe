@@ -182,6 +182,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       patchOrder(targetOrderId, { status: "delivered" });
       setIfoodCodeTarget(null);
       setIfoodCodeValue("");
+      setDetailsTarget(null);
       await qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Erro");
