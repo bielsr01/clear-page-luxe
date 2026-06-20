@@ -294,12 +294,28 @@ Deno.serve(async (req) => {
       let ihubResult: { ok: boolean; status: number; data: any } | null = null;
       ihubPromise.then((r) => { ihubResult = r; });
 
+      const isInvalidCode = (res: { ok: boolean; status: number; data: any } | null) => {
+        if (!res || res.ok) return false;
+        if (res.data?.valid === false) return true;
+        if (res.data?.success === false) return true;
+        // 4xx do iHub indica rejeição (código errado / inválido), não intermitência.
+        if (res.status >= 400 && res.status < 500) return true;
+        return false;
+      };
+
       while (Date.now() < deadline) {
         if (ihubResult?.ok) {
           await supabase.from("orders").update({ status: "delivered" }).eq("id", orderId).eq("restaurant_id", restaurantId);
           return new Response(JSON.stringify({ ok: true, viaIhub: true, ...ihubResult.data }), {
             status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
+        }
+        if (isInvalidCode(ihubResult)) {
+          return new Response(JSON.stringify({
+            ok: false,
+            error: "Código de entrega inválido. Confira com o cliente e tente novamente.",
+            detail: ihubResult?.data,
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         const confirmed = await checkDeliveryConfirmed({ restaurantId, orderId, externalOrderId });
         if (confirmed.confirmed) {
@@ -310,18 +326,25 @@ Deno.serve(async (req) => {
         await new Promise((res) => setTimeout(res, VERIFY_DELIVERY_POLL_MS));
       }
 
-      // Sem confirmação rápida: deixamos o iHub terminar em background (o webhook
-      // chegará nos próximos segundos e marcará o pedido como entregue).
-      // Respondemos "pending" para a UI marcar otimistamente como entregue.
+      // Timeout sem resposta definitiva. Se o iHub respondeu rejeitando depois,
+      // ainda assim devolvemos erro; caso contrário (5xx/timeout real), tratamos
+      // como falha para não confirmar entrega indevidamente.
+      if (isInvalidCode(ihubResult)) {
+        return new Response(JSON.stringify({
+          ok: false,
+          error: "Código de entrega inválido. Confira com o cliente e tente novamente.",
+          detail: ihubResult?.data,
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       try { (globalThis as any).EdgeRuntime?.waitUntil?.(ihubPromise); } catch { /* ignore */ }
       return new Response(JSON.stringify({
-        ok: true,
-        pending: true,
-        message: "Confirmação enviada — aguardando webhook do iFood.",
+        ok: false,
+        error: "Não foi possível confirmar a entrega agora. Tente novamente em alguns segundos.",
       }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     if (action === "test-connection") {
       if (!integration.merchant_id) {
