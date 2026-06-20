@@ -99,6 +99,7 @@ interface Props {
   onCancel: (o: OrderLike) => void;
   onDelete: (o: OrderLike) => void;
   onPrint: (o: OrderLike) => void;
+  onIfoodConfirmDelivery?: (o: OrderLike) => void;
   pending?: boolean;
   canChangeStatus: boolean;
   canEditOrders: boolean;
