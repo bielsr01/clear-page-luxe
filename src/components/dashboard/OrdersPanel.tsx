@@ -1225,21 +1225,27 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               <Input
                 id="ifood-delivery-code"
                 value={ifoodCodeValue}
-                onChange={(e) => setIfoodCodeValue(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => { setIfoodCodeValue(e.target.value.replace(/\D/g, "")); if (ifoodCodeError) setIfoodCodeError(null); }}
                 placeholder="Ex: 9999"
                 inputMode="numeric"
                 autoFocus
                 onKeyDown={(e) => { if (e.key === "Enter" && !ifoodCodeSubmitting) confirmIfoodDelivery(); }}
               />
+              {ifoodCodeError && (
+                <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                  {ifoodCodeError}
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setIfoodCodeTarget(null); setIfoodCodeValue(""); }} disabled={ifoodCodeSubmitting}>
+              <Button variant="outline" onClick={() => { setIfoodCodeTarget(null); setIfoodCodeValue(""); setIfoodCodeError(null); }} disabled={ifoodCodeSubmitting}>
                 Cancelar
               </Button>
               <Button onClick={confirmIfoodDelivery} disabled={ifoodCodeSubmitting || !ifoodCodeValue.trim()}>
                 {ifoodCodeSubmitting ? "Confirmando…" : "Confirmar entrega"}
               </Button>
             </div>
+
           </div>
         </div>,
         document.body,
