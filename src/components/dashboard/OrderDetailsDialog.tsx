@@ -221,7 +221,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
           role="dialog"
           aria-modal="true"
           aria-labelledby="order-details-title"
-          className="mx-auto min-h-[100dvh] w-full max-w-2xl bg-background sm:my-6 sm:min-h-0 sm:rounded-lg sm:border sm:shadow-lg"
+          className="mx-auto min-h-[100dvh] w-full max-w-2xl bg-background sm:my-6 sm:min-h-0 sm:max-h-[90vh] sm:overflow-y-auto sm:rounded-lg sm:border sm:shadow-lg"
         >
           <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur sm:rounded-t-lg sm:px-6">
             <h2 id="order-details-title" className="min-w-0 text-lg font-semibold leading-snug">
