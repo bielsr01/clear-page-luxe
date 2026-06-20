@@ -1018,3 +1018,47 @@ function CampaignDialog({
     </Dialog>
   );
 }
+
+function CampaignDetailsDialog({
+  campaign, restaurantName, onOpenChange,
+}: { campaign: any; restaurantName: string; onOpenChange: (open: boolean) => void }) {
+  const c = campaign;
+  const fmt = (v: any) => (v === null || v === undefined || v === "" ? "—" : String(v));
+  const fmtDate = (v: any) => (v ? new Date(v).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—");
+  const f = c.filters || {};
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="grid grid-cols-3 gap-2 text-sm py-1.5 border-b last:border-b-0">
+      <div className="text-muted-foreground col-span-1">{label}</div>
+      <div className="col-span-2 break-words">{value}</div>
+    </div>
+  );
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Detalhes da campanha</DialogTitle>
+          <DialogDescription>Configurações utilizadas no envio em massa</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1">
+          {row("Nome", fmt(c.name))}
+          {row("Restaurante", restaurantName)}
+          {row("Status", STATUS_LABEL[c.status] ?? c.status)}
+          {row("Criada em", fmtDate(c.created_at))}
+          {row("Última execução", fmtDate(c.last_run_at))}
+          {row("Finalizada em", fmtDate(c.finished_at))}
+          {row("Pausa automática até", fmtDate(c.paused_until))}
+          {row("Total / Enviadas / Falhas", `${c.total ?? 0} / ${c.sent ?? 0} / ${c.failed ?? 0}`)}
+          {row("Intervalo entre envios", `${c.interval_seconds ?? 0}s`)}
+          {row("Pausa automática", c.pause_after_messages > 0 ? `A cada ${c.pause_after_messages} msgs pausar ${c.pause_duration_minutes} min` : "Desativada")}
+          {row("Enviadas no bloco atual", fmt(c.sent_in_block))}
+          {row("Mídia", c.media_url ? <a href={c.media_url} target="_blank" rel="noreferrer" className="text-primary underline break-all">{c.media_url}</a> : "—")}
+          {row("Mensagem", <pre className="whitespace-pre-wrap font-sans text-sm bg-muted/40 p-2 rounded">{c.message_text || "—"}</pre>)}
+          {Object.keys(f).length > 0 && row("Filtros aplicados", <pre className="whitespace-pre-wrap font-mono text-xs bg-muted/40 p-2 rounded">{JSON.stringify(f, null, 2)}</pre>)}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
