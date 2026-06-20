@@ -959,6 +959,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           </div>
 
           {/* Painel lateral de Finalizados */}
+          {finalizedOpen && !detailsTarget && (
           <Sheet open={finalizedOpen} onOpenChange={setFinalizedOpen}>
             <SheetContent side="right" className="w-full sm:max-w-md flex flex-col gap-3">
               <SheetHeader>
@@ -979,6 +980,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
               </div>
             </SheetContent>
           </Sheet>
+          )}
         </>
       )}
 
