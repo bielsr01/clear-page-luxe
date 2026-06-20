@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Send, Play, Pause, Plus, Search, Filter, X, Trash2, Users, Pencil, RotateCcw, Loader2 } from "lucide-react";
+import { Send, Play, Pause, Plus, Search, Filter, X, Trash2, Users, Pencil, RotateCcw, Loader2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { unmaskPhone } from "@/lib/format";
 import { RestaurantMultiSelect, useRestaurants } from "@/components/admin/RestaurantMultiSelect";
