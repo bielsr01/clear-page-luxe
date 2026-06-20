@@ -363,6 +363,11 @@ export function BulkCampaignsPanel({
                                   <Pause className="w-3.5 h-3.5 mr-1" /> Pausar
                                 </Button>
                               )}
+                              {scope === "admin" && (
+                                <Button size="sm" variant="outline" onClick={() => setViewing(c)} title="Ver detalhes">
+                                  <Eye className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
                               {canEdit && c.status !== "completed" && (
                                 <Button size="sm" variant="outline" onClick={() => handleEdit(c)} title="Editar" disabled={preparing !== null}>
                                   {preparing === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
