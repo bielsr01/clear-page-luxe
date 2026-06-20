@@ -99,6 +99,7 @@ interface Props {
   onCancel: (o: OrderLike) => void;
   onDelete: (o: OrderLike) => void;
   onPrint: (o: OrderLike) => void;
+  onIfoodConfirmDelivery?: (o: OrderLike) => void;
   pending?: boolean;
   canChangeStatus: boolean;
   canEditOrders: boolean;
@@ -247,7 +248,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
 }
 
 export function OrderDetailsDialog({
-  order, items, onClose, onAdvance, onCancel, onDelete, onPrint,
+  order, items, onClose, onAdvance, onCancel, onDelete, onPrint, onIfoodConfirmDelivery,
   pending, canChangeStatus, canEditOrders, canCancelFinalized = false, canViewFeeBreakdown = true,
 }: Props) {
   const optionsQuery = useQuery({
@@ -712,6 +713,11 @@ export function OrderDetailsDialog({
             {!["delivered", "cancelled"].includes(order.status) && canChangeStatus && next && !(order.external_source === "ifood" && next === "delivered") && (
               <Button size="sm" className="flex-1 min-w-[180px]" onClick={handleAdvance} disabled={pending}>
                 {pending ? "Enviando…" : order.status === "pending" ? "✓ Aceitar pedido" : `→ ${orderStatusLabel[next]}`}
+              </Button>
+            )}
+            {order.external_source === "ifood" && order.status === "out_for_delivery" && order.order_type !== "pickup" && canChangeStatus && onIfoodConfirmDelivery && (
+              <Button size="sm" className="flex-1 min-w-[180px]" onClick={() => onIfoodConfirmDelivery(order)} disabled={pending}>
+                📦 Confirmar entrega
               </Button>
             )}
             {!["delivered", "cancelled"].includes(order.status) && canChangeStatus && (

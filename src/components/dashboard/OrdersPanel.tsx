@@ -1167,6 +1167,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         onCancel={(o) => setCancelTarget(o as Order)}
         onDelete={(o) => setDeleteTarget(o as Order)}
         onPrint={(o) => setPrintTarget(o as Order)}
+        onIfoodConfirmDelivery={(o) => { setIfoodCodeTarget(o as Order); setIfoodCodeValue(""); }}
         pending={detailsTarget ? !!pendingAction[detailsTarget.id] : false}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
