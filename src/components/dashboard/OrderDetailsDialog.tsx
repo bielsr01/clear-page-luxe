@@ -199,7 +199,7 @@ function OrderDetailsSurface({ title, onClose, children }: { title: ReactNode; o
               <X className="h-5 w-5" />
             </button>
           </header>
-          <div className="space-y-4 px-4 pb-6 pt-4">
+          <div className="min-w-0 space-y-4 overflow-x-hidden px-4 pb-6 pt-4">
             {children}
           </div>
         </article>
