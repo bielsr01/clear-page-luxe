@@ -1192,37 +1192,50 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
         canCancelFinalized={canCancelFinalized}
       />
 
-      <Dialog open={!!ifoodCodeTarget} onOpenChange={(o) => { if (!o) { setIfoodCodeTarget(null); setIfoodCodeValue(""); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Confirmar entrega iFood</DialogTitle>
-            <DialogDescription>
-              Digite o código de entrega informado pelo cliente para confirmar o pedido
-              {ifoodCodeTarget ? ` #${displayOrderNumber(ifoodCodeTarget)}` : ""}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="ifood-delivery-code">Código de entrega</Label>
-            <Input
-              id="ifood-delivery-code"
-              value={ifoodCodeValue}
-              onChange={(e) => setIfoodCodeValue(e.target.value.replace(/\D/g, ""))}
-              placeholder="Ex: 9999"
-              inputMode="numeric"
-              autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter" && !ifoodCodeSubmitting) confirmIfoodDelivery(); }}
-            />
+      {ifoodCodeTarget && createPortal(
+        <div
+          className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/70 p-4 pointer-events-auto"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !ifoodCodeSubmitting) {
+              setIfoodCodeTarget(null);
+              setIfoodCodeValue("");
+            }
+          }}
+        >
+          <div className="w-full max-w-sm rounded-lg border bg-background p-6 shadow-elegant space-y-4">
+            <div className="space-y-1.5">
+              <h2 className="text-lg font-semibold leading-none tracking-tight">Confirmar entrega iFood</h2>
+              <p className="text-sm text-muted-foreground">
+                Digite o código de entrega informado pelo cliente para confirmar o pedido
+                {ifoodCodeTarget ? ` #${displayOrderNumber(ifoodCodeTarget)}` : ""}.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ifood-delivery-code">Código de entrega</Label>
+              <Input
+                id="ifood-delivery-code"
+                value={ifoodCodeValue}
+                onChange={(e) => setIfoodCodeValue(e.target.value.replace(/\D/g, ""))}
+                placeholder="Ex: 9999"
+                inputMode="numeric"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" && !ifoodCodeSubmitting) confirmIfoodDelivery(); }}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setIfoodCodeTarget(null); setIfoodCodeValue(""); }} disabled={ifoodCodeSubmitting}>
+                Cancelar
+              </Button>
+              <Button onClick={confirmIfoodDelivery} disabled={ifoodCodeSubmitting || !ifoodCodeValue.trim()}>
+                {ifoodCodeSubmitting ? "Confirmando…" : "Confirmar entrega"}
+              </Button>
+            </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => { setIfoodCodeTarget(null); setIfoodCodeValue(""); }} disabled={ifoodCodeSubmitting}>
-              Cancelar
-            </Button>
-            <Button onClick={confirmIfoodDelivery} disabled={ifoodCodeSubmitting || !ifoodCodeValue.trim()}>
-              {ifoodCodeSubmitting ? "Confirmando…" : "Confirmar entrega"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </div>,
+        document.body,
+      )}
 
     </div>
   );
