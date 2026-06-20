@@ -477,6 +477,13 @@ export function BulkCampaignsPanel({
           onSaved={() => qc.invalidateQueries({ queryKey: ["bulk-campaigns"] })}
         />
       )}
+      {viewing && (
+        <CampaignDetailsDialog
+          campaign={viewing}
+          restaurantName={viewing.is_admin ? "Admin (todos)" : (restNameById.get(viewing.restaurant_id) ?? "—")}
+          onOpenChange={(o) => !o && setViewing(null)}
+        />
+      )}
     </div>
   );
 }
