@@ -23,28 +23,40 @@ type Order = {
 
 const normPhone = (p: string) => (p || "").replace(/\D/g, "");
 
-export function CouponMetrics({ restaurantId, onBack }: { restaurantId: string; onBack: () => void }) {
+export function CouponMetrics({
+  restaurantId,
+  restaurantIds,
+  onBack,
+}: {
+  restaurantId?: string;
+  restaurantIds?: string[];
+  onBack: () => void;
+}) {
+  const ids = (restaurantIds && restaurantIds.length > 0 ? restaurantIds : restaurantId ? [restaurantId] : []);
+  const idsKey = ids.slice().sort().join(",");
   const [selected, setSelected] = useState<string>("__all__");
 
   const { data: coupons } = useQuery({
-    queryKey: ["coupon-metrics-coupons", restaurantId],
+    queryKey: ["coupon-metrics-coupons", idsKey],
+    enabled: ids.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("coupons" as any)
         .select("id,code,name,uses_count")
-        .eq("restaurant_id", restaurantId)
+        .in("restaurant_id", ids)
         .order("created_at", { ascending: false });
       return ((data ?? []) as unknown) as Coupon[];
     },
   });
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["coupon-metrics-orders", restaurantId],
+    queryKey: ["coupon-metrics-orders", idsKey],
+    enabled: ids.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("orders")
         .select("id,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at")
-        .eq("restaurant_id", restaurantId)
+        .in("restaurant_id", ids)
         .neq("status", "cancelled")
         .order("created_at", { ascending: true });
       return (data ?? []) as Order[];
