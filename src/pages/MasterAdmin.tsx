@@ -204,7 +204,10 @@ export default function MasterAdmin() {
   };
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
-  const openSupportCount = useOpenSupportTicketsCount();
+  const { count: openSupportCount, markSeen: markSupportSeen } = useOpenSupportTicketsCount();
+  useEffect(() => {
+    if (view === "support") markSupportSeen();
+  }, [view, markSupportSeen]);
 
   return (
     <SidebarProvider>
