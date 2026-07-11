@@ -365,17 +365,29 @@ function AuditWizardDialog({
     setSaving(true);
     try {
       const avg = states.reduce((s, x) => s + x.score, 0) / states.length;
-      const { data: audit, error } = await sb.from("audits").insert({
-        restaurant_id: restaurant.id,
-        audit_month: month,
-        avg_score: Number(avg.toFixed(2)),
-        status: "completed",
-        created_by: user?.id ?? null,
-      }).select("id").single();
-      if (error) throw error;
+      let auditId = editingAuditId;
+      if (editingAuditId) {
+        const { error: eu } = await sb.from("audits").update({
+          avg_score: Number(avg.toFixed(2)),
+          status: "completed",
+        }).eq("id", editingAuditId);
+        if (eu) throw eu;
+        const { error: ed } = await sb.from("audit_scores").delete().eq("audit_id", editingAuditId);
+        if (ed) throw ed;
+      } else {
+        const { data: audit, error } = await sb.from("audits").insert({
+          restaurant_id: restaurant.id,
+          audit_month: month,
+          avg_score: Number(avg.toFixed(2)),
+          status: "completed",
+          created_by: user?.id ?? null,
+        }).select("id").single();
+        if (error) throw error;
+        auditId = audit.id;
+      }
 
       const rows = groups.map((g, i) => ({
-        audit_id: audit.id,
+        audit_id: auditId,
         group_id: g.id,
         group_name: g.name,
         score: states[i].score,
