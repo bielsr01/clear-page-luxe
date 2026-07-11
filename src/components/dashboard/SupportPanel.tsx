@@ -19,6 +19,7 @@ import {
 import { Plus, Paperclip, X, LifeBuoy, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToR2 } from "@/lib/r2Upload";
+import { TicketThread } from "@/components/support/TicketThread";
 
 type Status = "open" | "in_progress" | "completed";
 
