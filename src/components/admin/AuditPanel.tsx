@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, ClipboardCheck, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronUp, ChevronDown, Store, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { uploadToR2 } from "@/lib/r2Upload";
 
 const sb = supabase as any;
 
@@ -309,16 +310,23 @@ function AuditWizardDialog({
 
   const onPickPhoto = async (file: File) => {
     updateSt({ photo: file, uploading: true });
-    const path = `${restaurant.id}/${month}/${current.id}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const { error } = await sb.storage.from("audit-photos").upload(path, file, { upsert: false });
-    if (error) {
-      updateSt({ uploading: false, photo: null });
-      return toast.error(`Erro ao enviar foto: ${error.message}`);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filename = `${current.id}-${Date.now()}-${safeName}`;
+      const folder = `audit-photos/${restaurant.id}/${month}`;
+      const url = await uploadToR2(file, folder, filename);
+      updateSt({ uploading: false, photoUrl: url });
+    } catch (e: any) {
+      updateSt({ uploading: false, photo: null, photoUrl: null });
+      toast.error(`Erro ao enviar foto: ${e.message ?? e}`);
     }
-    updateSt({ uploading: false, photoUrl: path });
   };
 
   const finish = async () => {
+    if (states.some((s) => !s.photoUrl)) {
+      toast.error("Envie a foto de todos os grupos antes de finalizar.");
+      return;
+    }
     setSaving(true);
     try {
       const avg = states.reduce((s, x) => s + x.score, 0) / states.length;
@@ -366,10 +374,12 @@ function AuditWizardDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Foto</Label>
+            <Label>Foto <span className="text-destructive">*</span></Label>
             {st?.photoUrl ? (
               <div className="text-xs text-success flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Foto enviada</div>
-            ) : null}
+            ) : (
+              <div className="text-xs text-muted-foreground">Obrigatório para prosseguir.</div>
+            )}
             <label className="flex items-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-accent">
               <Upload className="w-4 h-4" />
               <span className="text-sm">{st?.uploading ? "Enviando..." : st?.photo ? st.photo.name : "Escolher / tirar foto"}</span>
@@ -406,11 +416,11 @@ function AuditWizardDialog({
             <ArrowLeft className="w-4 h-4 mr-1" /> Anterior
           </Button>
           {isLast ? (
-            <Button disabled={saving || st?.uploading} onClick={finish}>
+            <Button disabled={saving || st?.uploading || !st?.photoUrl} onClick={finish}>
               {saving ? "Salvando..." : "Finalizar auditoria"}
             </Button>
           ) : (
-            <Button disabled={st?.uploading} onClick={() => setStep((s) => s + 1)}>
+            <Button disabled={st?.uploading || !st?.photoUrl} onClick={() => setStep((s) => s + 1)}>
               Próximo <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           )}
@@ -431,19 +441,6 @@ function AuditDetailsDialog({ auditId, onClose }: { auditId: string; onClose: ()
     },
   });
 
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    (async () => {
-      const paths = (data ?? []).filter((s) => s.photo_url).map((s) => s.photo_url!) as string[];
-      if (paths.length === 0) return;
-      const { data: signed } = await sb.storage.from("audit-photos").createSignedUrls(paths, 3600);
-      const map: Record<string, string> = {};
-      (signed ?? []).forEach((s: any, i: number) => { map[paths[i]] = s.signedUrl; });
-      setSignedUrls(map);
-    })();
-  }, [data]);
-
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl">
@@ -458,8 +455,8 @@ function AuditDetailsDialog({ auditId, onClose }: { auditId: string; onClose: ()
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {s.photo_url && signedUrls[s.photo_url] && (
-                  <img src={signedUrls[s.photo_url]} alt={s.group_name} className="rounded max-h-64 object-cover" />
+                {s.photo_url && (
+                  <img src={s.photo_url} alt={s.group_name} className="rounded max-h-64 object-cover" />
                 )}
                 {s.notes && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{s.notes}</p>}
               </CardContent>
