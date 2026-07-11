@@ -1257,6 +1257,48 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          available_capital: number | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          position: number
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+        }
+        Insert: {
+          available_capital?: number | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: number
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Update: {
+          available_capital?: number | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: number
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       loyalty_members: {
         Row: {
           created_at: string
@@ -2987,6 +3029,12 @@ export type Database = {
         | "adjustment"
         | "opening"
       cash_session_status: "open" | "closed"
+      lead_status:
+        | "em_espera"
+        | "com_interesse"
+        | "em_atendimento"
+        | "desinteressado"
+        | "contrato_fechado"
       order_status:
         | "pending"
         | "accepted"
@@ -3162,6 +3210,13 @@ export const Constants = {
         "opening",
       ],
       cash_session_status: ["open", "closed"],
+      lead_status: [
+        "em_espera",
+        "com_interesse",
+        "em_atendimento",
+        "desinteressado",
+        "contrato_fechado",
+      ],
       order_status: [
         "pending",
         "accepted",
