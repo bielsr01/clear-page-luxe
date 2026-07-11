@@ -73,6 +73,7 @@ export function AppSidebar({
   onChange,
   ordersBadge = 0,
   ordersBlinking = false,
+  supportBadge = 0,
   permissions,
   isFullAccess = true,
 }: {
@@ -80,6 +81,7 @@ export function AppSidebar({
   onChange: (v: DashboardView) => void;
   ordersBadge?: number;
   ordersBlinking?: boolean;
+  supportBadge?: number;
   permissions?: Permissions;
   isFullAccess?: boolean;
 }) {
