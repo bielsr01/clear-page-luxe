@@ -52,6 +52,7 @@ export function AdminLeadsPanel() {
   const [form, setForm] = useState(emptyForm);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<LeadStatus | null>(null);
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -69,13 +70,25 @@ export function AdminLeadsPanel() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return leads;
+    const qDigits = q.replace(/\D/g, "");
+    return leads.filter((l) => {
+      const name = (l.name ?? "").toLowerCase();
+      const city = (l.city ?? "").toLowerCase();
+      const phoneDigits = (l.phone ?? "").replace(/\D/g, "");
+      return name.includes(q) || city.includes(q) || (qDigits.length > 0 && phoneDigits.includes(qDigits));
+    });
+  }, [leads, search]);
+
   const grouped = useMemo(() => {
     const g: Record<LeadStatus, Lead[]> = {
       em_espera: [], com_interesse: [], em_atendimento: [], desinteressado: [], contrato_fechado: [],
     };
-    leads.forEach((l) => g[l.status].push(l));
+    filtered.forEach((l) => g[l.status].push(l));
     return g;
-  }, [leads]);
+  }, [filtered]);
 
   const openCreate = () => { setEditing(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (l: Lead) => {
@@ -138,9 +151,17 @@ export function AdminLeadsPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
         <p className="text-muted-foreground text-sm">Arraste os cards entre as colunas para atualizar o status.</p>
-        <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Novo lead</Button>
+        <div className="flex items-center gap-2">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nome, telefone ou cidade"
+            className="w-full sm:w-72"
+          />
+          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Novo lead</Button>
+        </div>
       </div>
 
       {loading ? (
