@@ -899,6 +899,63 @@ export type Database = {
         }
         Relationships: []
       }
+      expansion_cities: {
+        Row: {
+          city_name: string
+          competitors_count: number | null
+          created_at: string
+          created_by: string | null
+          fastfoods_count: number | null
+          gdp: number | null
+          ibge_id: string | null
+          id: string
+          income_per_capita: number | null
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          population: number | null
+          restaurants_count: number | null
+          state_uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          city_name: string
+          competitors_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          fastfoods_count?: number | null
+          gdp?: number | null
+          ibge_id?: string | null
+          id?: string
+          income_per_capita?: number | null
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          population?: number | null
+          restaurants_count?: number | null
+          state_uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city_name?: string
+          competitors_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          fastfoods_count?: number | null
+          gdp?: number | null
+          ibge_id?: string | null
+          id?: string
+          income_per_capita?: number | null
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          population?: number | null
+          restaurants_count?: number | null
+          state_uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       expense_categories: {
         Row: {
           created_at: string
