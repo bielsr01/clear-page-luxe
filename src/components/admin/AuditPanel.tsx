@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, ClipboardCheck, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronUp, ChevronDown, Store, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { uploadToR2 } from "@/lib/r2Upload";
 
 const sb = supabase as any;
 
