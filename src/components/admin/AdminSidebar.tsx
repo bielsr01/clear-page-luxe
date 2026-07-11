@@ -91,16 +91,37 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
                   <span>Visão geral</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={active === "restaurants"}
-                  onClick={() => handleChange("restaurants")}
-                  tooltip="Restaurantes"
-                >
-                  <Store className="h-4 w-4" />
-                  <span>Restaurantes</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible open={restaurantsOpen || collapsed} onOpenChange={setRestaurantsOpen} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={restaurantsActive} tooltip="Restaurantes">
+                      <Store className="h-4 w-4" />
+                      <span>Restaurantes</span>
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={active === "restaurants"}>
+                          <button type="button" onClick={() => handleChange("restaurants")} className="w-full text-left flex items-center gap-2">
+                            <Store className="h-4 w-4" />
+                            <span>Gerenciar</span>
+                          </button>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={active === "restaurants:health"}>
+                          <button type="button" onClick={() => handleChange("restaurants:health")} className="w-full text-left flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            <span>Saúde da Rede</span>
+                          </button>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
