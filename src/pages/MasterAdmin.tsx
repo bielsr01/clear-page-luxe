@@ -38,8 +38,10 @@ import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel"
 import { AdminAccessPanel } from "@/components/admin/AdminAccessPanel";
 import { NetworkHealthPanel } from "@/components/admin/NetworkHealthPanel";
 import { AuditPanel } from "@/components/admin/AuditPanel";
+import { AdminSupportPanel } from "@/components/admin/AdminSupportPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
+import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 
 interface Restaurant {
@@ -198,14 +200,16 @@ export default function MasterAdmin() {
     "finance:admin": "Receitas - Despesas / Admin",
     "finance:restaurants": "Receitas - Despesas / Restaurantes",
     "access": "Gestão de acessos",
+    "support": "Suporte",
   };
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
+  const openSupportCount = useOpenSupportTicketsCount();
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
-        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} />
+        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} />
         <SidebarInset className="flex-1 flex flex-col">
           <header className="bg-background border-b sticky top-0 z-30">
             <div className="h-16 px-2 sm:px-4 flex items-center justify-between gap-2">
