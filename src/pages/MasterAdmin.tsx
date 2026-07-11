@@ -177,6 +177,7 @@ export default function MasterAdmin() {
   const titleMap: Record<AdminView, string> = {
     overview: "Visão geral",
     restaurants: "Restaurantes",
+    "restaurants:health": "Restaurantes / Saúde da Rede",
     menu: "Cardápio",
     customers: "Clientes",
     "marketing:coupons": "Cupons de desconto",
