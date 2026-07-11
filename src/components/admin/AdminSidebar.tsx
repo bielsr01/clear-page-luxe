@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -39,9 +39,10 @@ export type AdminView =
   | "expenses:stores"
   | "finance:admin"
   | "finance:restaurants"
-  | "access";
+  | "access"
+  | "support";
 
-export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number }) {
+export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const handleChange = (v: AdminView) => {
@@ -383,6 +384,23 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
                 >
                   <ShieldCheck className="h-4 w-4" />
                   <span>Gestão de acessos</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={active === "support"}
+                  onClick={() => handleChange("support")}
+                  tooltip="Suporte"
+                  className={supportBadge > 0 ? "text-destructive animate-pulse" : ""}
+                >
+                  <LifeBuoy className="h-4 w-4" />
+                  <span>Suporte</span>
+                  {supportBadge > 0 && (
+                    <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center">
+                      {supportBadge > 9 ? "9+" : supportBadge}
+                    </span>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

@@ -2706,6 +2706,62 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          admin_notes: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          handled_by: string | null
+          id: string
+          in_progress_at: string | null
+          photos: Json
+          restaurant_id: string
+          status: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          handled_by?: string | null
+          id?: string
+          in_progress_at?: string | null
+          photos?: Json
+          restaurant_id: string
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          handled_by?: string | null
+          id?: string
+          in_progress_at?: string | null
+          photos?: Json
+          restaurant_id?: string
+          status?: Database["public"]["Enums"]["support_ticket_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2919,6 +2975,7 @@ export type Database = {
         | "order_revert"
         | "manual_adjust"
       supply_order_status: "pending" | "accepted" | "shipped" | "delivered"
+      support_ticket_status: "open" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3096,6 +3153,7 @@ export const Constants = {
         "manual_adjust",
       ],
       supply_order_status: ["pending", "accepted", "shipped", "delivered"],
+      support_ticket_status: ["open", "in_progress", "completed"],
     },
   },
 } as const

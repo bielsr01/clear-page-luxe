@@ -38,6 +38,7 @@ import { CashFlowPanel } from "@/components/dashboard/cashflow/CashFlowPanel";
 import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
+import { SupportPanel } from "@/components/dashboard/SupportPanel";
 
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
@@ -194,6 +195,7 @@ export default function ManagerDashboard() {
       expenses: !!permissions.expenses.view,
       finance: !!permissions.finance.view,
       "cash-flow": !!permissions.cash_flow.view,
+      support: true,
     };
     if (!allowed[view]) {
       const fallback = (Object.keys(allowed) as DashboardView[]).find((k) => allowed[k]);
@@ -243,6 +245,7 @@ export default function ManagerDashboard() {
     expenses: "Cadastro de despesas",
     finance: "Receitas - Despesas",
     "cash-flow": "Fluxo de caixa",
+    support: "Suporte",
   };
 
   return (
@@ -406,6 +409,11 @@ export default function ManagerDashboard() {
             {view === "finance" && (
               <LazyView viewKey={view} variant="stats">
                 <FinancePanel restaurantIds={[restaurant.id]} />
+              </LazyView>
+            )}
+            {view === "support" && (
+              <LazyView viewKey={view} variant="list">
+                <SupportPanel restaurantId={restaurant.id} />
               </LazyView>
             )}
           </main>

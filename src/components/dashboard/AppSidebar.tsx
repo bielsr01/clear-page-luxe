@@ -1,4 +1,4 @@
-import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck, Wallet } from "lucide-react";
+import { ChefHat, LayoutDashboard, ShoppingBag, UtensilsCrossed, Settings, Store, Printer, Plug, ChevronDown, ChevronRight, Users, Megaphone, Ticket, Award, Send, ClipboardList, Package, Receipt, Boxes, LineChart, ShieldCheck, Wallet, LifeBuoy } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
@@ -38,7 +38,8 @@ export type DashboardView =
   | "stock"
   | "expenses"
   | "finance"
-  | "cash-flow";
+  | "cash-flow"
+  | "support";
 
 const mainItems: { id: DashboardView; title: string; icon: any }[] = [
   { id: "overview", title: "Visão geral", icon: LayoutDashboard },
@@ -321,6 +322,13 @@ export function AppSidebar({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={active === "support"} onClick={() => handleChange("support")} tooltip="Suporte">
+                  <LifeBuoy className="h-4 w-4" />
+                  <span>Suporte</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
