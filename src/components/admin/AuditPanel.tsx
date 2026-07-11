@@ -306,18 +306,35 @@ function GroupsConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChang
 type StepState = { score: number; notes: string; photo?: File | null; photoUrl?: string | null; uploading?: boolean };
 
 function AuditWizardDialog({
-  restaurant, month, groups, onClose,
+  restaurant, month, groups, onClose, editingAuditId,
 }: {
   restaurant: Restaurant;
   month: string;
   groups: AuditGroup[];
   onClose: () => void;
+  editingAuditId?: string;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [states, setStates] = useState<StepState[]>(() => groups.map(() => ({ score: 100, notes: "" })));
+
+  useEffect(() => {
+    if (!editingAuditId) return;
+    (async () => {
+      const { data } = await sb.from("audit_scores").select("*").eq("audit_id", editingAuditId);
+      const rows = (data ?? []) as { group_id: string; score: number; notes: string | null; photo_url: string | null }[];
+      setStates(groups.map((g) => {
+        const r = rows.find((x) => x.group_id === g.id);
+        return {
+          score: r?.score ?? 100,
+          notes: r?.notes ?? "",
+          photoUrl: r?.photo_url ?? null,
+        };
+      }));
+    })();
+  }, [editingAuditId, groups]);
 
   const current = groups[step];
   const st = states[step];
