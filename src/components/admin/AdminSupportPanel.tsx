@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { MessageCircle, PlayCircle, CheckCircle2, Trash2 } from "lucide-react";
+import { TicketThread } from "@/components/support/TicketThread";
 
 type Status = "open" | "in_progress" | "completed";
 
