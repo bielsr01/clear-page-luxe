@@ -36,6 +36,7 @@ import { AdminQueroFeesPanel } from "@/components/admin/AdminQueroFeesPanel";
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
 import { AdminAccessPanel } from "@/components/admin/AdminAccessPanel";
+import { NetworkHealthPanel } from "@/components/admin/NetworkHealthPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
@@ -177,6 +178,7 @@ export default function MasterAdmin() {
   const titleMap: Record<AdminView, string> = {
     overview: "Visão geral",
     restaurants: "Restaurantes",
+    "restaurants:health": "Restaurantes / Saúde da Rede",
     menu: "Cardápio",
     customers: "Clientes",
     "marketing:coupons": "Cupons de desconto",
@@ -353,6 +355,7 @@ export default function MasterAdmin() {
             )}
 
             {view === "overview" && <AdminOverviewPanel />}
+            {view === "restaurants:health" && <NetworkHealthPanel />}
             {view === "menu" && <AdminMenuPanel />}
             {view === "customers" && <AdminCustomersPanel />}
             {view === "marketing:coupons" && <AdminCouponsPanel />}
