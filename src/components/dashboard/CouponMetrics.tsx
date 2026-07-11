@@ -132,7 +132,7 @@ export function CouponMetrics({
   });
   const restNameById = useMemo(() => {
     const m = new Map<string, string>();
-    (restaurants ?? []).forEach((r) => m.set(r.id, r.name));
+    (restaurants ?? []).forEach((r) => m.set(r.id, cleanRestName(r.name)));
     return m;
   }, [restaurants]);
 
