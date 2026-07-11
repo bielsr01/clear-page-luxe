@@ -236,7 +236,7 @@ function NewTicketDialog({
         <div className="space-y-3">
           <div className="space-y-1">
             <Label>Assunto</Label>
-            <Input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={120} placeholder="Ex: Impressora não imprime" />
+            <Input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={120} placeholder="Digite o assunto do suporte." />
           </div>
           <div className="space-y-1">
             <Label>Descrição</Label>
