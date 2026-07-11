@@ -222,7 +222,7 @@ export function AdminCouponsPanel() {
   const formatDiscount = (c: Coupon) => c.discount_type === "percent" ? `${Number(c.discount_value)}%` : brl(Number(c.discount_value));
 
   if (metricsFor) {
-    return <CouponMetrics restaurantId={metricsFor} onBack={() => setMetricsFor(null)} />;
+    return <CouponMetrics restaurantIds={metricsFor} onBack={() => setMetricsFor(null)} />;
   }
 
   return (
