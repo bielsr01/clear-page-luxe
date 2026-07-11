@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -41,7 +41,8 @@ export type AdminView =
   | "finance:restaurants"
   | "access"
   | "support"
-  | "leads";
+  | "leads"
+  | "expansion";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -413,6 +414,17 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                 >
                   <UserPlus className="h-4 w-4" />
                   <span>Banco de Leads</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={active === "expansion"}
+                  onClick={() => handleChange("expansion")}
+                  tooltip="Mapa de expansão"
+                >
+                  <Map className="h-4 w-4" />
+                  <span>Mapa de expansão</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

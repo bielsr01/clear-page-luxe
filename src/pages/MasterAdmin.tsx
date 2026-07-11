@@ -40,6 +40,7 @@ import { NetworkHealthPanel } from "@/components/admin/NetworkHealthPanel";
 import { AuditPanel } from "@/components/admin/AuditPanel";
 import { AdminSupportPanel } from "@/components/admin/AdminSupportPanel";
 import { AdminLeadsPanel } from "@/components/admin/AdminLeadsPanel";
+import { AdminExpansionMapPanel } from "@/components/admin/AdminExpansionMapPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -203,6 +204,7 @@ export default function MasterAdmin() {
     "access": "Gestão de acessos",
     "support": "Suporte",
     "leads": "Banco de Leads",
+    "expansion": "Mapa de expansão",
   };
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
@@ -387,6 +389,7 @@ export default function MasterAdmin() {
             {view === "access" && <AdminAccessPanel />}
             {view === "support" && <AdminSupportPanel />}
             {view === "leads" && <AdminLeadsPanel />}
+            {view === "expansion" && <AdminExpansionMapPanel />}
           </main>
         </SidebarInset>
 
