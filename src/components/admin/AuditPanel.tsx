@@ -374,10 +374,13 @@ function AuditWizardDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Foto</Label>
+          <div className="space-y-2">
+            <Label>Foto <span className="text-destructive">*</span></Label>
             {st?.photoUrl ? (
               <div className="text-xs text-success flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Foto enviada</div>
-            ) : null}
+            ) : (
+              <div className="text-xs text-muted-foreground">Obrigatório para prosseguir.</div>
+            )}
             <label className="flex items-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-accent">
               <Upload className="w-4 h-4" />
               <span className="text-sm">{st?.uploading ? "Enviando..." : st?.photo ? st.photo.name : "Escolher / tirar foto"}</span>
