@@ -89,7 +89,7 @@ export function AdminCouponsPanel() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<(ReturnType<typeof emptyForm> & { id?: string; restaurant_id?: string }) | null>(null);
   const [toDelete, setToDelete] = useState<Coupon | null>(null);
-  const [metricsFor, setMetricsFor] = useState<string | null>(null);
+  const [metricsFor, setMetricsFor] = useState<string[] | null>(null);
 
 
   const { data: coupons, isLoading } = useQuery({
@@ -222,7 +222,7 @@ export function AdminCouponsPanel() {
   const formatDiscount = (c: Coupon) => c.discount_type === "percent" ? `${Number(c.discount_value)}%` : brl(Number(c.discount_value));
 
   if (metricsFor) {
-    return <CouponMetrics restaurantId={metricsFor} onBack={() => setMetricsFor(null)} />;
+    return <CouponMetrics restaurantIds={metricsFor} onBack={() => setMetricsFor(null)} />;
   }
 
   return (
@@ -258,12 +258,12 @@ export function AdminCouponsPanel() {
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
-              onClick={() => selected[0] && setMetricsFor(selected[0])}
-              disabled={selected.length !== 1}
-              title={selected.length !== 1 ? "Selecione exatamente 1 restaurante" : ""}
+              onClick={() => selected.length && setMetricsFor(selected.slice())}
+              disabled={selected.length === 0}
+              title={selected.length === 0 ? "Selecione ao menos 1 restaurante" : selected.length === 1 ? "Métricas do restaurante selecionado" : `Métricas consolidadas de ${selected.length} restaurantes`}
               className="gap-2 w-full sm:w-auto"
             >
-              <BarChart3 className="w-4 h-4" /> Métricas
+              <BarChart3 className="w-4 h-4" /> Métricas{selected.length > 1 ? ` (${selected.length})` : ""}
             </Button>
             <Button onClick={openNew} disabled={all.length === 0} className="gap-2 w-full sm:w-auto"><Plus className="w-4 h-4" /> Novo cupom</Button>
           </div>
