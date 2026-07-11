@@ -203,6 +203,119 @@ export type Database = {
           },
         ]
       }
+      audit_groups: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      audit_scores: {
+        Row: {
+          audit_id: string
+          created_at: string
+          group_id: string | null
+          group_name: string
+          id: string
+          notes: string | null
+          photo_url: string | null
+          score: number
+        }
+        Insert: {
+          audit_id: string
+          created_at?: string
+          group_id?: string | null
+          group_name: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          score?: number
+        }
+        Update: {
+          audit_id?: string
+          created_at?: string
+          group_id?: string | null
+          group_name?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_scores_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_scores_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "audit_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audits: {
+        Row: {
+          audit_month: string
+          avg_score: number
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          restaurant_id: string
+          status: string
+        }
+        Insert: {
+          audit_month: string
+          avg_score?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          restaurant_id: string
+          status?: string
+        }
+        Update: {
+          audit_month?: string
+          avg_score?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          restaurant_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audits_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bulk_campaign_recipients: {
         Row: {
           campaign_id: string
