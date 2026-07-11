@@ -326,9 +326,19 @@ export function AppSidebar({
               )}
 
               <SidebarMenuItem>
-                <SidebarMenuButton isActive={active === "support"} onClick={() => handleChange("support")} tooltip="Suporte">
+                <SidebarMenuButton
+                  isActive={active === "support"}
+                  onClick={() => handleChange("support")}
+                  tooltip="Suporte"
+                  className={supportBadge > 0 ? "text-destructive animate-pulse" : ""}
+                >
                   <LifeBuoy className="h-4 w-4" />
                   <span>Suporte</span>
+                  {supportBadge > 0 && (
+                    <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center">
+                      {supportBadge > 9 ? "9+" : supportBadge}
+                    </span>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
