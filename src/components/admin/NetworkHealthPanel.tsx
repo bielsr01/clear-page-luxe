@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 type Thresholds = { destaque: number; atencao: number; risco: number };
 const STORAGE_KEY = "admin_network_health_thresholds_v1";
-const DEFAULTS: Thresholds = { destaque: 30000, atencao: 15000, risco: 0 };
+const DEFAULTS: Thresholds = { destaque: 30000, atencao: 15000, risco: 1 };
 
 function loadThresholds(): Thresholds {
   try {
@@ -109,7 +109,7 @@ export function NetworkHealthPanel() {
     const list = rows ?? [];
     const destaque = list.filter((r) => r.revenue >= thresholds.destaque);
     const atencao = list.filter((r) => r.revenue >= thresholds.atencao && r.revenue < thresholds.destaque);
-    const risco = list.filter((r) => r.revenue < thresholds.atencao);
+    const risco = list.filter((r) => r.revenue >= thresholds.risco && r.revenue < thresholds.atencao);
     return { destaque, atencao, risco };
   }, [rows, thresholds]);
 
@@ -184,7 +184,7 @@ export function NetworkHealthPanel() {
           <TabsContent value="risco" className="mt-4">
             <RankingCard
               title="Lojas em risco"
-              description={`Faturamento < ${brl(thresholds.atencao)}. Top 3 exibidos.`}
+              description={`Faturamento entre ${brl(thresholds.risco)} e ${brl(thresholds.atencao)}. Top 3 exibidos.`}
               rows={groups.risco}
               limit={3}
               tone="destructive"
@@ -270,21 +270,28 @@ function ThresholdConfig({
 }) {
   const [destaque, setDestaque] = useState(String(value.destaque));
   const [atencao, setAtencao] = useState(String(value.atencao));
+  const [risco, setRisco] = useState(String(value.risco));
   useEffect(() => {
     if (open) {
       setDestaque(String(value.destaque));
       setAtencao(String(value.atencao));
+      setRisco(String(value.risco));
     }
   }, [open, value]);
 
   const save = () => {
     const d = Number(destaque) || 0;
     const a = Number(atencao) || 0;
+    const r = Number(risco) || 0;
     if (a >= d) {
       toast.error("O valor de Atenção deve ser menor que o de Destaque");
       return;
     }
-    onSave({ destaque: d, atencao: a, risco: 0 });
+    if (r >= a) {
+      toast.error("O valor de Risco deve ser menor que o de Atenção");
+      return;
+    }
+    onSave({ destaque: d, atencao: a, risco: r });
     setOpen(false);
   };
 
@@ -309,8 +316,9 @@ function ThresholdConfig({
             <p className="text-xs text-muted-foreground">Lojas entre este valor e o de Destaque.</p>
           </div>
           <div className="space-y-1">
-            <Label>Risco</Label>
-            <p className="text-xs text-muted-foreground">Lojas com faturamento abaixo do mínimo de Atenção.</p>
+            <Label>Risco — faturamento mínimo (R$)</Label>
+            <Input type="number" min={0} step={100} value={risco} onChange={(e) => setRisco(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Lojas entre este valor e o de Atenção. Abaixo disso não aparecem em nenhum grupo.</p>
           </div>
         </div>
         <DialogFooter>
