@@ -355,6 +355,7 @@ export default function MasterAdmin() {
             )}
 
             {view === "overview" && <AdminOverviewPanel />}
+            {view === "restaurants:health" && <NetworkHealthPanel />}
             {view === "menu" && <AdminMenuPanel />}
             {view === "customers" && <AdminCustomersPanel />}
             {view === "marketing:coupons" && <AdminCouponsPanel />}
