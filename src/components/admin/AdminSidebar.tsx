@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -22,6 +22,7 @@ export type AdminView =
   | "overview"
   | "restaurants"
   | "restaurants:health"
+  | "restaurants:audit"
   | "menu"
   | "customers"
   | "marketing:coupons"
@@ -115,6 +116,14 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
                           <button type="button" onClick={() => handleChange("restaurants:health")} className="w-full text-left flex items-center gap-2">
                             <BarChart3 className="h-4 w-4" />
                             <span>Saúde da Rede</span>
+                          </button>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={active === "restaurants:audit"}>
+                          <button type="button" onClick={() => handleChange("restaurants:audit")} className="w-full text-left flex items-center gap-2">
+                            <ClipboardCheck className="h-4 w-4" />
+                            <span>Auditoria</span>
                           </button>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
