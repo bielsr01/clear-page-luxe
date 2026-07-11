@@ -25,6 +25,7 @@ import { NotificationsBell } from "@/components/dashboard/NotificationsBell";
 import { SoundPicker } from "@/components/dashboard/SoundPicker";
 import { LazyView } from "@/components/dashboard/LazyView";
 import { useNewOrderNotifications } from "@/hooks/useNewOrderNotifications";
+import { useRestaurantSupportUnread } from "@/hooks/useRestaurantSupportUnread";
 import { usePendingOrdersCount } from "@/hooks/usePendingCounts";
 import { SupplyOrderPanel } from "@/components/dashboard/SupplyOrderPanel";
 import { ExpensesPanel } from "@/components/dashboard/ExpensesPanel";
