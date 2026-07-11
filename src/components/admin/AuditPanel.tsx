@@ -173,6 +173,12 @@ export function AuditPanel() {
                         {Number(a.avg_score).toFixed(0)}%
                       </Badge>
                       <Button size="sm" variant="outline" onClick={() => setViewingAudit(a.id)}>Ver detalhes</Button>
+                      <Button size="sm" variant="outline" onClick={() => setWizardFor({ restaurant: r, editingAuditId: a.id })} title="Editar">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-destructive" onClick={() => deleteAudit(a.id)} title="Excluir">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
