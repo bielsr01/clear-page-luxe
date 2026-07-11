@@ -23,6 +23,13 @@ type Order = {
 
 const normPhone = (p: string) => (p || "").replace(/\D/g, "");
 
+function cleanRestName(name: string): string {
+  if (!name) return name;
+  if (/teste/i.test(name)) return name;
+  // Remove prefixo "Coxinha Surprise -" (com variações de espaço/traço)
+  return name.replace(/^\s*coxinha\s*surprise\s*[-–—]\s*/i, "").trim() || name;
+}
+
 type Stats = ReturnType<typeof computeStatsRaw>;
 
 function computeStatsRaw(orders: Order[], codes: Set<string>, filterCode: string | null) {
@@ -132,7 +139,7 @@ export function CouponMetrics({
   });
   const restNameById = useMemo(() => {
     const m = new Map<string, string>();
-    (restaurants ?? []).forEach((r) => m.set(r.id, r.name));
+    (restaurants ?? []).forEach((r) => m.set(r.id, cleanRestName(r.name)));
     return m;
   }, [restaurants]);
 
