@@ -21,7 +21,7 @@ interface Ticket {
   created_at: string;
   in_progress_at: string | null;
   completed_at: string | null;
-  restaurants?: { name: string; phone_number: string | null; slug: string } | null;
+  restaurants?: { name: string; phone: string | null; slug: string } | null;
 }
 
 const statusLabel: Record<Status, string> = {
@@ -53,7 +53,7 @@ export function AdminSupportPanel() {
     setLoading(true);
     const { data } = await supabase
       .from("support_tickets")
-      .select("id,restaurant_id,subject,description,photos,status,admin_notes,created_at,in_progress_at,completed_at,restaurants(name,phone_number,slug)")
+      .select("id,restaurant_id,subject,description,photos,status,admin_notes,created_at,in_progress_at,completed_at,restaurants(name,phone,slug)")
       .order("created_at", { ascending: false });
     setTickets(((data as any) ?? []) as Ticket[]);
     setLoading(false);
@@ -141,7 +141,7 @@ function AdminTicketCard({
   onDelete: (t: Ticket) => void;
 }) {
   const [notes, setNotes] = useState(ticket.admin_notes ?? "");
-  const wa = waLink(ticket.restaurants?.phone_number, ticket.subject);
+  const wa = waLink(ticket.restaurants?.phone, ticket.subject);
 
   return (
     <Card>
