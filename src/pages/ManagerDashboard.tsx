@@ -244,6 +244,7 @@ export default function ManagerDashboard() {
     expenses: "Cadastro de despesas",
     finance: "Receitas - Despesas",
     "cash-flow": "Fluxo de caixa",
+    support: "Suporte",
   };
 
   return (
