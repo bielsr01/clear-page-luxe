@@ -139,7 +139,7 @@ export function AuditPanel() {
                     <Store className="w-4 h-4 shrink-0 text-muted-foreground" />
                     <span className="font-medium truncate">{r.name}</span>
                   </div>
-                  <Button size="sm" disabled={activeGroups.length === 0} onClick={() => setWizardFor(r)}>
+                  <Button size="sm" disabled={activeGroups.length === 0} onClick={() => setWizardFor({ restaurant: r })}>
                     Fazer auditoria
                   </Button>
                 </CardContent>
