@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 export type AdminView =
   | "overview"
   | "restaurants"
+  | "restaurants:health"
   | "menu"
   | "customers"
   | "marketing:coupons"
