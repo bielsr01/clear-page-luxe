@@ -380,6 +380,7 @@ export default function MasterAdmin() {
             {view === "finance:restaurants" && <AdminFinancePanel />}
             {view === "finance:admin" && <AdminFinanceAdminPanel />}
             {view === "access" && <AdminAccessPanel />}
+            {view === "support" && <AdminSupportPanel />}
           </main>
         </SidebarInset>
 
