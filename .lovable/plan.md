@@ -1,58 +1,66 @@
-## Caixa Diário — plano de implementação
 
-### O que já existe (reaproveitar)
-- Tabelas: `cash_register_sessions`, `cash_movements`, `cash_withdrawals`, `payment_reconciliation` — todas com RLS por restaurante via `is_restaurant_manager`.
-- Enums: `cash_session_status` (open/closed), `cash_movement_type` (opening, order_cash, change_out, withdrawal, supply, adjustment), `payment_method` (cash, pix, card_on_delivery, online).
-- Aba "Fluxo de caixa" já existe no `AppSidebar` / `ManagerDashboard` (placeholder "Em breve").
-- `FinancePanel` (mensal) permanece intocado e continua acessível em "Receitas - Despesas".
+## Mapa de Expansão (Admin)
 
-### Mudanças de banco (1 migration)
-1. `ALTER TABLE public.orders ADD COLUMN cash_session_id uuid REFERENCES public.cash_register_sessions(id)` + índice.
-2. `ALTER TABLE public.orders ADD COLUMN created_by uuid` (quem registrou — usado em PDV / cancelamentos).
-3. Estender enum `payment_method` com `card_debit`, `card_credit`, `mixed` (mantém os existentes funcionando).
-4. Estender enum `cash_movement_type` com `cancel_refund` (estorno de venda cancelada paga em dinheiro).
-5. Trigger `tg_orders_attach_cash_session` em `orders` (BEFORE INSERT) que, se `restaurant_id` for de venda interna (`order_type IN ('pdv','delivery','pickup')` e não `external_source`), procura sessão `open` da unidade e seta `cash_session_id`. Se não houver sessão aberta e `order_type='pdv'` → `RAISE EXCEPTION 'Nenhum caixa aberto'`. Para delivery/pickup do cardápio público apenas anexa se existir (não bloqueia cliente final).
-6. Trigger `tg_orders_cash_movement` AFTER INSERT/UPDATE em `orders`: ao status `delivered` (ou `accepted` p/ delivery, conforme padrão atual) insere linha em `cash_movements` (`order_cash` / `cancel_refund`) com `session_id` e valor por forma de pagamento. Idempotente via `order_id` + `type`.
-7. View `v_cash_session_summary` que calcula em tempo real para cada sessão: `cash_sales`, `pix_sales`, `card_sales`, `manual_in`, `manual_out`, `expected_cash`, `total_movement`.
-8. Habilitar realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE cash_register_sessions, cash_movements, cash_withdrawals;` (se ainda não estiverem).
-9. Function `public.close_cash_session(_session_id, counted_cash, counted_pix, counted_card, notes)` SECURITY DEFINER — calcula esperado a partir da view, grava em `cash_register_sessions` (status=closed, expected_cash, counted_cash, difference) e em `payment_reconciliation` (1 linha por método).
-10. Function `public.reopen_cash_session(_session_id)` restrita a `master_admin`.
-11. GRANTs/policies revisadas para `authenticated`.
+Novo menu no painel admin com integração Google Maps + IBGE para prospecção de cidades.
 
-### Frontend
-Novo diretório `src/components/dashboard/cashflow/`:
-- `CashFlowPanel.tsx` — container da aba "cash-flow" com 2 abas internas:
-  - **Caixa diário** (novo) — default
-  - **Resumo mensal** (renderiza `FinancePanel` atual, sem alteração)
-- `CurrentSessionCard.tsx` — mostra sessão aberta (aberto por, hora, valor inicial, totais por forma, esperado, total geral) com subscribe em realtime nas 3 tabelas.
-- `OpenSessionDialog.tsx` — modal de abertura (valor inicial, observação).
-- `CloseSessionDialog.tsx` — modal de fechamento (dinheiro/pix/cartão contados, observação, mostra diferenças, chama `close_cash_session`).
-- `CashMovementDialog.tsx` — entrada/retirada manual (tipo, valor, motivo).
-- `SessionHistoryList.tsx` — sessões fechadas com drill-down (movimentações, vendas, diferenças).
-- `useCashSession.ts` — hook com query da sessão aberta + summary + realtime.
+### Fluxo do usuário
+1. Digita o nome da cidade em um autocomplete (Places API New via gateway já conectado).
+2. Mapa Google centraliza na cidade. Ao arrastar o mapa, reverse geocoding atualiza automaticamente o nome da cidade exibida (label acima do mapa).
+3. Ao confirmar a cidade, o sistema busca no IBGE e pré-preenche automaticamente: **Habitantes**, **Renda per capita**, **PIB**.
+4. Usuário preenche manualmente: **Qtd. restaurantes**, **Qtd. fast-foods**, **Qtd. concorrentes diretos** + observações.
+5. Salva → aparece como card no grid. Clique no card abre modal com todos os detalhes (auto + manual), com opção editar/excluir.
 
-Integrações:
-- **`PdvDialog.tsx`**: bloquear venda se `useCashSession` não tiver sessão aberta — mostrar botão "Abrir caixa" que abre o `OpenSessionDialog`. Injeta `created_by = auth.uid()` no insert do pedido.
-- **`StoreOpenToggle.tsx`**:
-  - Ao abrir loja → se não houver sessão aberta, abre `OpenSessionDialog` em seguida (toast com CTA).
-  - Ao fechar loja → se houver sessão aberta, abre `CloseSessionDialog` (bloqueia confirmação se usuário descartar? mostra aviso modal não-bloqueante).
-- **`ManagerDashboard.tsx`**: substituir o `<div>Em breve.</div>` da view `cash-flow` por `<CashFlowPanel restaurantId={...} />`.
-- **`OrdersPanel` / cancelamentos**: nenhum código novo — o trigger cuida do estorno automático ao status virar `cancelled`.
+### APIs IBGE (todas públicas, sem chave)
+- **Localidades** — resolver `city_name + UF` → `municipio_id` (código IBGE 7 dígitos):
+  `GET https://servicodados.ibge.gov.br/api/v1/localidades/municipios`
+- **População** (estimativa mais recente, agregado 6579, variável 9324):
+  `GET https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N6[{ibgeId}]`
+- **PIB municipal** (agregado 5938, variável 37 = PIB a preços correntes, mil R$):
+  `GET https://servicodados.ibge.gov.br/api/v3/agregados/5938/periodos/-1/variaveis/37?localidades=N6[{ibgeId}]`
+- **Renda per capita** — não existe atualizada por município na API; usar PIB per capita como proxy (variável 39 do agregado 5938) OU renda média domiciliar do Censo 2022 (agregado 793x). Vou usar **PIB per capita (variável 39)** por ser confiável e anual.
+
+Fallback: se algum endpoint falhar, o campo fica editável em branco com aviso.
+
+### Chamada IBGE — onde executar
+Chamar direto do frontend (CORS liberado pelo IBGE, sem chave). Sem edge function necessária.
+
+### Google Maps
+Reusar o conector já configurado:
+- `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` para carregar o Maps JS + `PlaceAutocompleteElement`.
+- Reverse geocoding server-side: já existe edge function `geocode` — estender com modo `reverse` (lat/lng → cidade/UF) chamando `maps/api/geocode/json?latlng=...` via gateway.
+
+### Banco de dados
+Nova tabela `public.expansion_cities`:
+
+```text
+id, city_name, state_uf, ibge_id, lat, lng,
+population, income_per_capita, gdp,
+restaurants_count, fastfoods_count, competitors_count,
+notes, created_by, created_at, updated_at
+```
+
+- RLS: só `master_admin` (via `has_role`).
+- GRANTs padrão authenticated + service_role.
+- Índice em `ibge_id` (único).
+
+### Arquivos
+
+**Criar:**
+- `src/components/admin/AdminExpansionMapPanel.tsx` — painel principal (busca + mapa + form + grid de cards + modal detalhes)
+- `src/components/admin/ExpansionCityMap.tsx` — wrapper do Google Map com autocomplete e drag → reverse geocode
+- `src/lib/ibge.ts` — funções `fetchIbgeMunicipio(nome, uf)`, `fetchPopulation`, `fetchGdp`, `fetchIncomePerCapita`
+
+**Editar:**
+- `src/components/admin/AdminSidebar.tsx` — item "Mapa de expansão" (ícone `MapPin`), tipo `"expansion"` no `AdminView`
+- `src/pages/MasterAdmin.tsx` — rota `expansion` renderiza `<AdminExpansionMapPanel />`
+- `supabase/functions/geocode/index.ts` — adicionar modo reverse (lat/lng)
+
+**Migração:** tabela + RLS + GRANTs + trigger `touch_updated_at`.
 
 ### Detalhes técnicos
-- A view `v_cash_session_summary` é a **fonte única** de números no front (evita divergência). Front consulta `.from('v_cash_session_summary').eq('session_id', ...)`.
-- Realtime: subscribe em `cash_register_sessions` (sessão atual), `cash_movements` (toda inserção) e `orders` filtrado por `restaurant_id` invalidam a query do summary.
-- `payment_method='mixed'`: front grava em `orders.payment_method='mixed'` e cria 2+ linhas em `cash_movements` no momento da venda PDV (já há suporte multi-linha por venda).
-- Auditoria: nenhum DELETE é exposto — UI só oferece "Estornar" que cria movimento `adjustment` negativo com motivo + `created_by`.
-- Tipos: após a migration, `src/integrations/supabase/types.ts` será regenerado automaticamente.
+- Autocomplete restrito a `country: BR`.
+- Ao arrastar mapa: debounce 400ms → `page.evaluate` reverse → atualiza label da cidade.
+- Cards em grid responsivo mostrando nome, UF, população e nº restaurantes cadastrados.
+- Modal com todos os campos + botões Editar / Excluir.
 
-### Entregáveis nesta ordem
-1. Migration (banco + view + functions + triggers + realtime).
-2. Componentes em `src/components/dashboard/cashflow/`.
-3. Patch em `PdvDialog`, `StoreOpenToggle`, `ManagerDashboard`.
-4. Resumo curto de onde tudo ficou.
-
-### Fora de escopo (não mexer)
-- `FinancePanel` mensal e `AdminFinancePanel` — preservados.
-- Pedidos vindos de iFood/Quero (`external_source` setado) não geram movimento de caixa.
-- Permissões granulares por grupo: usaremos a permission `finance` existente como gate.
+Confirmo? Após aprovação: migração → edge function reverse → frontend.
