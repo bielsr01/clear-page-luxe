@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, ClipboardCheck, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronUp, ChevronDown, Store, CheckCircle2, Clock } from "lucide-react";
+import { Settings, ClipboardCheck, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronUp, ChevronDown, Store, CheckCircle2, Clock, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToR2 } from "@/lib/r2Upload";
 
@@ -45,8 +45,19 @@ export function AuditPanel() {
   const monthOpts = useMemo(() => monthOptions(12), []);
   const [month, setMonth] = useState<string>(monthOpts[0].value);
   const [configOpen, setConfigOpen] = useState(false);
-  const [wizardFor, setWizardFor] = useState<Restaurant | null>(null);
+  const [wizardFor, setWizardFor] = useState<{ restaurant: Restaurant; editingAuditId?: string } | null>(null);
   const [viewingAudit, setViewingAudit] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const deleteAudit = async (auditId: string) => {
+    if (!confirm("Excluir esta auditoria? Esta ação não pode ser desfeita.")) return;
+    const { error: e1 } = await sb.from("audit_scores").delete().eq("audit_id", auditId);
+    if (e1) return toast.error(e1.message);
+    const { error: e2 } = await sb.from("audits").delete().eq("id", auditId);
+    if (e2) return toast.error(e2.message);
+    toast.success("Auditoria excluída");
+    qc.invalidateQueries({ queryKey: ["audits"] });
+  };
 
   const { data: groups } = useQuery({
     queryKey: ["audit-groups"],
@@ -128,7 +139,7 @@ export function AuditPanel() {
                     <Store className="w-4 h-4 shrink-0 text-muted-foreground" />
                     <span className="font-medium truncate">{r.name}</span>
                   </div>
-                  <Button size="sm" disabled={activeGroups.length === 0} onClick={() => setWizardFor(r)}>
+                  <Button size="sm" disabled={activeGroups.length === 0} onClick={() => setWizardFor({ restaurant: r })}>
                     Fazer auditoria
                   </Button>
                 </CardContent>
@@ -162,6 +173,12 @@ export function AuditPanel() {
                         {Number(a.avg_score).toFixed(0)}%
                       </Badge>
                       <Button size="sm" variant="outline" onClick={() => setViewingAudit(a.id)}>Ver detalhes</Button>
+                      <Button size="sm" variant="outline" onClick={() => setWizardFor({ restaurant: r, editingAuditId: a.id })} title="Editar">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-destructive" onClick={() => deleteAudit(a.id)} title="Excluir">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -174,7 +191,8 @@ export function AuditPanel() {
       <GroupsConfigDialog open={configOpen} onOpenChange={setConfigOpen} />
       {wizardFor && (
         <AuditWizardDialog
-          restaurant={wizardFor}
+          restaurant={wizardFor.restaurant}
+          editingAuditId={wizardFor.editingAuditId}
           month={month}
           groups={activeGroups}
           onClose={() => setWizardFor(null)}
@@ -288,18 +306,35 @@ function GroupsConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChang
 type StepState = { score: number; notes: string; photo?: File | null; photoUrl?: string | null; uploading?: boolean };
 
 function AuditWizardDialog({
-  restaurant, month, groups, onClose,
+  restaurant, month, groups, onClose, editingAuditId,
 }: {
   restaurant: Restaurant;
   month: string;
   groups: AuditGroup[];
   onClose: () => void;
+  editingAuditId?: string;
 }) {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [states, setStates] = useState<StepState[]>(() => groups.map(() => ({ score: 100, notes: "" })));
+
+  useEffect(() => {
+    if (!editingAuditId) return;
+    (async () => {
+      const { data } = await sb.from("audit_scores").select("*").eq("audit_id", editingAuditId);
+      const rows = (data ?? []) as { group_id: string; score: number; notes: string | null; photo_url: string | null }[];
+      setStates(groups.map((g) => {
+        const r = rows.find((x) => x.group_id === g.id);
+        return {
+          score: r?.score ?? 100,
+          notes: r?.notes ?? "",
+          photoUrl: r?.photo_url ?? null,
+        };
+      }));
+    })();
+  }, [editingAuditId, groups]);
 
   const current = groups[step];
   const st = states[step];
@@ -330,17 +365,29 @@ function AuditWizardDialog({
     setSaving(true);
     try {
       const avg = states.reduce((s, x) => s + x.score, 0) / states.length;
-      const { data: audit, error } = await sb.from("audits").insert({
-        restaurant_id: restaurant.id,
-        audit_month: month,
-        avg_score: Number(avg.toFixed(2)),
-        status: "completed",
-        created_by: user?.id ?? null,
-      }).select("id").single();
-      if (error) throw error;
+      let auditId = editingAuditId;
+      if (editingAuditId) {
+        const { error: eu } = await sb.from("audits").update({
+          avg_score: Number(avg.toFixed(2)),
+          status: "completed",
+        }).eq("id", editingAuditId);
+        if (eu) throw eu;
+        const { error: ed } = await sb.from("audit_scores").delete().eq("audit_id", editingAuditId);
+        if (ed) throw ed;
+      } else {
+        const { data: audit, error } = await sb.from("audits").insert({
+          restaurant_id: restaurant.id,
+          audit_month: month,
+          avg_score: Number(avg.toFixed(2)),
+          status: "completed",
+          created_by: user?.id ?? null,
+        }).select("id").single();
+        if (error) throw error;
+        auditId = audit.id;
+      }
 
       const rows = groups.map((g, i) => ({
-        audit_id: audit.id,
+        audit_id: auditId,
         group_id: g.id,
         group_name: g.name,
         score: states[i].score,
