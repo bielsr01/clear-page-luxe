@@ -21,7 +21,7 @@ interface Ticket {
   created_at: string;
   in_progress_at: string | null;
   completed_at: string | null;
-  restaurants?: { name: string; phone_number: string | null; slug: string } | null;
+  restaurants?: { name: string; phone: string | null; slug: string } | null;
 }
 
 const statusLabel: Record<Status, string> = {
