@@ -179,6 +179,7 @@ export default function MasterAdmin() {
     overview: "Visão geral",
     restaurants: "Restaurantes",
     "restaurants:health": "Restaurantes / Saúde da Rede",
+    "restaurants:audit": "Restaurantes / Auditoria",
     menu: "Cardápio",
     customers: "Clientes",
     "marketing:coupons": "Cupons de desconto",
