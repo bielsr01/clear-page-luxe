@@ -238,7 +238,13 @@ export function CouponMetrics({
         </div>
         <Select value={selected} onValueChange={setSelected}>
           <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
+          <SelectContent
+            position="popper"
+            className="max-h-[60vh]"
+            ref={(el) => {
+              if (el) el.ontouchstart = (e) => e.stopPropagation();
+            }}
+          >
             <SelectItem value="__all__">Todos os cupons</SelectItem>
             {(coupons ?? []).map((c) => (
               <SelectItem key={c.id} value={c.code}>{c.code} — {c.name}</SelectItem>
