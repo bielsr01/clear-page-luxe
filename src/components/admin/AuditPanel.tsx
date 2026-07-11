@@ -441,19 +441,6 @@ function AuditDetailsDialog({ auditId, onClose }: { auditId: string; onClose: ()
     },
   });
 
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    (async () => {
-      const paths = (data ?? []).filter((s) => s.photo_url).map((s) => s.photo_url!) as string[];
-      if (paths.length === 0) return;
-      const { data: signed } = await sb.storage.from("audit-photos").createSignedUrls(paths, 3600);
-      const map: Record<string, string> = {};
-      (signed ?? []).forEach((s: any, i: number) => { map[paths[i]] = s.signedUrl; });
-      setSignedUrls(map);
-    })();
-  }, [data]);
-
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl">
@@ -468,8 +455,8 @@ function AuditDetailsDialog({ auditId, onClose }: { auditId: string; onClose: ()
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {s.photo_url && signedUrls[s.photo_url] && (
-                  <img src={signedUrls[s.photo_url]} alt={s.group_name} className="rounded max-h-64 object-cover" />
+                {s.photo_url && (
+                  <img src={s.photo_url} alt={s.group_name} className="rounded max-h-64 object-cover" />
                 )}
                 {s.notes && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{s.notes}</p>}
               </CardContent>
