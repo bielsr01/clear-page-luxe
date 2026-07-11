@@ -415,7 +415,7 @@ function AuditWizardDialog({
         <DialogHeader>
           <DialogTitle>Auditoria — {restaurant.name}</DialogTitle>
           <DialogDescription>
-            Passo {step + 1} de {groups.length} • {current?.name}
+            Passo {step + 1} de {groups.length} • <span className="font-bold text-foreground">{current?.name}</span>
           </DialogDescription>
         </DialogHeader>
 
