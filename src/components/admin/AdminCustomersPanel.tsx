@@ -85,6 +85,7 @@ export function AdminCustomersPanel() {
           .from("customers")
           .select("id, restaurant_id, name, phone, orders_count, last_order_at, created_at")
           .in("restaurant_id", selected)
+          .order("last_order_at", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
           .order("id", { ascending: true })
           .range(from, from + CHUNK - 1);
