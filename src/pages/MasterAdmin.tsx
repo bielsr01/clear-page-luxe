@@ -36,6 +36,7 @@ import { AdminQueroFeesPanel } from "@/components/admin/AdminQueroFeesPanel";
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
 import { AdminAccessPanel } from "@/components/admin/AdminAccessPanel";
+import { NetworkHealthPanel } from "@/components/admin/NetworkHealthPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
