@@ -75,9 +75,9 @@ export async function fetchGdp(municipioId: string): Promise<number | null> {
   return v == null ? null : v * 1000;
 }
 
-// PIB per capita as income proxy: agregado 5938, variável 39 (R$ por habitante)
+// PIB per capita as income proxy: agregado 5938, variável 6575 (R$ por habitante)
 export async function fetchIncomePerCapita(municipioId: string): Promise<number | null> {
-  return fetchLatestAgregado("5938", "39", municipioId);
+  return fetchLatestAgregado("5938", "6575", municipioId);
 }
 
 export async function fetchIbgeBundle(municipioId: string) {
