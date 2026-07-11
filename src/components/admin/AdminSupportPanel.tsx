@@ -165,11 +165,8 @@ function AdminTicketCard({
         )}
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Resposta / notas internas</label>
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Escreva uma resposta visível para o restaurante..." />
-          <div className="flex justify-end">
-            <Button size="sm" variant="outline" onClick={() => onSaveNotes(ticket, notes)}>Salvar resposta</Button>
-          </div>
+          <label className="text-xs font-medium text-muted-foreground">Conversa com o restaurante</label>
+          <TicketThread ticketId={ticket.id} myRole="admin" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t">
