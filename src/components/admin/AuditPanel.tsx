@@ -374,7 +374,6 @@ function AuditWizardDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-          <div className="space-y-2">
             <Label>Foto <span className="text-destructive">*</span></Label>
             {st?.photoUrl ? (
               <div className="text-xs text-success flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Foto enviada</div>
