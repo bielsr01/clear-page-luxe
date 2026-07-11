@@ -38,6 +38,7 @@ import { CashFlowPanel } from "@/components/dashboard/cashflow/CashFlowPanel";
 import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
+import { SupportPanel } from "@/components/dashboard/SupportPanel";
 
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
@@ -408,6 +409,11 @@ export default function ManagerDashboard() {
             {view === "finance" && (
               <LazyView viewKey={view} variant="stats">
                 <FinancePanel restaurantIds={[restaurant.id]} />
+              </LazyView>
+            )}
+            {view === "support" && (
+              <LazyView viewKey={view} variant="list">
+                <SupportPanel restaurantId={restaurant.id} />
               </LazyView>
             )}
           </main>
