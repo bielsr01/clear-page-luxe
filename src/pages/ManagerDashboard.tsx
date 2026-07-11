@@ -25,6 +25,7 @@ import { NotificationsBell } from "@/components/dashboard/NotificationsBell";
 import { SoundPicker } from "@/components/dashboard/SoundPicker";
 import { LazyView } from "@/components/dashboard/LazyView";
 import { useNewOrderNotifications } from "@/hooks/useNewOrderNotifications";
+import { useRestaurantSupportUnread } from "@/hooks/useRestaurantSupportUnread";
 import { usePendingOrdersCount } from "@/hooks/usePendingCounts";
 import { SupplyOrderPanel } from "@/components/dashboard/SupplyOrderPanel";
 import { ExpensesPanel } from "@/components/dashboard/ExpensesPanel";
@@ -172,6 +173,10 @@ export default function ManagerDashboard() {
   );
   const pendingOrdersCount = usePendingOrdersCount(restaurant?.id);
   const { permissions, isFullAccess, loading: permissionsLoading } = usePermissions(restaurant?.id);
+  const { count: supportUnread, markSeen: markSupportSeen } = useRestaurantSupportUnread(restaurant?.id);
+  useEffect(() => {
+    if (view === "support") markSupportSeen();
+  }, [view, markSupportSeen]);
 
   // Redirect view if user lacks permission for the current view
   useEffect(() => {
@@ -258,6 +263,7 @@ export default function ManagerDashboard() {
           onChange={setView}
           ordersBadge={pendingOrdersCount}
           ordersBlinking={pendingOrdersCount > 0}
+          supportBadge={supportUnread}
           permissions={permissions}
           isFullAccess={isFullAccess}
         />
