@@ -184,7 +184,7 @@ export function NetworkHealthPanel() {
           <TabsContent value="risco" className="mt-4">
             <RankingCard
               title="Lojas em risco"
-              description={`Faturamento < ${brl(thresholds.atencao)}. Top 3 exibidos.`}
+              description={`Faturamento entre ${brl(thresholds.risco)} e ${brl(thresholds.atencao)}. Top 3 exibidos.`}
               rows={groups.risco}
               limit={3}
               tone="destructive"
