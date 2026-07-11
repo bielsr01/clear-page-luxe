@@ -270,21 +270,28 @@ function ThresholdConfig({
 }) {
   const [destaque, setDestaque] = useState(String(value.destaque));
   const [atencao, setAtencao] = useState(String(value.atencao));
+  const [risco, setRisco] = useState(String(value.risco));
   useEffect(() => {
     if (open) {
       setDestaque(String(value.destaque));
       setAtencao(String(value.atencao));
+      setRisco(String(value.risco));
     }
   }, [open, value]);
 
   const save = () => {
     const d = Number(destaque) || 0;
     const a = Number(atencao) || 0;
+    const r = Number(risco) || 0;
     if (a >= d) {
       toast.error("O valor de Atenção deve ser menor que o de Destaque");
       return;
     }
-    onSave({ destaque: d, atencao: a, risco: 0 });
+    if (r >= a) {
+      toast.error("O valor de Risco deve ser menor que o de Atenção");
+      return;
+    }
+    onSave({ destaque: d, atencao: a, risco: r });
     setOpen(false);
   };
 
@@ -309,8 +316,9 @@ function ThresholdConfig({
             <p className="text-xs text-muted-foreground">Lojas entre este valor e o de Destaque.</p>
           </div>
           <div className="space-y-1">
-            <Label>Risco</Label>
-            <p className="text-xs text-muted-foreground">Lojas com faturamento abaixo do mínimo de Atenção.</p>
+            <Label>Risco — faturamento mínimo (R$)</Label>
+            <Input type="number" min={0} step={100} value={risco} onChange={(e) => setRisco(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Lojas entre este valor e o de Atenção. Abaixo disso não aparecem em nenhum grupo.</p>
           </div>
         </div>
         <DialogFooter>
