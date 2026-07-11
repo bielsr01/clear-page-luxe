@@ -21,13 +21,16 @@ export function useRestaurantSupportUnread(restaurantId: string | undefined) {
 
     const { data: tickets } = await supabase
       .from("support_tickets")
-      .select("id,updated_at")
+      .select("id,created_at,updated_at")
       .eq("restaurant_id", restaurantId);
 
     const ids = (tickets ?? []).map((t: any) => t.id);
-    const statusChanges = (tickets ?? []).filter(
-      (t: any) => new Date(t.updated_at) > new Date(lastSeen)
-    ).length;
+    // Só conta mudanças posteriores à criação (ignora a inserção inicial feita pelo próprio restaurante).
+    const statusChanges = (tickets ?? []).filter((t: any) => {
+      const updated = new Date(t.updated_at).getTime();
+      const created = new Date(t.created_at).getTime();
+      return updated > new Date(lastSeen).getTime() && updated - created > 1500;
+    }).length;
 
     let msgChanges = 0;
     if (ids.length) {
