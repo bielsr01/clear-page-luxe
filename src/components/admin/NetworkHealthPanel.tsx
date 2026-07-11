@@ -109,7 +109,7 @@ export function NetworkHealthPanel() {
     const list = rows ?? [];
     const destaque = list.filter((r) => r.revenue >= thresholds.destaque);
     const atencao = list.filter((r) => r.revenue >= thresholds.atencao && r.revenue < thresholds.destaque);
-    const risco = list.filter((r) => r.revenue < thresholds.atencao);
+    const risco = list.filter((r) => r.revenue >= thresholds.risco && r.revenue < thresholds.atencao);
     return { destaque, atencao, risco };
   }, [rows, thresholds]);
 
