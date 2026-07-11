@@ -45,8 +45,19 @@ export function AuditPanel() {
   const monthOpts = useMemo(() => monthOptions(12), []);
   const [month, setMonth] = useState<string>(monthOpts[0].value);
   const [configOpen, setConfigOpen] = useState(false);
-  const [wizardFor, setWizardFor] = useState<Restaurant | null>(null);
+  const [wizardFor, setWizardFor] = useState<{ restaurant: Restaurant; editingAuditId?: string } | null>(null);
   const [viewingAudit, setViewingAudit] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const deleteAudit = async (auditId: string) => {
+    if (!confirm("Excluir esta auditoria? Esta ação não pode ser desfeita.")) return;
+    const { error: e1 } = await sb.from("audit_scores").delete().eq("audit_id", auditId);
+    if (e1) return toast.error(e1.message);
+    const { error: e2 } = await sb.from("audits").delete().eq("id", auditId);
+    if (e2) return toast.error(e2.message);
+    toast.success("Auditoria excluída");
+    qc.invalidateQueries({ queryKey: ["audits"] });
+  };
 
   const { data: groups } = useQuery({
     queryKey: ["audit-groups"],
