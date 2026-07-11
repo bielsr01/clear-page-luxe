@@ -29,7 +29,7 @@ const COLUMNS: { id: LeadStatus; title: string; color: string }[] = [
   { id: "em_espera", title: "Em espera", color: "bg-slate-500" },
   { id: "com_interesse", title: "Com interesse", color: "bg-blue-500" },
   { id: "em_atendimento", title: "Em atendimento", color: "bg-amber-500" },
-  { id: "desinteressado", title: "Desinteressado", color: "bg-rose-500" },
+  { id: "desinteressado", title: "Desinteressado", color: "bg-red-500" },
   { id: "contrato_fechado", title: "Contrato fechado", color: "bg-emerald-600" },
 ];
 
