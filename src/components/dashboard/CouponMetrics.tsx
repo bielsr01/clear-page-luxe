@@ -7,12 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, BarChart3, Users, DollarSign, TrendingUp, UserPlus, Repeat } from "lucide-react";
+import { ArrowLeft, BarChart3, Users, DollarSign, TrendingUp, UserPlus, Repeat, Store } from "lucide-react";
 import { brl } from "@/lib/format";
 
-type Coupon = { id: string; code: string; name: string; uses_count: number };
+type Coupon = { id: string; code: string; name: string; uses_count: number; restaurant_id: string };
 type Order = {
   id: string;
+  restaurant_id: string;
   customer_phone: string;
   subtotal: number;
   total: number;
@@ -35,6 +36,22 @@ export function CouponMetrics({
   const ids = (restaurantIds && restaurantIds.length > 0 ? restaurantIds : restaurantId ? [restaurantId] : []);
   const idsKey = ids.slice().sort().join(",");
   const [selected, setSelected] = useState<string>("__all__");
+  const [restFilter, setRestFilter] = useState<string>("__all__");
+  const multi = ids.length > 1;
+
+  const { data: restaurants } = useQuery({
+    queryKey: ["coupon-metrics-restaurants", idsKey],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.from("restaurants").select("id,name").in("id", ids);
+      return (data ?? []) as { id: string; name: string }[];
+    },
+  });
+  const restNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    (restaurants ?? []).forEach((r) => m.set(r.id, r.name));
+    return m;
+  }, [restaurants]);
 
   const { data: coupons } = useQuery({
     queryKey: ["coupon-metrics-coupons", idsKey],
@@ -42,26 +59,31 @@ export function CouponMetrics({
     queryFn: async () => {
       const { data } = await supabase
         .from("coupons" as any)
-        .select("id,code,name,uses_count")
+        .select("id,code,name,uses_count,restaurant_id")
         .in("restaurant_id", ids)
         .order("created_at", { ascending: false });
       return ((data ?? []) as unknown) as Coupon[];
     },
   });
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: allOrders, isLoading } = useQuery({
     queryKey: ["coupon-metrics-orders", idsKey],
     enabled: ids.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at")
+        .select("id,restaurant_id,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at")
         .in("restaurant_id", ids)
         .neq("status", "cancelled")
         .order("created_at", { ascending: true });
       return (data ?? []) as Order[];
     },
   });
+
+  const orders = useMemo(
+    () => (restFilter === "__all__" ? (allOrders ?? []) : (allOrders ?? []).filter((o) => o.restaurant_id === restFilter)),
+    [allOrders, restFilter],
+  );
 
   const codes = useMemo(() => new Set((coupons ?? []).map((c) => c.code.toUpperCase())), [coupons]);
 
@@ -76,7 +98,6 @@ export function CouponMetrics({
       ? withCoupon.filter((o) => o.coupon_code?.toUpperCase() === filterCode)
       : withCoupon;
 
-    // build first-order map (earliest order per phone, including all orders)
     const firstOrderByPhone = new Map<string, Order>();
     for (const o of all) {
       const k = normPhone(o.customer_phone);
@@ -84,11 +105,9 @@ export function CouponMetrics({
       if (!firstOrderByPhone.has(k)) firstOrderByPhone.set(k, o);
     }
 
-    // 1. Uso básico
     const totalUses = targetWithCoupon.length;
     const uniqueUsers = new Set(targetWithCoupon.map((o) => normPhone(o.customer_phone)).filter(Boolean)).size;
 
-    // 2. Receita
     const grossRevenue = targetWithCoupon.reduce((s, o) => s + Number(o.total), 0);
     const discountTotal = targetWithCoupon.reduce(
       (s, o) => s + Math.max(0, Number(o.subtotal) + Number(o.delivery_fee) - Number(o.total)),
@@ -96,13 +115,11 @@ export function CouponMetrics({
     );
     const netRevenue = targetWithCoupon.reduce((s, o) => s + (Number(o.total) - Number(o.delivery_fee)), 0);
 
-    // 3. Ticket médio
     const avgWith = targetWithCoupon.length ? grossRevenue / targetWithCoupon.length : 0;
     const sumWithout = withoutCoupon.reduce((s, o) => s + Number(o.total), 0);
     const avgWithout = withoutCoupon.length ? sumWithout / withoutCoupon.length : 0;
     const diffPct = avgWithout > 0 ? ((avgWith - avgWithout) / avgWithout) * 100 : 0;
 
-    // 4. Aquisição: clientes cujo PRIMEIRO pedido foi com este cupom
     const newCustomers = new Set<string>();
     const recurringCustomers = new Set<string>();
     for (const o of targetWithCoupon) {
@@ -118,7 +135,6 @@ export function CouponMetrics({
     const newPct = totalUnique ? (newCount / totalUnique) * 100 : 0;
     const recPct = totalUnique ? (recCount / totalUnique) * 100 : 0;
 
-    // 5. Retenção: clientes que usaram o cupom e voltaram a comprar SEM cupom depois
     const usersByPhone = new Map<string, Order[]>();
     for (const o of all) {
       const k = normPhone(o.customer_phone);
@@ -164,7 +180,9 @@ export function CouponMetrics({
   const perCoupon = useMemo(() => {
     const map = new Map<string, { code: string; name: string; uses: number; unique: Set<string>; revenue: number; discount: number }>();
     for (const c of coupons ?? []) {
-      map.set(c.code.toUpperCase(), { code: c.code, name: c.name, uses: 0, unique: new Set(), revenue: 0, discount: 0 });
+      if (!map.has(c.code.toUpperCase())) {
+        map.set(c.code.toUpperCase(), { code: c.code, name: c.name, uses: 0, unique: new Set(), revenue: 0, discount: 0 });
+      }
     }
     for (const o of orders ?? []) {
       if (!o.coupon_code) continue;
@@ -180,6 +198,33 @@ export function CouponMetrics({
     return Array.from(map.values()).sort((a, b) => b.uses - a.uses);
   }, [coupons, orders]);
 
+  // Por restaurante (só quando multi)
+  const perRestaurant = useMemo(() => {
+    if (!multi) return [];
+    const filterCode = selected === "__all__" ? null : selected.toUpperCase();
+    const map = new Map<string, { id: string; uses: number; unique: Set<string>; revenue: number; discount: number; codes: Map<string, number> }>();
+    for (const rid of ids) {
+      map.set(rid, { id: rid, uses: 0, unique: new Set(), revenue: 0, discount: 0, codes: new Map() });
+    }
+    for (const o of allOrders ?? []) {
+      if (!o.coupon_code) continue;
+      const code = o.coupon_code.toUpperCase();
+      if (!codes.has(code)) continue;
+      if (filterCode && code !== filterCode) continue;
+      const row = map.get(o.restaurant_id);
+      if (!row) continue;
+      row.uses++;
+      const k = normPhone(o.customer_phone);
+      if (k) row.unique.add(k);
+      row.revenue += Number(o.total);
+      row.discount += Math.max(0, Number(o.subtotal) + Number(o.delivery_fee) - Number(o.total));
+      row.codes.set(code, (row.codes.get(code) ?? 0) + 1);
+    }
+    return Array.from(map.values()).sort((a, b) => b.uses - a.uses);
+  }, [allOrders, codes, ids, multi, selected]);
+
+  const restaurantsThatUsed = perRestaurant.filter((r) => r.uses > 0).length;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -191,18 +236,33 @@ export function CouponMetrics({
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <BarChart3 className="w-5 h-5" /> Métricas de cupons
             </h2>
-            <p className="text-sm text-muted-foreground">Desempenho dos seus cupons de desconto.</p>
+            <p className="text-sm text-muted-foreground">
+              {multi ? `Consolidado de ${ids.length} restaurantes.` : "Desempenho dos seus cupons de desconto."}
+            </p>
           </div>
         </div>
-        <Select value={selected} onValueChange={setSelected}>
-          <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all__">Todos os cupons</SelectItem>
-            {(coupons ?? []).map((c) => (
-              <SelectItem key={c.id} value={c.code}>{c.code} — {c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 flex-wrap">
+          {multi && (
+            <Select value={restFilter} onValueChange={setRestFilter}>
+              <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos os restaurantes ({ids.length})</SelectItem>
+                {ids.map((rid) => (
+                  <SelectItem key={rid} value={rid}>{restNameById.get(rid) ?? rid.slice(0, 8)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={selected} onValueChange={setSelected}>
+            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos os cupons</SelectItem>
+              {(coupons ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.code}>{c.code} — {c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -215,7 +275,65 @@ export function CouponMetrics({
           <Section title="Uso básico" icon={Users}>
             <Metric label="Total de usos" value={stats.totalUses.toString()} />
             <Metric label="Usuários únicos" value={stats.uniqueUsers.toString()} />
+            {multi && <Metric label="Restaurantes que usaram" value={`${restaurantsThatUsed} de ${ids.length}`} />}
           </Section>
+
+          {/* Por restaurante */}
+          {multi && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2"><Store className="w-4 h-4 text-primary" /> Uso por restaurante</CardTitle>
+                <CardDescription>
+                  Quantidade de usos e cupons utilizados em cada restaurante{selected !== "__all__" ? ` para ${selected}` : ""}.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Restaurante</TableHead>
+                        <TableHead className="text-right">Usos</TableHead>
+                        <TableHead className="text-right">Únicos</TableHead>
+                        <TableHead className="text-right">Faturamento</TableHead>
+                        <TableHead className="text-right">Desconto</TableHead>
+                        <TableHead>Cupons utilizados</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {perRestaurant.length === 0 && (
+                        <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum uso registrado</TableCell></TableRow>
+                      )}
+                      {perRestaurant.map((r) => (
+                        <TableRow key={r.id} className={r.uses === 0 ? "opacity-50" : ""}>
+                          <TableCell className="font-medium">{restNameById.get(r.id) ?? r.id.slice(0, 8)}</TableCell>
+                          <TableCell className="text-right font-semibold">{r.uses}</TableCell>
+                          <TableCell className="text-right">{r.unique.size}</TableCell>
+                          <TableCell className="text-right">{brl(r.revenue)}</TableCell>
+                          <TableCell className="text-right">{brl(r.discount)}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {r.codes.size === 0 ? (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              ) : (
+                                Array.from(r.codes.entries())
+                                  .sort((a, b) => b[1] - a[1])
+                                  .map(([code, n]) => (
+                                    <Badge key={code} variant="outline" className="font-mono text-[10px]">
+                                      {code} · {n}
+                                    </Badge>
+                                  ))
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 2. Receita */}
           <Section title="Receita gerada" icon={DollarSign}>
