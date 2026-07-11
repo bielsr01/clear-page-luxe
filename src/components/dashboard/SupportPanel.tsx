@@ -148,10 +148,14 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
         )}
         {ticket.admin_notes && (
           <div className="text-sm border-l-2 border-primary/60 pl-3 bg-muted/40 py-2 rounded-r">
-            <div className="text-xs font-semibold text-muted-foreground mb-1">Resposta do suporte</div>
+            <div className="text-xs font-semibold text-muted-foreground mb-1">Resposta inicial</div>
             <div className="whitespace-pre-wrap">{ticket.admin_notes}</div>
           </div>
         )}
+        <div>
+          <div className="text-xs font-semibold text-muted-foreground mb-1">Conversa com o suporte</div>
+          <TicketThread ticketId={ticket.id} myRole="manager" />
+        </div>
       </CardContent>
     </Card>
   );
