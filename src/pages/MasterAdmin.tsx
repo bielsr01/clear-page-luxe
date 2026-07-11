@@ -39,6 +39,7 @@ import { AdminAccessPanel } from "@/components/admin/AdminAccessPanel";
 import { NetworkHealthPanel } from "@/components/admin/NetworkHealthPanel";
 import { AuditPanel } from "@/components/admin/AuditPanel";
 import { AdminSupportPanel } from "@/components/admin/AdminSupportPanel";
+import { AdminLeadsPanel } from "@/components/admin/AdminLeadsPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -201,6 +202,7 @@ export default function MasterAdmin() {
     "finance:restaurants": "Receitas - Despesas / Restaurantes",
     "access": "Gestão de acessos",
     "support": "Suporte",
+    "leads": "Banco de Leads",
   };
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
@@ -384,6 +386,7 @@ export default function MasterAdmin() {
             {view === "finance:admin" && <AdminFinanceAdminPanel />}
             {view === "access" && <AdminAccessPanel />}
             {view === "support" && <AdminSupportPanel />}
+            {view === "leads" && <AdminLeadsPanel />}
           </main>
         </SidebarInset>
 
