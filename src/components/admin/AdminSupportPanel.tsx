@@ -118,7 +118,6 @@ export function AdminSupportPanel() {
                 key={t.id}
                 ticket={t}
                 onSetStatus={setStatus}
-                onSaveNotes={saveNotes}
                 onDelete={remove}
               />
             ))
@@ -132,15 +131,12 @@ export function AdminSupportPanel() {
 function AdminTicketCard({
   ticket,
   onSetStatus,
-  onSaveNotes,
   onDelete,
 }: {
   ticket: Ticket;
   onSetStatus: (t: Ticket, s: Status) => void;
-  onSaveNotes: (t: Ticket, n: string) => void;
   onDelete: (t: Ticket) => void;
 }) {
-  const [notes, setNotes] = useState(ticket.admin_notes ?? "");
   const wa = waLink(ticket.restaurants?.phone, ticket.subject);
 
   return (
