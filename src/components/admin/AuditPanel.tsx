@@ -416,11 +416,11 @@ function AuditWizardDialog({
             <ArrowLeft className="w-4 h-4 mr-1" /> Anterior
           </Button>
           {isLast ? (
-            <Button disabled={saving || st?.uploading} onClick={finish}>
+            <Button disabled={saving || st?.uploading || !st?.photoUrl} onClick={finish}>
               {saving ? "Salvando..." : "Finalizar auditoria"}
             </Button>
           ) : (
-            <Button disabled={st?.uploading} onClick={() => setStep((s) => s + 1)}>
+            <Button disabled={st?.uploading || !st?.photoUrl} onClick={() => setStep((s) => s + 1)}>
               Próximo <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           )}
