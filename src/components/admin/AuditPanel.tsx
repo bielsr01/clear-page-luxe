@@ -310,13 +310,16 @@ function AuditWizardDialog({
 
   const onPickPhoto = async (file: File) => {
     updateSt({ photo: file, uploading: true });
-    const path = `${restaurant.id}/${month}/${current.id}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const { error } = await sb.storage.from("audit-photos").upload(path, file, { upsert: false });
-    if (error) {
-      updateSt({ uploading: false, photo: null });
-      return toast.error(`Erro ao enviar foto: ${error.message}`);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filename = `${current.id}-${Date.now()}-${safeName}`;
+      const folder = `audit-photos/${restaurant.id}/${month}`;
+      const url = await uploadToR2(file, folder, filename);
+      updateSt({ uploading: false, photoUrl: url });
+    } catch (e: any) {
+      updateSt({ uploading: false, photo: null, photoUrl: null });
+      toast.error(`Erro ao enviar foto: ${e.message ?? e}`);
     }
-    updateSt({ uploading: false, photoUrl: path });
   };
 
   const finish = async () => {
