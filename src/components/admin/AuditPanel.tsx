@@ -323,6 +323,10 @@ function AuditWizardDialog({
   };
 
   const finish = async () => {
+    if (states.some((s) => !s.photoUrl)) {
+      toast.error("Envie a foto de todos os grupos antes de finalizar.");
+      return;
+    }
     setSaving(true);
     try {
       const avg = states.reduce((s, x) => s + x.score, 0) / states.length;
