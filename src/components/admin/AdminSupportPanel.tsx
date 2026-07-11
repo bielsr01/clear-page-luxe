@@ -53,7 +53,7 @@ export function AdminSupportPanel() {
     setLoading(true);
     const { data } = await supabase
       .from("support_tickets")
-      .select("id,restaurant_id,subject,description,photos,status,admin_notes,created_at,in_progress_at,completed_at,restaurants(name,phone_number,slug)")
+      .select("id,restaurant_id,subject,description,photos,status,admin_notes,created_at,in_progress_at,completed_at,restaurants(name,phone,slug)")
       .order("created_at", { ascending: false });
     setTickets(((data as any) ?? []) as Ticket[]);
     setLoading(false);
