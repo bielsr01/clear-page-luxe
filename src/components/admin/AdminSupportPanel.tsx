@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { MessageCircle, PlayCircle, CheckCircle2, Trash2 } from "lucide-react";
+import { TicketThread } from "@/components/support/TicketThread";
 
 type Status = "open" | "in_progress" | "completed";
 
@@ -118,7 +118,6 @@ export function AdminSupportPanel() {
                 key={t.id}
                 ticket={t}
                 onSetStatus={setStatus}
-                onSaveNotes={saveNotes}
                 onDelete={remove}
               />
             ))
@@ -132,15 +131,12 @@ export function AdminSupportPanel() {
 function AdminTicketCard({
   ticket,
   onSetStatus,
-  onSaveNotes,
   onDelete,
 }: {
   ticket: Ticket;
   onSetStatus: (t: Ticket, s: Status) => void;
-  onSaveNotes: (t: Ticket, n: string) => void;
   onDelete: (t: Ticket) => void;
 }) {
-  const [notes, setNotes] = useState(ticket.admin_notes ?? "");
   const wa = waLink(ticket.restaurants?.phone, ticket.subject);
 
   return (
@@ -169,11 +165,8 @@ function AdminTicketCard({
         )}
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Resposta / notas internas</label>
-          <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Escreva uma resposta visível para o restaurante..." />
-          <div className="flex justify-end">
-            <Button size="sm" variant="outline" onClick={() => onSaveNotes(ticket, notes)}>Salvar resposta</Button>
-          </div>
+          <label className="text-xs font-medium text-muted-foreground">Conversa com o restaurante</label>
+          <TicketThread ticketId={ticket.id} myRole="admin" />
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t">
