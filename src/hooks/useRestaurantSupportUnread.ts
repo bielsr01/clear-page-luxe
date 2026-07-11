@@ -1,48 +1,51 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const key = (restaurantId: string) => `support-lastSeen:${restaurantId}`;
 
 /**
- * Conta atualizações não vistas dos chamados de suporte do restaurante:
- * - novas mensagens do admin
- * - mudanças de status (updated_at posterior ao lastSeen)
- * Zera quando markSeen() é chamado (ao abrir a aba Suporte).
+ * Conta CHAMADOS (não mensagens) com atualização não vista pelo restaurante:
+ * - mudou de status após a criação
+ * - ou recebeu qualquer mensagem nova do admin
+ * Zera com markSeen() ao abrir a aba Suporte.
  */
 export function useRestaurantSupportUnread(restaurantId: string | undefined) {
   const [count, setCount] = useState(0);
 
-  const getLastSeen = () =>
-    (restaurantId && localStorage.getItem(key(restaurantId))) || "1970-01-01T00:00:00Z";
-
   const refresh = useCallback(async () => {
     if (!restaurantId) return;
-    const lastSeen = getLastSeen();
+    const lastSeen = localStorage.getItem(key(restaurantId)) || "1970-01-01T00:00:00Z";
+    const lastSeenMs = new Date(lastSeen).getTime();
 
     const { data: tickets } = await supabase
       .from("support_tickets")
       .select("id,created_at,updated_at")
       .eq("restaurant_id", restaurantId);
 
-    const ids = (tickets ?? []).map((t: any) => t.id);
-    // Só conta mudanças posteriores à criação (ignora a inserção inicial feita pelo próprio restaurante).
-    const statusChanges = (tickets ?? []).filter((t: any) => {
-      const updated = new Date(t.updated_at).getTime();
-      const created = new Date(t.created_at).getTime();
-      return updated > new Date(lastSeen).getTime() && updated - created > 1500;
-    }).length;
+    const list = (tickets ?? []) as { id: string; created_at: string; updated_at: string }[];
+    const ticketsWithStatusChange = new Set(
+      list
+        .filter((t) => {
+          const u = new Date(t.updated_at).getTime();
+          const c = new Date(t.created_at).getTime();
+          return u > lastSeenMs && u - c > 1500;
+        })
+        .map((t) => t.id)
+    );
 
-    let msgChanges = 0;
-    if (ids.length) {
-      const { count: c } = await supabase
+    let ticketsWithNewMsg = new Set<string>();
+    if (list.length) {
+      const { data: msgs } = await supabase
         .from("support_ticket_messages")
-        .select("id", { count: "exact", head: true })
-        .in("ticket_id", ids)
+        .select("ticket_id")
+        .in("ticket_id", list.map((t) => t.id))
         .eq("sender_role", "admin")
         .gt("created_at", lastSeen);
-      msgChanges = c ?? 0;
+      ticketsWithNewMsg = new Set(((msgs ?? []) as any[]).map((m) => m.ticket_id));
     }
-    setCount(statusChanges + msgChanges);
+
+    const union = new Set<string>([...ticketsWithStatusChange, ...ticketsWithNewMsg]);
+    setCount(union.size);
   }, [restaurantId]);
 
   useEffect(() => {
