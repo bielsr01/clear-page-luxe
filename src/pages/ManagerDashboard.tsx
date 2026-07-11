@@ -263,6 +263,7 @@ export default function ManagerDashboard() {
           onChange={setView}
           ordersBadge={pendingOrdersCount}
           ordersBlinking={pendingOrdersCount > 0}
+          supportBadge={supportUnread}
           permissions={permissions}
           isFullAccess={isFullAccess}
         />
