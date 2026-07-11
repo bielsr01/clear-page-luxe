@@ -166,27 +166,24 @@ export function NetworkHealthPanel() {
           <TabsContent value="destaque" className="mt-4">
             <RankingCard
               title="Lojas em destaque"
-              description={`Faturamento ≥ ${brl(thresholds.destaque)}. Top 3 exibidos.`}
+              description={`Faturamento ≥ ${brl(thresholds.destaque)}.`}
               rows={groups.destaque}
-              limit={3}
               tone="success"
             />
           </TabsContent>
           <TabsContent value="atencao" className="mt-4">
             <RankingCard
               title="Lojas em atenção"
-              description={`Faturamento entre ${brl(thresholds.atencao)} e ${brl(thresholds.destaque)}. Top 3 exibidos.`}
+              description={`Faturamento entre ${brl(thresholds.atencao)} e ${brl(thresholds.destaque)}.`}
               rows={groups.atencao}
-              limit={3}
               tone="warning"
             />
           </TabsContent>
           <TabsContent value="risco" className="mt-4">
             <RankingCard
               title="Lojas em risco"
-              description={`Faturamento entre ${brl(thresholds.risco)} e ${brl(thresholds.atencao)}. Top 3 exibidos.`}
+              description={`Faturamento entre ${brl(thresholds.risco)} e ${brl(thresholds.atencao)}.`}
               rows={groups.risco}
-              limit={3}
               tone="destructive"
             />
           </TabsContent>
