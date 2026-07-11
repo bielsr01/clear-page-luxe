@@ -22,6 +22,7 @@ export type AdminView =
   | "overview"
   | "restaurants"
   | "restaurants:health"
+  | "restaurants:audit"
   | "menu"
   | "customers"
   | "marketing:coupons"
