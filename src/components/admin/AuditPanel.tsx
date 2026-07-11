@@ -191,7 +191,8 @@ export function AuditPanel() {
       <GroupsConfigDialog open={configOpen} onOpenChange={setConfigOpen} />
       {wizardFor && (
         <AuditWizardDialog
-          restaurant={wizardFor}
+          restaurant={wizardFor.restaurant}
+          editingAuditId={wizardFor.editingAuditId}
           month={month}
           groups={activeGroups}
           onClose={() => setWizardFor(null)}
