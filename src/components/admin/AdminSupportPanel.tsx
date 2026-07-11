@@ -141,7 +141,7 @@ function AdminTicketCard({
   onDelete: (t: Ticket) => void;
 }) {
   const [notes, setNotes] = useState(ticket.admin_notes ?? "");
-  const wa = waLink(ticket.restaurants?.phone_number, ticket.subject);
+  const wa = waLink(ticket.restaurants?.phone, ticket.subject);
 
   return (
     <Card>
