@@ -53,12 +53,14 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0 }: { active: Ad
   const settingsActive = active.startsWith("settings:");
   const financeActive = active.startsWith("finance:");
   const stockActive = active.startsWith("stock:");
+  const restaurantsActive = active === "restaurants" || active.startsWith("restaurants:");
   const [supplyOpen, setSupplyOpen] = useState(supplyActive);
   const [marketingOpen, setMarketingOpen] = useState(marketingActive);
   const [expensesOpen, setExpensesOpen] = useState(expensesActive);
   const [settingsOpen, setSettingsOpen] = useState(settingsActive);
   const [financeOpen, setFinanceOpen] = useState(financeActive);
   const [stockOpen, setStockOpen] = useState(stockActive);
+  const [restaurantsOpen, setRestaurantsOpen] = useState(restaurantsActive);
 
   return (
     <Sidebar collapsible="icon">
