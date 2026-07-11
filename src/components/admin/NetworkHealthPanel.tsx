@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 type Thresholds = { destaque: number; atencao: number; risco: number };
 const STORAGE_KEY = "admin_network_health_thresholds_v1";
-const DEFAULTS: Thresholds = { destaque: 30000, atencao: 15000, risco: 0 };
+const DEFAULTS: Thresholds = { destaque: 30000, atencao: 15000, risco: 1 };
 
 function loadThresholds(): Thresholds {
   try {
