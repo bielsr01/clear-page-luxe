@@ -193,7 +193,6 @@ export function AdminExpansionMapPanel() {
           ibge_id: muni.id,
           state_uf: f.state_uf || muni.uf,
           population: bundle.population != null ? String(bundle.population) : f.population,
-          gdp: bundle.gdp != null ? String(bundle.gdp) : f.gdp,
           income_per_capita:
             bundle.incomePerCapita != null ? String(bundle.incomePerCapita) : f.income_per_capita,
         }));
