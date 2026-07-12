@@ -85,7 +85,6 @@ type FormState = {
   lng: number | null;
   population: string;
   income_per_capita: string;
-  gdp: string;
   restaurants_count: string;
   fastfoods_count: string;
   competitors_count: string;
@@ -100,7 +99,6 @@ const emptyForm = (): FormState => ({
   lng: null,
   population: "",
   income_per_capita: "",
-  gdp: "",
   restaurants_count: "",
   fastfoods_count: "",
   competitors_count: "",
