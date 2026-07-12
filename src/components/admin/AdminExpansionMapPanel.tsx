@@ -352,9 +352,7 @@ export function AdminExpansionMapPanel() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <span className="text-muted-foreground">Habitantes (IBGE)</span>
                 <span className="text-right font-medium">{fmtInt(detail.population)}</span>
-                <span className="text-muted-foreground">PIB (IBGE)</span>
-                <span className="text-right font-medium">{fmtBRL(detail.gdp)}</span>
-                <span className="text-muted-foreground">Renda per capita (IBGE)</span>
+                <span className="text-muted-foreground">Salário médio mensal (IBGE)</span>
                 <span className="text-right font-medium">{fmtBRL(detail.income_per_capita)}</span>
                 <span className="text-muted-foreground">Restaurantes</span>
                 <span className="text-right font-medium">{fmtInt(detail.restaurants_count)}</span>
