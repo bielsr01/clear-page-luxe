@@ -162,7 +162,6 @@ export function AdminExpansionMapPanel() {
       lng: c.lng,
       population: c.population != null ? String(c.population) : "",
       income_per_capita: c.income_per_capita != null ? String(c.income_per_capita) : "",
-      gdp: c.gdp != null ? String(c.gdp) : "",
       restaurants_count: c.restaurants_count != null ? String(c.restaurants_count) : "",
       fastfoods_count: c.fastfoods_count != null ? String(c.fastfoods_count) : "",
       competitors_count: c.competitors_count != null ? String(c.competitors_count) : "",
