@@ -33,7 +33,7 @@ type ExpansionCity = {
   lng: number | null;
   population: number | null;
   income_per_capita: number | null;
-  gdp: number | null;
+  
   restaurants_count: number | null;
   fastfoods_count: number | null;
   competitors_count: number | null;
@@ -85,7 +85,6 @@ type FormState = {
   lng: number | null;
   population: string;
   income_per_capita: string;
-  gdp: string;
   restaurants_count: string;
   fastfoods_count: string;
   competitors_count: string;
@@ -100,7 +99,6 @@ const emptyForm = (): FormState => ({
   lng: null,
   population: "",
   income_per_capita: "",
-  gdp: "",
   restaurants_count: "",
   fastfoods_count: "",
   competitors_count: "",
@@ -164,7 +162,6 @@ export function AdminExpansionMapPanel() {
       lng: c.lng,
       population: c.population != null ? String(c.population) : "",
       income_per_capita: c.income_per_capita != null ? String(c.income_per_capita) : "",
-      gdp: c.gdp != null ? String(c.gdp) : "",
       restaurants_count: c.restaurants_count != null ? String(c.restaurants_count) : "",
       fastfoods_count: c.fastfoods_count != null ? String(c.fastfoods_count) : "",
       competitors_count: c.competitors_count != null ? String(c.competitors_count) : "",
@@ -193,7 +190,6 @@ export function AdminExpansionMapPanel() {
           ibge_id: muni.id,
           state_uf: f.state_uf || muni.uf,
           population: bundle.population != null ? String(bundle.population) : f.population,
-          gdp: bundle.gdp != null ? String(bundle.gdp) : f.gdp,
           income_per_capita:
             bundle.incomePerCapita != null ? String(bundle.incomePerCapita) : f.income_per_capita,
         }));
@@ -222,7 +218,6 @@ export function AdminExpansionMapPanel() {
       lng: form.lng,
       population: form.population ? Number(form.population) : null,
       income_per_capita: form.income_per_capita ? Number(form.income_per_capita) : null,
-      gdp: form.gdp ? Number(form.gdp) : null,
       restaurants_count: form.restaurants_count ? Number(form.restaurants_count) : 0,
       fastfoods_count: form.fastfoods_count ? Number(form.fastfoods_count) : 0,
       competitors_count: form.competitors_count ? Number(form.competitors_count) : 0,
@@ -306,7 +301,7 @@ export function AdminExpansionMapPanel() {
               <CardContent className="text-xs text-muted-foreground grid grid-cols-2 gap-y-1">
                 <span>Habitantes</span>
                 <span className="text-foreground text-right font-medium">{fmtInt(c.population)}</span>
-                <span>PIB per capita</span>
+                <span>Salário médio</span>
                 <span className="text-foreground text-right font-medium">
                   {fmtBRL(c.income_per_capita)}
                 </span>
@@ -357,9 +352,7 @@ export function AdminExpansionMapPanel() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <span className="text-muted-foreground">Habitantes (IBGE)</span>
                 <span className="text-right font-medium">{fmtInt(detail.population)}</span>
-                <span className="text-muted-foreground">PIB (IBGE)</span>
-                <span className="text-right font-medium">{fmtBRL(detail.gdp)}</span>
-                <span className="text-muted-foreground">Renda per capita (IBGE)</span>
+                <span className="text-muted-foreground">Salário médio mensal (IBGE)</span>
                 <span className="text-right font-medium">{fmtBRL(detail.income_per_capita)}</span>
                 <span className="text-muted-foreground">Restaurantes</span>
                 <span className="text-right font-medium">{fmtInt(detail.restaurants_count)}</span>
@@ -579,19 +572,11 @@ function CityFormDialog({
               />
             </div>
             <div>
-              <Label>Renda per capita (R$)</Label>
+              <Label>Salário médio mensal (R$)</Label>
               <Input
                 type="number"
                 value={form.income_per_capita}
                 onChange={(e) => setForm((f) => ({ ...f, income_per_capita: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label>PIB (R$)</Label>
-              <Input
-                type="number"
-                value={form.gdp}
-                onChange={(e) => setForm((f) => ({ ...f, gdp: e.target.value }))}
               />
             </div>
             <div>
