@@ -69,22 +69,16 @@ export async function fetchPopulation(municipioId: string): Promise<number | nul
   return fetchLatestAgregado("6579", "9324", municipioId);
 }
 
-// GDP: agregado 5938, variável 37 = PIB a preços correntes (mil R$) - returns in R$
-export async function fetchGdp(municipioId: string): Promise<number | null> {
-  const v = await fetchLatestAgregado("5938", "37", municipioId);
-  return v == null ? null : v * 1000;
-}
-
-// PIB per capita as income proxy: agregado 5938, variável 6575 (R$ por habitante)
+// Salário médio mensal dos trabalhadores formais (CEMPRE): agregado 1685, variável 10143 (Reais)
+// Usado como proxy de renda média mensal por trabalhador formal no município.
 export async function fetchIncomePerCapita(municipioId: string): Promise<number | null> {
-  return fetchLatestAgregado("5938", "6575", municipioId);
+  return fetchLatestAgregado("1685", "10143", municipioId);
 }
 
 export async function fetchIbgeBundle(municipioId: string) {
-  const [population, gdp, incomePerCapita] = await Promise.all([
+  const [population, incomePerCapita] = await Promise.all([
     fetchPopulation(municipioId),
-    fetchGdp(municipioId),
     fetchIncomePerCapita(municipioId),
   ]);
-  return { population, gdp, incomePerCapita };
+  return { population, incomePerCapita };
 }
