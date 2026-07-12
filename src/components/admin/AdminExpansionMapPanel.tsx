@@ -33,7 +33,7 @@ type ExpansionCity = {
   lng: number | null;
   population: number | null;
   income_per_capita: number | null;
-  gdp: number | null;
+  
   restaurants_count: number | null;
   fastfoods_count: number | null;
   competitors_count: number | null;
@@ -572,7 +572,7 @@ function CityFormDialog({
               />
             </div>
             <div>
-              <Label>Renda per capita (R$)</Label>
+              <Label>Salário médio mensal (R$)</Label>
               <Input
                 type="number"
                 value={form.income_per_capita}
