@@ -218,7 +218,6 @@ export function AdminExpansionMapPanel() {
       lng: form.lng,
       population: form.population ? Number(form.population) : null,
       income_per_capita: form.income_per_capita ? Number(form.income_per_capita) : null,
-      gdp: form.gdp ? Number(form.gdp) : null,
       restaurants_count: form.restaurants_count ? Number(form.restaurants_count) : 0,
       fastfoods_count: form.fastfoods_count ? Number(form.fastfoods_count) : 0,
       competitors_count: form.competitors_count ? Number(form.competitors_count) : 0,
