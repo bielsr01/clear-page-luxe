@@ -301,7 +301,7 @@ export function AdminExpansionMapPanel() {
               <CardContent className="text-xs text-muted-foreground grid grid-cols-2 gap-y-1">
                 <span>Habitantes</span>
                 <span className="text-foreground text-right font-medium">{fmtInt(c.population)}</span>
-                <span>PIB per capita</span>
+                <span>Salário médio</span>
                 <span className="text-foreground text-right font-medium">
                   {fmtBRL(c.income_per_capita)}
                 </span>
