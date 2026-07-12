@@ -582,14 +582,6 @@ function CityFormDialog({
               />
             </div>
             <div>
-              <Label>PIB (R$)</Label>
-              <Input
-                type="number"
-                value={form.gdp}
-                onChange={(e) => setForm((f) => ({ ...f, gdp: e.target.value }))}
-              />
-            </div>
-            <div>
               <Label>Qtd. restaurantes</Label>
               <Input
                 type="number"
