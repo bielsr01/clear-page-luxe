@@ -471,7 +471,15 @@ function CityFormDialog({
       mapRef.current = { map };
 
       let idleTimer: number | undefined;
+      let userInteracted = false;
+      map.addListener("dragstart", () => {
+        userInteracted = true;
+      });
+      map.addListener("zoom_changed", () => {
+        userInteracted = true;
+      });
       map.addListener("idle", () => {
+        if (!userInteracted) return;
         window.clearTimeout(idleTimer);
         idleTimer = window.setTimeout(() => {
           const c = map.getCenter();
