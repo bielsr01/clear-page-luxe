@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const uid = userData.user.id;
     const supabase = createClient(SUPABASE_URL, SERVICE);
 
-    const { action, integrationId, phone, text, mediaUrl } = await req.json();
+    const { action, integrationId, phone, text, mediaUrl, mediaType, fileName } = await req.json();
     if (!integrationId) throw new Error("integrationId é obrigatório");
 
     const { data: integration } = await supabase
