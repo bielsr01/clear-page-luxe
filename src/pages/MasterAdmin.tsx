@@ -41,6 +41,8 @@ import { AuditPanel } from "@/components/admin/AuditPanel";
 import { AdminSupportPanel } from "@/components/admin/AdminSupportPanel";
 import { AdminLeadsPanel } from "@/components/admin/AdminLeadsPanel";
 import { AdminExpansionMapPanel } from "@/components/admin/AdminExpansionMapPanel";
+import { AdminDocumentsPanel } from "@/components/admin/AdminDocumentsPanel";
+import { AdminDocumentsFranchiseesPanel } from "@/components/admin/AdminDocumentsFranchiseesPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
