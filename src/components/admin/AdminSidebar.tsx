@@ -432,9 +432,44 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                   <span>Mapa de expansão</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <Collapsible open={documentsOpen || collapsed} onOpenChange={setDocumentsOpen} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={documentsActive} tooltip="Documentos">
+                      <FileText className="h-4 w-4" />
+                      <span>Documentos</span>
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", documentsOpen && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:commercial"} onClick={() => handleChange("documents:commercial")}>
+                          Apresentação comercial
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:investor"} onClick={() => handleChange("documents:investor")}>
+                          Apresentação para investidor
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")}>
+                          Documentos franqueados
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
       </SidebarContent>
     </Sidebar>
   );
