@@ -470,7 +470,3 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
     </Sidebar>
   );
 }
-      </SidebarContent>
-    </Sidebar>
-  );
-}
