@@ -396,6 +396,9 @@ export default function MasterAdmin() {
             {view === "support" && <AdminSupportPanel />}
             {view === "leads" && <AdminLeadsPanel />}
             {view === "expansion" && <AdminExpansionMapPanel />}
+            {view === "documents:commercial" && <AdminDocumentsPanel docType="commercial" title="Apresentação comercial" />}
+            {view === "documents:investor" && <AdminDocumentsPanel docType="investor" title="Apresentação para investidor" />}
+            {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
           </main>
         </SidebarInset>
 
