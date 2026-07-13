@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const uid = userData.user.id;
     const supabase = createClient(SUPABASE_URL, SERVICE);
 
-    const { action, integrationId, phone, text, mediaUrl } = await req.json();
+    const { action, integrationId, phone, text, mediaUrl, mediaType, fileName } = await req.json();
     if (!integrationId) throw new Error("integrationId é obrigatório");
 
     const { data: integration } = await supabase
@@ -109,9 +109,10 @@ Deno.serve(async (req) => {
       const sendKey = cfg.instanceToken || cfg.apiKey;
       let r;
       if (mediaUrl) {
-        r = await evoFetch(cfg.apiUrl, `/message/sendMedia/${inst}`, sendKey, {
-          number, mediatype: "image", media: mediaUrl, caption: text || "",
-        });
+        const mt = (mediaType || "image").toLowerCase();
+        const body: any = { number, mediatype: mt, media: mediaUrl, caption: text || "" };
+        if (fileName) body.fileName = fileName;
+        r = await evoFetch(cfg.apiUrl, `/message/sendMedia/${inst}`, sendKey, body);
       } else {
         r = await evoFetch(cfg.apiUrl, `/message/sendText/${inst}`, sendKey, {
           number, text: text || "",

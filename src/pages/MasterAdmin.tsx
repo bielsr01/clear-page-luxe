@@ -41,6 +41,8 @@ import { AuditPanel } from "@/components/admin/AuditPanel";
 import { AdminSupportPanel } from "@/components/admin/AdminSupportPanel";
 import { AdminLeadsPanel } from "@/components/admin/AdminLeadsPanel";
 import { AdminExpansionMapPanel } from "@/components/admin/AdminExpansionMapPanel";
+import { AdminDocumentsPanel } from "@/components/admin/AdminDocumentsPanel";
+import { AdminDocumentsFranchiseesPanel } from "@/components/admin/AdminDocumentsFranchiseesPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -205,7 +207,11 @@ export default function MasterAdmin() {
     "support": "Suporte",
     "leads": "Banco de Leads",
     "expansion": "Mapa de expansão",
+    "documents:commercial": "Apresentação comercial",
+    "documents:investor": "Apresentação para investidor",
+    "documents:franchisees": "Documentos de franqueados",
   };
+
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
   const { count: openSupportCount, markSeen: markSupportSeen } = useOpenSupportTicketsCount();
@@ -390,6 +396,9 @@ export default function MasterAdmin() {
             {view === "support" && <AdminSupportPanel />}
             {view === "leads" && <AdminLeadsPanel />}
             {view === "expansion" && <AdminExpansionMapPanel />}
+            {view === "documents:commercial" && <AdminDocumentsPanel docType="commercial" title="Apresentação comercial" />}
+            {view === "documents:investor" && <AdminDocumentsPanel docType="investor" title="Apresentação para investidor" />}
+            {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
           </main>
         </SidebarInset>
 

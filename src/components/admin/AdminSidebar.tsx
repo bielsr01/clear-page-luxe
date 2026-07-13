@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map, FileText } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -42,7 +42,10 @@ export type AdminView =
   | "access"
   | "support"
   | "leads"
-  | "expansion";
+  | "expansion"
+  | "documents:commercial"
+  | "documents:investor"
+  | "documents:franchisees";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -58,6 +61,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
   const financeActive = active.startsWith("finance:");
   const stockActive = active.startsWith("stock:");
   const restaurantsActive = active === "restaurants" || active.startsWith("restaurants:");
+  const documentsActive = active.startsWith("documents:");
   const [supplyOpen, setSupplyOpen] = useState(supplyActive);
   const [marketingOpen, setMarketingOpen] = useState(marketingActive);
   const [expensesOpen, setExpensesOpen] = useState(expensesActive);
@@ -65,6 +69,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
   const [financeOpen, setFinanceOpen] = useState(financeActive);
   const [stockOpen, setStockOpen] = useState(stockActive);
   const [restaurantsOpen, setRestaurantsOpen] = useState(restaurantsActive);
+  const [documentsOpen, setDocumentsOpen] = useState(documentsActive);
 
   return (
     <Sidebar collapsible="icon">
@@ -427,6 +432,37 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                   <span>Mapa de expansão</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <Collapsible open={documentsOpen || collapsed} onOpenChange={setDocumentsOpen} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={documentsActive} tooltip="Documentos">
+                      <FileText className="h-4 w-4" />
+                      <span>Documentos</span>
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", documentsOpen && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:commercial"} onClick={() => handleChange("documents:commercial")}>
+                          Apresentação comercial
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:investor"} onClick={() => handleChange("documents:investor")}>
+                          Apresentação para investidor
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")}>
+                          Documentos franqueados
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
