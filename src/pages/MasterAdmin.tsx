@@ -207,7 +207,11 @@ export default function MasterAdmin() {
     "support": "Suporte",
     "leads": "Banco de Leads",
     "expansion": "Mapa de expansão",
+    "documents:commercial": "Apresentação comercial",
+    "documents:investor": "Apresentação para investidor",
+    "documents:franchisees": "Documentos de franqueados",
   };
+
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
   const { count: openSupportCount, markSeen: markSupportSeen } = useOpenSupportTicketsCount();
