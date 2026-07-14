@@ -456,7 +456,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
-                          <span>Documentos franqueados</span>
+                          <span>Franqueados</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
