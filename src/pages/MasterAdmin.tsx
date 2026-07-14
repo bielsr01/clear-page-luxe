@@ -45,6 +45,7 @@ import { AdminDocumentsPanel } from "@/components/admin/AdminDocumentsPanel";
 import { AdminDocumentsFranchiseesPanel } from "@/components/admin/AdminDocumentsFranchiseesPanel";
 import { AdminImplantacaoStoresPanel } from "@/components/admin/AdminImplantacaoStoresPanel";
 import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplantacaoChecklistPanel";
+import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
