@@ -495,16 +495,26 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                 </SidebarMenuItem>
               </Collapsible>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={active === "crm:tasks"}
-                  onClick={() => handleChange("crm:tasks")}
-                  tooltip="CRM de relacionamento"
-                >
-                  <ClipboardCheck className="h-4 w-4" />
-                  <span>CRM de relacionamento</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible open={active.startsWith("crm:") || collapsed} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={active.startsWith("crm:")} tooltip="CRM de relacionamento">
+                      <ClipboardCheck className="h-4 w-4" />
+                      <span>CRM de relacionamento</span>
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", active.startsWith("crm:") && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "crm:tasks"} onClick={() => handleChange("crm:tasks")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Tarefas do dia</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
