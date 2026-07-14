@@ -198,9 +198,7 @@ async function handlePlaced(integration: any, ev: IHubEvent) {
   const displayIdNum = displayIdRaw != null ? parseInt(String(displayIdRaw).replace(/\D/g, ""), 10) : NaN;
   const orderNumberFromIfood = Number.isFinite(displayIdNum) && displayIdNum > 0 ? displayIdNum : null;
 
-  const { data, error } = await supabase
-    .from("orders")
-    .insert({
+  const baseInsert = {
       restaurant_id: integration.restaurant_id,
       customer_name: customer.name ?? "Cliente iFood",
       customer_phone: phone || "—",
@@ -228,11 +226,27 @@ async function handlePlaced(integration: any, ev: IHubEvent) {
       external_display_id: od.displayId ?? null,
       ifood_subsidy: ifoodSubsidy,
       merchant_subsidy: merchantSubsidy,
-      ...(orderNumberFromIfood ? { order_number: orderNumberFromIfood } : {}),
-    })
+  } as Record<string, unknown>;
+
+  let insertRes = await supabase
+    .from("orders")
+    .insert({ ...baseInsert, ...(orderNumberFromIfood ? { order_number: orderNumberFromIfood } : {}) })
     .select("id")
     .single();
+
+  // Se displayId do iFood colidir com order_number já existente (unique global),
+  // insere sem forçar o número — o trigger assign_order_number escolhe o próximo livre.
+  if (insertRes.error && (insertRes.error as any).code === "23505") {
+    console.warn(`[ihub-webhook] order_number ${orderNumberFromIfood} em uso, gerando novo número interno para displayId=${od.displayId}`);
+    insertRes = await supabase
+      .from("orders")
+      .insert(baseInsert)
+      .select("id")
+      .single();
+  }
+  const { data, error } = insertRes;
   if (error) throw error;
+
 
   // Insert order_items + order_item_options
   const items = buildItemsForOrderItems(od);
