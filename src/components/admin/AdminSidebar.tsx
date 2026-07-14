@@ -497,13 +497,13 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                 </SidebarMenuItem>
               </Collapsible>
 
-              <Collapsible open={active.startsWith("crm:") || collapsed} asChild>
+              <Collapsible open={crmOpen || collapsed} onOpenChange={setCrmOpen} asChild>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={active.startsWith("crm:")} tooltip="CRM de relacionamento">
+                    <SidebarMenuButton isActive={crmActive} tooltip="CRM de relacionamento">
                       <ClipboardCheck className="h-4 w-4" />
                       <span>CRM de relacionamento</span>
-                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", active.startsWith("crm:") && "rotate-180")} />
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", crmOpen && "rotate-180")} />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
