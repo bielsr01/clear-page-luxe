@@ -43,6 +43,8 @@ import { AdminLeadsPanel } from "@/components/admin/AdminLeadsPanel";
 import { AdminExpansionMapPanel } from "@/components/admin/AdminExpansionMapPanel";
 import { AdminDocumentsPanel } from "@/components/admin/AdminDocumentsPanel";
 import { AdminDocumentsFranchiseesPanel } from "@/components/admin/AdminDocumentsFranchiseesPanel";
+import { AdminImplantacaoStoresPanel } from "@/components/admin/AdminImplantacaoStoresPanel";
+import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplantacaoChecklistPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -210,6 +212,8 @@ export default function MasterAdmin() {
     "documents:commercial": "Apresentação comercial",
     "documents:investor": "Apresentação para investidor",
     "documents:franchisees": "Documentos de franqueados",
+    "implantacao:stores": "Implantação / Lojas",
+    "implantacao:checklist": "Implantação / Checklist",
   };
 
 
@@ -399,6 +403,8 @@ export default function MasterAdmin() {
             {view === "documents:commercial" && <AdminDocumentsPanel docType="commercial" title="Apresentação comercial" />}
             {view === "documents:investor" && <AdminDocumentsPanel docType="investor" title="Apresentação para investidor" />}
             {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
+            {view === "implantacao:stores" && <AdminImplantacaoStoresPanel />}
+            {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
           </main>
         </SidebarInset>
 

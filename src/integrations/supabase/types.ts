@@ -1398,6 +1398,117 @@ export type Database = {
           },
         ]
       }
+      implantacao_checklist_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      implantacao_checklist_status: {
+        Row: {
+          checked: boolean
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          id: string
+          item_id: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implantacao_checklist_status_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "implantacao_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implantacao_checklist_status_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "implantacao_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implantacao_stores: {
+        Row: {
+          city: string | null
+          consultant: string | null
+          contract_signed_at: string | null
+          created_at: string
+          expected_opening_at: string | null
+          franchisee_name: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          consultant?: string | null
+          contract_signed_at?: string | null
+          created_at?: string
+          expected_opening_at?: string | null
+          franchisee_name?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          consultant?: string | null
+          contract_signed_at?: string | null
+          created_at?: string
+          expected_opening_at?: string | null
+          franchisee_name?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           available_capital: number | null

@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map, FileText } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map, FileText, Rocket } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -45,7 +45,9 @@ export type AdminView =
   | "expansion"
   | "documents:commercial"
   | "documents:investor"
-  | "documents:franchisees";
+  | "documents:franchisees"
+  | "implantacao:stores"
+  | "implantacao:checklist";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -62,6 +64,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
   const stockActive = active.startsWith("stock:");
   const restaurantsActive = active === "restaurants" || active.startsWith("restaurants:");
   const documentsActive = active.startsWith("documents:");
+  const implantacaoActive = active.startsWith("implantacao:");
   const [supplyOpen, setSupplyOpen] = useState(supplyActive);
   const [marketingOpen, setMarketingOpen] = useState(marketingActive);
   const [expensesOpen, setExpensesOpen] = useState(expensesActive);
@@ -70,6 +73,7 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
   const [stockOpen, setStockOpen] = useState(stockActive);
   const [restaurantsOpen, setRestaurantsOpen] = useState(restaurantsActive);
   const [documentsOpen, setDocumentsOpen] = useState(documentsActive);
+  const [implantacaoOpen, setImplantacaoOpen] = useState(implantacaoActive);
 
   return (
     <Sidebar collapsible="icon">
@@ -457,6 +461,32 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
                           <span>Franqueados</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              <Collapsible open={implantacaoOpen || collapsed} onOpenChange={setImplantacaoOpen} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={implantacaoActive} tooltip="Implantação">
+                      <Rocket className="h-4 w-4" />
+                      <span>Implantação</span>
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", implantacaoOpen && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "implantacao:stores"} onClick={() => handleChange("implantacao:stores")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Lojas</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "implantacao:checklist"} onClick={() => handleChange("implantacao:checklist")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Checklist de implantação</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
