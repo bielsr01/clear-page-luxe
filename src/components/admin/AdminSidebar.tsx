@@ -47,7 +47,8 @@ export type AdminView =
   | "documents:investor"
   | "documents:franchisees"
   | "implantacao:stores"
-  | "implantacao:checklist";
+  | "implantacao:checklist"
+  | "crm:tasks";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
