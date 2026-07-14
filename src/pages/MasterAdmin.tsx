@@ -407,6 +407,7 @@ export default function MasterAdmin() {
             {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
             {view === "implantacao:stores" && <AdminImplantacaoStoresPanel />}
             {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
+            {view === "crm:tasks" && <AdminCrmTasksPanel />}
           </main>
         </SidebarInset>
 
