@@ -467,6 +467,32 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <Collapsible open={implantacaoOpen || collapsed} onOpenChange={setImplantacaoOpen} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={implantacaoActive} tooltip="Implantação">
+                      <Rocket className="h-4 w-4" />
+                      <span>Implantação</span>
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", implantacaoOpen && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "implantacao:stores"} onClick={() => handleChange("implantacao:stores")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Lojas</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "implantacao:checklist"} onClick={() => handleChange("implantacao:checklist")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Checklist de implantação</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
