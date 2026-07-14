@@ -201,6 +201,7 @@ export default function ManagerDashboard() {
       finance: !!permissions.finance.view,
       "cash-flow": !!permissions.cash_flow.view,
       support: true,
+      "crm:tasks": true,
     };
     if (!allowed[view]) {
       const fallback = (Object.keys(allowed) as DashboardView[]).find((k) => allowed[k]);
