@@ -403,6 +403,8 @@ export default function MasterAdmin() {
             {view === "documents:commercial" && <AdminDocumentsPanel docType="commercial" title="Apresentação comercial" />}
             {view === "documents:investor" && <AdminDocumentsPanel docType="investor" title="Apresentação para investidor" />}
             {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
+            {view === "implantacao:stores" && <AdminImplantacaoStoresPanel />}
+            {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
           </main>
         </SidebarInset>
 
