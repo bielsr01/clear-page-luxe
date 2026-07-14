@@ -445,18 +445,18 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton isActive={active === "documents:commercial"} onClick={() => handleChange("documents:commercial")}>
-                          Apresentação comercial
+                        <SidebarMenuSubButton isActive={active === "documents:commercial"} onClick={() => handleChange("documents:commercial")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
+                          <span>Apresentação comercial</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton isActive={active === "documents:investor"} onClick={() => handleChange("documents:investor")}>
-                          Apresentação para investidor
+                        <SidebarMenuSubButton isActive={active === "documents:investor"} onClick={() => handleChange("documents:investor")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
+                          <span>Apresentação para investidor</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")}>
-                          Documentos franqueados
+                        <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
+                          <span>Documentos franqueados</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
