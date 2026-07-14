@@ -252,6 +252,7 @@ export default function ManagerDashboard() {
     finance: "Receitas - Despesas",
     "cash-flow": "Fluxo de caixa",
     support: "Suporte",
+    "crm:tasks": "CRM / Tarefas do dia",
   };
 
   return (
