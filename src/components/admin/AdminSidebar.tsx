@@ -45,7 +45,9 @@ export type AdminView =
   | "expansion"
   | "documents:commercial"
   | "documents:investor"
-  | "documents:franchisees";
+  | "documents:franchisees"
+  | "implantacao:stores"
+  | "implantacao:checklist";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
