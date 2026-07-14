@@ -47,7 +47,8 @@ export type AdminView =
   | "documents:investor"
   | "documents:franchisees"
   | "implantacao:stores"
-  | "implantacao:checklist";
+  | "implantacao:checklist"
+  | "crm:tasks";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -487,6 +488,27 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton isActive={active === "implantacao:checklist"} onClick={() => handleChange("implantacao:checklist")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
                           <span>Checklist de implantação</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              <Collapsible open={active.startsWith("crm:") || collapsed} asChild>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={active.startsWith("crm:")} tooltip="CRM de relacionamento">
+                      <ClipboardCheck className="h-4 w-4" />
+                      <span>CRM de relacionamento</span>
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", active.startsWith("crm:") && "rotate-180")} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "crm:tasks"} onClick={() => handleChange("crm:tasks")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Tarefas do dia</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>

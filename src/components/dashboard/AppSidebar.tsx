@@ -39,7 +39,8 @@ export type DashboardView =
   | "expenses"
   | "finance"
   | "cash-flow"
-  | "support";
+  | "support"
+  | "crm:tasks";
 
 const mainItems: { id: DashboardView; title: string; icon: any }[] = [
   { id: "overview", title: "Visão geral", icon: LayoutDashboard },
@@ -341,6 +342,51 @@ export function AppSidebar({
                   )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {collapsed ? (
+                <SidebarMenuItem>
+                  <HoverCard openDelay={80} closeDelay={120}>
+                    <HoverCardTrigger asChild>
+                      <SidebarMenuButton isActive={active === "crm:tasks"}>
+                        <ClipboardList className="h-4 w-4" />
+                        <span>CRM</span>
+                        <ChevronRight className="ml-auto h-3 w-3 opacity-60" />
+                      </SidebarMenuButton>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="right" align="start" sideOffset={8} className="w-56 p-1">
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">CRM de relacionamento</div>
+                      <button type="button" onClick={() => handleChange("crm:tasks")} className={cn("w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground", active === "crm:tasks" && "bg-accent text-accent-foreground")}>
+                        <ClipboardList className="h-4 w-4" />
+                        <span>Tarefas do dia</span>
+                      </button>
+                    </HoverCardContent>
+                  </HoverCard>
+                </SidebarMenuItem>
+              ) : (
+                <Collapsible defaultOpen={active.startsWith("crm:")} asChild>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton isActive={active.startsWith("crm:")} tooltip="CRM de relacionamento">
+                        <ClipboardList className="h-4 w-4" />
+                        <span>CRM de relacionamento</span>
+                        <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild isActive={active === "crm:tasks"}>
+                            <button type="button" onClick={() => handleChange("crm:tasks")} className="w-full text-left flex items-center gap-2">
+                              <ClipboardList className="h-4 w-4" />
+                              <span>Tarefas do dia</span>
+                            </button>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

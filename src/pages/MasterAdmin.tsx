@@ -45,6 +45,7 @@ import { AdminDocumentsPanel } from "@/components/admin/AdminDocumentsPanel";
 import { AdminDocumentsFranchiseesPanel } from "@/components/admin/AdminDocumentsFranchiseesPanel";
 import { AdminImplantacaoStoresPanel } from "@/components/admin/AdminImplantacaoStoresPanel";
 import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplantacaoChecklistPanel";
+import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -214,6 +215,7 @@ export default function MasterAdmin() {
     "documents:franchisees": "Documentos de franqueados",
     "implantacao:stores": "Implantação / Lojas",
     "implantacao:checklist": "Implantação / Checklist",
+    "crm:tasks": "CRM / Tarefas do dia",
   };
 
 
@@ -405,6 +407,7 @@ export default function MasterAdmin() {
             {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
             {view === "implantacao:stores" && <AdminImplantacaoStoresPanel />}
             {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
+            {view === "crm:tasks" && <AdminCrmTasksPanel />}
           </main>
         </SidebarInset>
 
