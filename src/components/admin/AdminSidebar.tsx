@@ -494,6 +494,17 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={active === "crm:tasks"}
+                  onClick={() => handleChange("crm:tasks")}
+                  tooltip="CRM de relacionamento"
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                  <span>CRM de relacionamento</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
