@@ -701,6 +701,116 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_admin_settings: {
+        Row: {
+          created_at: string
+          id: string
+          notify_template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_template?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_template?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_task_messages: {
+        Row: {
+          created_at: string
+          id: string
+          restaurant_id: string
+          task_key: string
+          template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          restaurant_id: string
+          task_key: string
+          template?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          restaurant_id?: string
+          task_key?: string
+          template?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_task_messages_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_task_sends: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          reference_date: string
+          restaurant_id: string
+          sent_at: string
+          sent_by: string | null
+          status: string
+          task_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          reference_date: string
+          restaurant_id: string
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          task_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          reference_date?: string
+          restaurant_id?: string
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          task_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_task_sends_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_task_sends_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address_cep: string | null

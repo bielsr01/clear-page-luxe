@@ -1,18 +1,26 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardList } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CrmTasksView } from "@/components/crm/CrmTasksView";
 
 export function CrmTasksPanel() {
-  return (
-    <Card>
-      <CardContent className="py-16 flex flex-col items-center justify-center text-center gap-3">
-        <div className="w-14 h-14 rounded-2xl bg-accent text-accent-foreground grid place-items-center">
-          <ClipboardList className="w-7 h-7" />
-        </div>
-        <div>
-          <div className="text-lg font-semibold">Tarefas do dia</div>
-          <p className="text-sm text-muted-foreground">Em breve. Esta seção ainda está em construção.</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const { user } = useAuth();
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: own } = await supabase.from("restaurants").select("id").eq("owner_id", user.id).maybeSingle();
+      if (own) { setRestaurantId((own as any).id); setLoading(false); return; }
+      const { data: mem } = await supabase.from("restaurant_members").select("restaurant_id").eq("user_id", user.id).maybeSingle();
+      setRestaurantId((mem as any)?.restaurant_id ?? null);
+      setLoading(false);
+    })();
+  }, [user]);
+
+  if (loading) return <Skeleton className="h-40 w-full" />;
+  if (!restaurantId) return <div className="text-muted-foreground">Sem restaurante vinculado.</div>;
+  return <CrmTasksView restaurantId={restaurantId} />;
 }
