@@ -39,7 +39,8 @@ export type DashboardView =
   | "expenses"
   | "finance"
   | "cash-flow"
-  | "support";
+  | "support"
+  | "crm:tasks";
 
 const mainItems: { id: DashboardView; title: string; icon: any }[] = [
   { id: "overview", title: "Visão geral", icon: LayoutDashboard },
