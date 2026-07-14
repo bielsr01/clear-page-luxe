@@ -40,6 +40,7 @@ import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { SupportPanel } from "@/components/dashboard/SupportPanel";
+import { CrmTasksPanel } from "@/components/dashboard/CrmTasksPanel";
 
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
