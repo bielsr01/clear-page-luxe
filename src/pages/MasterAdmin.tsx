@@ -214,6 +214,7 @@ export default function MasterAdmin() {
     "documents:franchisees": "Documentos de franqueados",
     "implantacao:stores": "Implantação / Lojas",
     "implantacao:checklist": "Implantação / Checklist",
+    "crm:tasks": "CRM / Tarefas do dia",
   };
 
 
