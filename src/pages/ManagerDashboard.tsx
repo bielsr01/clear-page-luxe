@@ -425,6 +425,11 @@ export default function ManagerDashboard() {
                 <SupportPanel restaurantId={restaurant.id} />
               </LazyView>
             )}
+            {view === "crm:tasks" && (
+              <LazyView viewKey={view} variant="list">
+                <CrmTasksPanel />
+              </LazyView>
+            )}
           </main>
         </div>
       </div>
