@@ -46,6 +46,7 @@ import { AdminDocumentsFranchiseesPanel } from "@/components/admin/AdminDocument
 import { AdminImplantacaoStoresPanel } from "@/components/admin/AdminImplantacaoStoresPanel";
 import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplantacaoChecklistPanel";
 import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
+import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -216,6 +217,7 @@ export default function MasterAdmin() {
     "implantacao:stores": "Implantação / Lojas",
     "implantacao:checklist": "Implantação / Checklist",
     "crm:tasks": "CRM / Tarefas do dia",
+    "crm:art-library": "CRM / Biblioteca de Artes",
   };
 
 
@@ -408,6 +410,7 @@ export default function MasterAdmin() {
             {view === "implantacao:stores" && <AdminImplantacaoStoresPanel />}
             {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
             {view === "crm:tasks" && <AdminCrmTasksPanel />}
+            {view === "crm:art-library" && <ArtLibraryPanel isAdmin={true} />}
           </main>
         </SidebarInset>
 

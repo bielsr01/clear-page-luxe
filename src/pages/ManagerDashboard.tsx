@@ -41,6 +41,7 @@ import { onCashflowRequest, requestCashflowAction } from "@/lib/cashflowBus";
 import { BulkCampaignsPanel } from "@/components/dashboard/BulkCampaignsPanel";
 import { SupportPanel } from "@/components/dashboard/SupportPanel";
 import { CrmTasksPanel } from "@/components/dashboard/CrmTasksPanel";
+import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
 
 import { ManualOverride, OpeningHours } from "@/lib/hours";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
@@ -203,6 +204,7 @@ export default function ManagerDashboard() {
       "cash-flow": !!permissions.cash_flow.view,
       support: true,
       "crm:tasks": true,
+      "crm:art-library": true,
     };
     if (!allowed[view]) {
       const fallback = (Object.keys(allowed) as DashboardView[]).find((k) => allowed[k]);
@@ -254,6 +256,7 @@ export default function ManagerDashboard() {
     "cash-flow": "Fluxo de caixa",
     support: "Suporte",
     "crm:tasks": "CRM / Tarefas do dia",
+    "crm:art-library": "CRM / Biblioteca de Artes",
   };
 
   return (
@@ -428,6 +431,11 @@ export default function ManagerDashboard() {
             {view === "crm:tasks" && (
               <LazyView viewKey={view} variant="list">
                 <CrmTasksPanel />
+              </LazyView>
+            )}
+            {view === "crm:art-library" && (
+              <LazyView viewKey={view} variant="list">
+                <ArtLibraryPanel isAdmin={false} />
               </LazyView>
             )}
           </main>
