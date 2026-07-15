@@ -275,24 +275,23 @@ export function CrmTasksView({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
-
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
-          {isAdmin && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setNotifyOpen(true)}>
-                <Settings className="w-4 h-4 mr-2" />Modelo notificação
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
+        {isAdmin && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setNotifyOpen(true)}>
+              <Settings className="w-4 h-4 mr-2" />Modelo notificação
+            </Button>
+            {restaurantInfo && (
+              <Button size="sm" onClick={notifyRestaurant}>
+                <Send className="w-4 h-4 mr-2" />Notificar restaurante
               </Button>
-              {restaurantInfo && (
-                <Button size="sm" onClick={notifyRestaurant}>
-                  <Send className="w-4 h-4 mr-2" />Notificar restaurante
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </>
+        )}
       </div>
+
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TaskKey)}>
         <TabsList className="w-full flex-wrap h-auto">
