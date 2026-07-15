@@ -48,7 +48,8 @@ export type AdminView =
   | "documents:franchisees"
   | "implantacao:stores"
   | "implantacao:checklist"
-  | "crm:tasks";
+  | "crm:tasks"
+  | "crm:art-library";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -511,6 +512,11 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton isActive={active === "crm:tasks"} onClick={() => handleChange("crm:tasks")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
                           <span>Tarefas do dia</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "crm:art-library"} onClick={() => handleChange("crm:art-library")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Biblioteca de Artes</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>

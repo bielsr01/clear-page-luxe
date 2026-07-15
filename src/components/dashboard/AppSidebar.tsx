@@ -40,7 +40,8 @@ export type DashboardView =
   | "finance"
   | "cash-flow"
   | "support"
-  | "crm:tasks";
+  | "crm:tasks"
+  | "crm:art-library";
 
 const mainItems: { id: DashboardView; title: string; icon: any }[] = [
   { id: "overview", title: "Visão geral", icon: LayoutDashboard },
@@ -359,6 +360,10 @@ export function AppSidebar({
                         <ClipboardList className="h-4 w-4" />
                         <span>Tarefas do dia</span>
                       </button>
+                      <button type="button" onClick={() => handleChange("crm:art-library")} className={cn("w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground", active === "crm:art-library" && "bg-accent text-accent-foreground")}>
+                        <ClipboardList className="h-4 w-4" />
+                        <span>Biblioteca de Artes</span>
+                      </button>
                     </HoverCardContent>
                   </HoverCard>
                 </SidebarMenuItem>
@@ -379,6 +384,14 @@ export function AppSidebar({
                             <button type="button" onClick={() => handleChange("crm:tasks")} className="w-full text-left flex items-center gap-2">
                               <ClipboardList className="h-4 w-4" />
                               <span>Tarefas do dia</span>
+                            </button>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild isActive={active === "crm:art-library"}>
+                            <button type="button" onClick={() => handleChange("crm:art-library")} className="w-full text-left flex items-center gap-2">
+                              <ClipboardList className="h-4 w-4" />
+                              <span>Biblioteca de Artes</span>
                             </button>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
