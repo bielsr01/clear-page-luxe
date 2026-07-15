@@ -74,6 +74,8 @@ export function CrmTasksView({
   const [rows, setRows] = useState<Record<TaskKey, CustomerRow[]>>({} as any);
   const [messages, setMessages] = useState<Record<TaskKey, string>>({} as any);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "sent">("all");
+  const [groupFilter, setGroupFilter] = useState<Record<TaskKey, "pending" | "sent">>({} as any);
+
   const [loading, setLoading] = useState(false);
   const [configOpen, setConfigOpen] = useState<TaskKey | null>(null);
   const [configText, setConfigText] = useState("");
