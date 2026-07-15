@@ -303,57 +303,82 @@ export function CrmTasksView({
           ))}
         </TabsList>
 
-        {TASKS.map((t) => (
-          <TabsContent key={t.key} value={t.key} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">{t.description}</p>
-              <Button variant="outline" size="sm" onClick={() => openConfig(t.key)}>
-                <Settings className="w-4 h-4 mr-2" />Configurar mensagem
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="p-8 text-center text-muted-foreground">Carregando...</div>
-                ) : currentList.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground">Nenhum cliente encontrado.</div>
-                ) : (
-                  <div className="divide-y">
-                    {currentList.map((r) => (
-                      <div key={`${r.id}-${r.reference_date}`} className="p-3 flex flex-wrap items-center gap-3 justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium flex items-center gap-2">
-                            {r.name}
-                            {r.status === "sent" ? (
-                              <Badge className="bg-success text-success-foreground">Enviado</Badge>
-                            ) : (
-                              <Badge variant="secondary">Pendente</Badge>
-                            )}
+        {TASKS.map((t) => {
+          const list = rows[t.key] ?? [];
+          const pending = list.filter((r) => r.status === "pending");
+          const sent = list.filter((r) => r.status === "sent");
+          const sub = groupFilter[t.key] ?? "pending";
+          const visible = sub === "sent" ? sent : pending;
+          return (
+            <TabsContent key={t.key} value={t.key} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">{t.description}</p>
+                <Button variant="outline" size="sm" onClick={() => openConfig(t.key)}>
+                  <Settings className="w-4 h-4 mr-2" />Configurar mensagem
+                </Button>
+              </div>
+
+              <Tabs value={sub} onValueChange={(v) => setGroupFilter((p) => ({ ...p, [t.key]: v as "pending" | "sent" }))}>
+                <TabsList>
+                  <TabsTrigger value="pending">
+                    Pendentes <Badge variant="secondary" className="ml-2">{pending.length}</Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="sent">
+                    Enviadas <Badge variant="secondary" className="ml-2">{sent.length}</Badge>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              <Card>
+                <CardContent className="p-0">
+                  {loading ? (
+                    <div className="p-8 text-center text-muted-foreground">Carregando...</div>
+                  ) : visible.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      {sub === "sent" ? "Nenhuma mensagem enviada." : "Nenhum cliente pendente."}
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {visible.map((r) => (
+                        <div key={`${r.id}-${r.reference_date}`} className="p-3 flex flex-wrap items-center gap-3 justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium flex items-center gap-2">
+                              {r.name}
+                              {r.status === "sent" ? (
+                                <Badge className="bg-success text-success-foreground">Enviado</Badge>
+                              ) : (
+                                <Badge variant="secondary">Pendente</Badge>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
+                              <span>{r.phone ?? "—"}</span>
+                              <span>Ticket médio: {brl(r.ticket_medio)}</span>
+                              <span>{r.orders_count ?? 0} pedidos</span>
+                              <span>Último: {r.last_order_at ? new Date(r.last_order_at).toLocaleDateString("pt-BR") : "—"}</span>
+                              {r.status === "sent" && r.sent_at && (
+                                <span>Enviado em: {new Date(r.sent_at).toLocaleString("pt-BR")}</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
-                            <span>{r.phone ?? "—"}</span>
-                            <span>Ticket médio: {brl(r.ticket_medio)}</span>
-                            <span>{r.orders_count ?? 0} pedidos</span>
-                            <span>Último: {r.last_order_at ? new Date(r.last_order_at).toLocaleDateString("pt-BR") : "—"}</span>
-                          </div>
+                          <Button
+                            size="sm"
+                            variant={r.status === "sent" ? "outline" : "default"}
+                            onClick={() => handleSend(t.key, r)}
+                            className="gap-2"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            {r.status === "sent" ? "Reenviar" : "Enviar"}
+                          </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          variant={r.status === "sent" ? "outline" : "default"}
-                          onClick={() => handleSend(t.key, r)}
-                          className="gap-2"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          {r.status === "sent" ? "Reenviar" : "Enviar"}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          );
+        })}
+
       </Tabs>
 
       <Dialog open={configOpen !== null} onOpenChange={(o) => !o && setConfigOpen(null)}>
