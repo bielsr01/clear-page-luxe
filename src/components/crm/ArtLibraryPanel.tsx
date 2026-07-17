@@ -240,8 +240,9 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Título (opcional — usado quando 1 arquivo)</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Banner promocional agosto" />
+              <Label>Título</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nome do arquivo" />
+              <p className="text-xs text-muted-foreground">Ao enviar vários arquivos, cada um usa o próprio nome; o título aqui só se aplica quando há 1 arquivo.</p>
             </div>
             <div className="space-y-2">
               <Label>Arquivos (pode selecionar vários)</Label>
@@ -249,7 +250,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                 ref={inputRef}
                 type="file"
                 multiple
-                onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                onChange={(e) => onFilesChange(Array.from(e.target.files || []))}
               />
               {files.length > 0 && (
                 <p className="text-xs text-muted-foreground">{files.length} arquivo(s) selecionado(s). Máx 25MB cada.</p>
