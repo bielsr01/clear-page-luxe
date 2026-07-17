@@ -209,14 +209,20 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                         <Download className="h-3 w-3 mr-1" /> Baixar
                       </Button>
                       {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(item)}
-                          disabled={deletingId === item.id}
-                        >
-                          {deletingId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                        </Button>
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => openEdit(item)} title="Editar">
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(item)}
+                            disabled={deletingId === item.id}
+                            title="Excluir"
+                          >
+                            {deletingId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
