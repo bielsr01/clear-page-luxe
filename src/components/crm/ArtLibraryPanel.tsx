@@ -205,25 +205,26 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                   <div className="p-2 space-y-1">
                     <p className="text-sm font-medium truncate" title={item.title}>{item.title}</p>
                     <p className="text-xs text-muted-foreground truncate">{humanSize(item.file_size)}</p>
-                    <div className="pt-1 space-y-1">
-                      <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload(item)}>
-                        <Download className="h-3 w-3 mr-1" /> Baixar
+                    <div className="pt-1 flex items-center justify-center gap-1">
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleDownload(item)} title="Baixar">
+                        <Download className="h-4 w-4" />
                       </Button>
                       {isAdmin && (
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(item)}>
-                            <Pencil className="h-3 w-3 mr-1" /> Editar
+                        <>
+                          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(item)} title="Editar">
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="destructive"
-                            className="flex-1"
+                            className="h-8 w-8"
                             onClick={() => handleDelete(item)}
                             disabled={deletingId === item.id}
+                            title="Excluir"
                           >
-                            {deletingId === item.id ? <Loader2 className="h-3 w-3" /> : <><Trash2 className="h-3 w-3 mr-1" /> Excluir</>}
+                            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                           </Button>
-                        </div>
+                        </>
                       )}
                     </div>
                   </div>
