@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Download, Trash2, Upload, FileText, FileArchive, Image as ImageIcon, Loader2, Search } from "lucide-react";
+import { Download, Trash2, Upload, FileText, FileArchive, Image as ImageIcon, Loader2, Search, Pencil } from "lucide-react";
 
 type ArtItem = {
   id: string;
@@ -41,7 +41,36 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editItem, setEditItem] = useState<ArtItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const stripExt = (name: string) => name.replace(/\.[^.]+$/, "");
+  const onFilesChange = (list: File[]) => {
+    setFiles(list);
+    if (list.length === 1 && !title.trim()) setTitle(stripExt(list[0].name));
+  };
+
+  const openEdit = (item: ArtItem) => {
+    setEditItem(item);
+    setEditTitle(item.title);
+  };
+
+  const saveEdit = async () => {
+    if (!editItem) return;
+    if (!editTitle.trim()) return toast.error("Título não pode ficar vazio");
+    setSavingEdit(true);
+    const { error } = await (supabase as any)
+      .from("art_library")
+      .update({ title: editTitle.trim() })
+      .eq("id", editItem.id);
+    setSavingEdit(false);
+    if (error) return toast.error("Erro ao salvar: " + error.message);
+    toast.success("Atualizado");
+    setEditItem(null);
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
@@ -180,14 +209,20 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                         <Download className="h-3 w-3 mr-1" /> Baixar
                       </Button>
                       {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(item)}
-                          disabled={deletingId === item.id}
-                        >
-                          {deletingId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                        </Button>
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => openEdit(item)} title="Editar">
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(item)}
+                            disabled={deletingId === item.id}
+                            title="Excluir"
+                          >
+                            {deletingId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -205,8 +240,9 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Título (opcional — usado quando 1 arquivo)</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Banner promocional agosto" />
+              <Label>Título</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nome do arquivo" />
+              <p className="text-xs text-muted-foreground">Ao enviar vários arquivos, cada um usa o próprio nome; o título aqui só se aplica quando há 1 arquivo.</p>
             </div>
             <div className="space-y-2">
               <Label>Arquivos (pode selecionar vários)</Label>
@@ -214,7 +250,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                 ref={inputRef}
                 type="file"
                 multiple
-                onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                onChange={(e) => onFilesChange(Array.from(e.target.files || []))}
               />
               {files.length > 0 && (
                 <p className="text-xs text-muted-foreground">{files.length} arquivo(s) selecionado(s). Máx 25MB cada.</p>
@@ -225,6 +261,24 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
             <Button variant="outline" onClick={() => setUploadOpen(false)} disabled={uploading}>Cancelar</Button>
             <Button onClick={handleUpload} disabled={uploading || !files.length}>
               {uploading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Enviando...</> : <>Enviar</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editItem} onOpenChange={(o) => !savingEdit && !o && setEditItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar arte</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Título</Label>
+            <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditItem(null)} disabled={savingEdit}>Cancelar</Button>
+            <Button onClick={saveEdit} disabled={savingEdit}>
+              {savingEdit ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando...</> : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>
