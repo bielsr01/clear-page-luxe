@@ -204,25 +204,25 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                   <div className="p-2 space-y-1">
                     <p className="text-sm font-medium truncate" title={item.title}>{item.title}</p>
                     <p className="text-xs text-muted-foreground truncate">{humanSize(item.file_size)}</p>
-                    <div className="flex gap-1 pt-1">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleDownload(item)}>
+                    <div className="pt-1 space-y-1">
+                      <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload(item)}>
                         <Download className="h-3 w-3 mr-1" /> Baixar
                       </Button>
                       {isAdmin && (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => openEdit(item)} title="Editar">
-                            <Pencil className="h-3 w-3" />
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => openEdit(item)}>
+                            <Pencil className="h-3 w-3 mr-1" /> Editar
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
+                            className="flex-1"
                             onClick={() => handleDelete(item)}
                             disabled={deletingId === item.id}
-                            title="Excluir"
                           >
-                            {deletingId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                            {deletingId === item.id ? <Loader2 className="h-3 w-3" /> : <><Trash2 className="h-3 w-3 mr-1" /> Excluir</>}
                           </Button>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
