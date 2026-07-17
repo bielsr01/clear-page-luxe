@@ -41,7 +41,36 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editItem, setEditItem] = useState<ArtItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const stripExt = (name: string) => name.replace(/\.[^.]+$/, "");
+  const onFilesChange = (list: File[]) => {
+    setFiles(list);
+    if (list.length === 1 && !title.trim()) setTitle(stripExt(list[0].name));
+  };
+
+  const openEdit = (item: ArtItem) => {
+    setEditItem(item);
+    setEditTitle(item.title);
+  };
+
+  const saveEdit = async () => {
+    if (!editItem) return;
+    if (!editTitle.trim()) return toast.error("Título não pode ficar vazio");
+    setSavingEdit(true);
+    const { error } = await (supabase as any)
+      .from("art_library")
+      .update({ title: editTitle.trim() })
+      .eq("id", editItem.id);
+    setSavingEdit(false);
+    if (error) return toast.error("Erro ao salvar: " + error.message);
+    toast.success("Atualizado");
+    setEditItem(null);
+    load();
+  };
 
   const load = async () => {
     setLoading(true);
