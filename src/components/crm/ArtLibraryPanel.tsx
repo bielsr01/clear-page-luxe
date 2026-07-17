@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Download, Trash2, Upload, FileText, FileArchive, Image as ImageIcon, Loader2, Search } from "lucide-react";
+import { Download, Trash2, Upload, FileText, FileArchive, Image as ImageIcon, Loader2, Search, Pencil } from "lucide-react";
 
 type ArtItem = {
   id: string;
