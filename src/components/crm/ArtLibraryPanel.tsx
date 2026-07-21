@@ -203,7 +203,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-sm font-medium break-words leading-tight" title={item.title}>{item.title}</p>
+                    <p className="text-sm font-medium break-words leading-tight line-clamp-2" title={item.title}>{item.title}</p>
                     <p className="text-xs text-muted-foreground">{humanSize(item.file_size)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
