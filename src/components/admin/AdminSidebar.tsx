@@ -502,10 +502,15 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
               <Collapsible open={crmOpen || collapsed} onOpenChange={setCrmOpen} asChild>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={crmActive} tooltip="CRM de relacionamento">
+                    <SidebarMenuButton isActive={crmActive} tooltip="CRM de relacionamento" className={promoCalendarBadge > 0 ? "text-destructive" : ""}>
                       <ClipboardCheck className="h-4 w-4" />
                       <span>CRM de relacionamento</span>
-                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", crmOpen && "rotate-180")} />
+                      {promoCalendarBadge > 0 && (
+                        <span className="ml-auto mr-1 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center animate-pulse">
+                          {promoCalendarBadge > 9 ? "9+" : promoCalendarBadge}
+                        </span>
+                      )}
+                      <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform", crmOpen && "rotate-180", promoCalendarBadge > 0 && "ml-0")} />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -518,6 +523,16 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton isActive={active === "crm:art-library"} onClick={() => handleChange("crm:art-library")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
                           <span>Biblioteca de Artes</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "crm:promo-calendar"} onClick={() => handleChange("crm:promo-calendar")} className={cn("h-auto min-h-7 py-1.5 whitespace-normal leading-tight", promoCalendarBadge > 0 && "text-destructive font-medium")}>
+                          <span>Calendário Promocional</span>
+                          {promoCalendarBadge > 0 && (
+                            <span className="ml-auto min-w-[18px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center animate-pulse">
+                              {promoCalendarBadge > 9 ? "9+" : promoCalendarBadge}
+                            </span>
+                          )}
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
