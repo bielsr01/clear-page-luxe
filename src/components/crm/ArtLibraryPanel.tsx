@@ -188,45 +188,45 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">Nenhuma arte cadastrada.</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filtered.map((item) => (
-                <div key={item.id} className="border rounded-lg overflow-hidden bg-card group">
-                  <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
+                <div key={item.id} className="border rounded-lg bg-card p-3 flex items-center gap-3 group">
+                  <div className="h-16 w-16 shrink-0 rounded-md bg-muted flex items-center justify-center overflow-hidden">
                     {isImage(item.file_type) ? (
                       <img src={item.file_url} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
                     ) : isPdf(item.file_type) ? (
-                      <FileText className="h-14 w-14 text-muted-foreground" />
+                      <FileText className="h-8 w-8 text-muted-foreground" />
                     ) : isZip(item.file_type) ? (
-                      <FileArchive className="h-14 w-14 text-muted-foreground" />
+                      <FileArchive className="h-8 w-8 text-muted-foreground" />
                     ) : (
-                      <ImageIcon className="h-14 w-14 text-muted-foreground" />
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="p-2 space-y-1">
-                    <p className="text-sm font-medium truncate" title={item.title}>{item.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{humanSize(item.file_size)}</p>
-                    <div className="pt-1 flex items-center justify-center gap-1">
-                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleDownload(item)} title="Baixar">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      {isAdmin && (
-                        <>
-                          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(item)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="destructive"
-                            className="h-8 w-8"
-                            onClick={() => handleDelete(item)}
-                            disabled={deletingId === item.id}
-                            title="Excluir"
-                          >
-                            {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="text-sm font-medium break-words leading-tight" title={item.title}>{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{humanSize(item.file_size)}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleDownload(item)} title="Baixar">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    {isAdmin && (
+                      <>
+                        <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => openEdit(item)} title="Editar">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="h-8 w-8"
+                          onClick={() => handleDelete(item)}
+                          disabled={deletingId === item.id}
+                          title="Excluir"
+                        >
+                          {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
