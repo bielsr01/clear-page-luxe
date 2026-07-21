@@ -415,6 +415,7 @@ export default function MasterAdmin() {
             {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
             {view === "crm:tasks" && <AdminCrmTasksPanel />}
             {view === "crm:art-library" && <ArtLibraryPanel isAdmin={true} />}
+            {view === "crm:promo-calendar" && <AdminPromoCalendarPanel />}
           </main>
         </SidebarInset>
 
