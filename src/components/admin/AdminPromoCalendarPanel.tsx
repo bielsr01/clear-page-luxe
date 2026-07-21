@@ -154,7 +154,7 @@ export function AdminPromoCalendarPanel() {
     load();
   };
 
-  const openNotify = (row: PromoCalendarRow) => setNotifyTarget({ row });
+  const openNotify = (row: PromoCalendarRow) => { setSentIds(new Set()); setNotifyTarget({ row }); };
 
   const notifyTargets = useMemo(() => {
     if (!notifyTarget) return [] as Restaurant[];
