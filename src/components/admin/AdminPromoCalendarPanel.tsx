@@ -48,6 +48,7 @@ export function AdminPromoCalendarPanel() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PromoCalendarRow | null>(null);
   const [notifyTarget, setNotifyTarget] = useState<{ row: PromoCalendarRow } | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
