@@ -48,6 +48,7 @@ export function AdminPromoCalendarPanel() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PromoCalendarRow | null>(null);
   const [notifyTarget, setNotifyTarget] = useState<{ row: PromoCalendarRow } | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
@@ -153,7 +154,7 @@ export function AdminPromoCalendarPanel() {
     load();
   };
 
-  const openNotify = (row: PromoCalendarRow) => setNotifyTarget({ row });
+  const openNotify = (row: PromoCalendarRow) => { setSentIds(new Set()); setNotifyTarget({ row }); };
 
   const notifyTargets = useMemo(() => {
     if (!notifyTarget) return [] as Restaurant[];
@@ -351,18 +352,25 @@ export function AdminPromoCalendarPanel() {
               const link = buildWhatsApp(r.phone, r.whatsapp_url);
               const msg = notifyTarget ? buildMessage(notifyTarget.row, r) : "";
               const href = link ? `${link}?text=${encodeURIComponent(msg)}` : null;
+              const sent = sentIds.has(r.id);
               return (
                 <div key={r.id} className="flex items-center justify-between gap-2 border rounded-md p-2">
                   <div className="min-w-0">
                     <p className="font-medium truncate">{r.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{r.phone || "sem telefone"}</p>
                   </div>
-                  <Button size="sm" disabled={!href} asChild={!!href}>
-                    {href ? (
-                      <a href={href} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 mr-2" />Enviar</a>
-                    ) : (
-                      <span><MessageCircle className="w-4 h-4 mr-2" />Sem telefone</span>
-                    )}
+                  <Button
+                    size="sm"
+                    disabled={!href}
+                    className={sent ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                    onClick={() => {
+                      if (!href) return;
+                      window.open(href, "_blank", "noopener,noreferrer");
+                      setSentIds((prev) => new Set(prev).add(r.id));
+                    }}
+                  >
+                    {sent ? <Check className="w-4 h-4 mr-2" /> : <MessageCircle className="w-4 h-4 mr-2" />}
+                    {href ? (sent ? "Enviado" : "Enviar") : "Sem telefone"}
                   </Button>
                 </div>
               );
