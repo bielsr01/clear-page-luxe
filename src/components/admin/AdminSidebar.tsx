@@ -49,9 +49,10 @@ export type AdminView =
   | "implantacao:stores"
   | "implantacao:checklist"
   | "crm:tasks"
-  | "crm:art-library";
+  | "crm:art-library"
+  | "crm:promo-calendar";
 
-export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number }) {
+export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0, promoCalendarBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number; promoCalendarBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const handleChange = (v: AdminView) => {
