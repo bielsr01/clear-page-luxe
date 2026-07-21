@@ -226,6 +226,7 @@ export default function MasterAdmin() {
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
   const { count: openSupportCount, markSeen: markSupportSeen } = useOpenSupportTicketsCount();
+  const promoCalendarPendingCount = usePromoCalendarPendingCount();
   useEffect(() => {
     if (view === "support") markSupportSeen();
   }, [view, markSupportSeen]);
