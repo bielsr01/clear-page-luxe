@@ -220,6 +220,7 @@ export default function MasterAdmin() {
     "implantacao:checklist": "Implantação / Checklist",
     "crm:tasks": "CRM / Tarefas do dia",
     "crm:art-library": "CRM / Biblioteca de Artes",
+    "crm:promo-calendar": "CRM / Calendário Promocional",
   };
 
 
