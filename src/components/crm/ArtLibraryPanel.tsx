@@ -188,7 +188,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">Nenhuma arte cadastrada.</p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filtered.map((item) => (
                 <div key={item.id} className="border rounded-lg bg-card p-3 flex items-center gap-3 group">
                   <div className="h-16 w-16 shrink-0 rounded-md bg-muted flex items-center justify-center overflow-hidden">
@@ -203,7 +203,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-sm font-medium break-words leading-tight" title={item.title}>{item.title}</p>
+                    <p className="text-sm font-medium break-words leading-tight line-clamp-2" title={item.title}>{item.title}</p>
                     <p className="text-xs text-muted-foreground">{humanSize(item.file_size)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
