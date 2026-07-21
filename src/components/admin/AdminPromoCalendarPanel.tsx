@@ -172,9 +172,9 @@ export function AdminPromoCalendarPanel() {
       ? row.message
       : `Olá! Lembrete: *${row.name}* está chegando em ${occStr}. Prepare a comunicação da loja!`;
     return base
-      .replaceAll("{nome}", row.name)
-      .replaceAll("{data}", occStr)
-      .replaceAll("{restaurante}", r.name);
+      .replace(/\{nome\}/g, row.name)
+      .replace(/\{data\}/g, occStr)
+      .replace(/\{restaurante\}/g, r.name);
   };
 
   return (
