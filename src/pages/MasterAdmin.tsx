@@ -234,7 +234,7 @@ export default function MasterAdmin() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
-        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} />
+        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} promoCalendarBadge={promoCalendarPendingCount} />
         <SidebarInset className="flex-1 flex flex-col">
           <header className="bg-background border-b sticky top-0 z-30">
             <div className="h-16 px-2 sm:px-4 flex items-center justify-between gap-2">
