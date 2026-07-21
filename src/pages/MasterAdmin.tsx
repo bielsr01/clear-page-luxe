@@ -47,9 +47,11 @@ import { AdminImplantacaoStoresPanel } from "@/components/admin/AdminImplantacao
 import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplantacaoChecklistPanel";
 import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
+import { AdminPromoCalendarPanel } from "@/components/admin/AdminPromoCalendarPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
+import { usePromoCalendarPendingCount } from "@/hooks/usePromoCalendarPendingCount";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 
 interface Restaurant {
