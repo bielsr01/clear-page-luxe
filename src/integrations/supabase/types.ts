@@ -2507,6 +2507,56 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_calendar_dates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dismissed_for_year: number | null
+          event_date: string
+          id: string
+          is_recurring: boolean
+          message: string
+          name: string
+          reminder_days_before: number | null
+          restaurant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dismissed_for_year?: number | null
+          event_date: string
+          id?: string
+          is_recurring?: boolean
+          message?: string
+          name: string
+          reminder_days_before?: number | null
+          restaurant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dismissed_for_year?: number | null
+          event_date?: string
+          id?: string
+          is_recurring?: boolean
+          message?: string
+          name?: string
+          reminder_days_before?: number | null
+          restaurant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_calendar_dates_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quero_events: {
         Row: {
           created_at: string

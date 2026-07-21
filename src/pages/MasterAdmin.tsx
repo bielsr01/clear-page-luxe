@@ -47,9 +47,11 @@ import { AdminImplantacaoStoresPanel } from "@/components/admin/AdminImplantacao
 import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplantacaoChecklistPanel";
 import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
+import { AdminPromoCalendarPanel } from "@/components/admin/AdminPromoCalendarPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
+import { usePromoCalendarPendingCount } from "@/hooks/usePromoCalendarPendingCount";
 import { BrasiliaClock } from "@/components/BrasiliaClock";
 
 interface Restaurant {
@@ -218,11 +220,13 @@ export default function MasterAdmin() {
     "implantacao:checklist": "Implantação / Checklist",
     "crm:tasks": "CRM / Tarefas do dia",
     "crm:art-library": "CRM / Biblioteca de Artes",
+    "crm:promo-calendar": "CRM / Calendário Promocional",
   };
 
 
   const supplyPendingCount = usePendingSupplyOrdersCount();
   const { count: openSupportCount, markSeen: markSupportSeen } = useOpenSupportTicketsCount();
+  const promoCalendarPendingCount = usePromoCalendarPendingCount();
   useEffect(() => {
     if (view === "support") markSupportSeen();
   }, [view, markSupportSeen]);
@@ -230,7 +234,7 @@ export default function MasterAdmin() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
-        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} />
+        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} promoCalendarBadge={promoCalendarPendingCount} />
         <SidebarInset className="flex-1 flex flex-col">
           <header className="bg-background border-b sticky top-0 z-30">
             <div className="h-16 px-2 sm:px-4 flex items-center justify-between gap-2">
@@ -411,6 +415,7 @@ export default function MasterAdmin() {
             {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
             {view === "crm:tasks" && <AdminCrmTasksPanel />}
             {view === "crm:art-library" && <ArtLibraryPanel isAdmin={true} />}
+            {view === "crm:promo-calendar" && <AdminPromoCalendarPanel />}
           </main>
         </SidebarInset>
 
