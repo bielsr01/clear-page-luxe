@@ -469,6 +469,11 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                           <span>Franqueados</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:franchisor"} onClick={() => handleChange("documents:franchisor")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
+                          <span>Documentos da Franqueadora</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
