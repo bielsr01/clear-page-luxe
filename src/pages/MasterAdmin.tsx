@@ -216,6 +216,7 @@ export default function MasterAdmin() {
     "documents:commercial": "Apresentação comercial",
     "documents:investor": "Apresentação para investidor",
     "documents:franchisees": "Documentos de franqueados",
+    "documents:franchisor": "Documentos da Franqueadora",
     "implantacao:stores": "Implantação / Lojas",
     "implantacao:checklist": "Implantação / Checklist",
     "crm:tasks": "CRM / Tarefas do dia",
