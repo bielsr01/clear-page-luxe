@@ -222,6 +222,7 @@ export default function MasterAdmin() {
     "crm:tasks": "CRM / Tarefas do dia",
     "crm:art-library": "CRM / Biblioteca de Artes",
     "crm:promo-calendar": "CRM / Calendário Promocional",
+    "crm:mystery-shopper": "CRM / Cliente Oculto",
   };
 
 
@@ -426,6 +427,7 @@ export default function MasterAdmin() {
             {view === "crm:tasks" && <AdminCrmTasksPanel />}
             {view === "crm:art-library" && <ArtLibraryPanel isAdmin={true} />}
             {view === "crm:promo-calendar" && <AdminPromoCalendarPanel />}
+            {view === "crm:mystery-shopper" && <AdminMysteryShopperPanel />}
           </main>
         </SidebarInset>
 
