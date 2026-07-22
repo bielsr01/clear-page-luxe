@@ -23,13 +23,12 @@ export default function MysteryShopperForm() {
   const [error, setError] = useState<string | null>(null);
   const [restaurantName, setRestaurantName] = useState<string>("");
   const [config, setConfig] = useState<Category[]>([]);
-  const [alreadySubmitted, setAlreadySubmitted] = useState<string | null>(null);
 
   const [visitDate, setVisitDate] = useState<Date | undefined>(new Date());
   const [ratings, setRatings] = useState<Record<string, Record<string, number>>>({});
   const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
+  const [doneToken, setDoneToken] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -40,7 +39,6 @@ export default function MysteryShopperForm() {
       if (res?.error) { setError(res.error === "not_found" ? "Formulário não encontrado" : res.error); setLoading(false); return; }
       setRestaurantName(res.assignment.restaurant_name || "");
       setConfig(res.config || []);
-      if (res.assignment.submitted_at) setAlreadySubmitted(res.assignment.result_token);
       setLoading(false);
     })();
   }, [token]);
@@ -65,14 +63,13 @@ export default function MysteryShopperForm() {
     if (error) { alert(error.message); return; }
     const res = data as any;
     if (res?.error) { alert(res.error); return; }
-    setDone(true);
+    setDoneToken(res.result_token || null);
   }
 
   if (loading) return <div className="min-h-screen grid place-items-center">Carregando…</div>;
   if (error) return <div className="min-h-screen grid place-items-center text-destructive">{error}</div>;
 
-  if (done || alreadySubmitted) {
-    const resultToken = alreadySubmitted;
+  if (doneToken) {
     return (
       <div className="min-h-screen grid place-items-center p-6 bg-muted/30">
         <Card className="max-w-lg w-full text-center">
@@ -81,9 +78,7 @@ export default function MysteryShopperForm() {
             <CheckCircle2 className="w-20 h-20 text-green-600 mx-auto" />
             <h1 className="text-2xl font-bold">Obrigado pela sua avaliação!</h1>
             <p className="text-muted-foreground">Suas respostas foram registradas com sucesso.</p>
-            {resultToken && (
-              <Button variant="outline" onClick={() => navigate(`/cliente-oculto/respostas/${resultToken}`)}>Ver minhas respostas</Button>
-            )}
+            <Button variant="outline" onClick={() => navigate(`/cliente-oculto/respostas/${doneToken}`)}>Ver minhas respostas</Button>
           </CardContent>
         </Card>
       </div>

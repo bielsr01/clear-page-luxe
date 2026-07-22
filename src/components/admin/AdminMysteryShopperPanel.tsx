@@ -3,14 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Copy, ExternalLink, Link2, Eye, MessageSquare } from "lucide-react";
+import { Pencil, Trash2, Plus, Copy, ExternalLink, Link2, Eye, MessageSquare, Check, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Shopper = { id: string; name: string; city: string | null; phone: string | null; cpf: string | null; pix_key: string | null };
@@ -18,9 +17,12 @@ type Question = { key: string; label: string };
 type Category = { key: string; name: string; weight: number; questions: Question[] };
 type Assignment = {
   id: string; shopper_id: string | null; restaurant_id: string;
-  form_token: string; result_token: string; visit_date: string | null;
-  comments: string | null; total_score: number | null; submitted_at: string | null;
-  created_at: string;
+  form_token: string; result_token: string; created_at: string;
+};
+type Response = {
+  id: string; assignment_id: string; result_token: string;
+  visit_date: string | null; comments: string | null;
+  total_score: number | null; submitted_at: string;
 };
 type Restaurant = { id: string; name: string };
 
@@ -42,10 +44,11 @@ export default function AdminMysteryShopperPanel() {
   const [tab, setTab] = useState("clientes");
   const [shoppers, setShoppers] = useState<Shopper[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [responses, setResponses] = useState<Response[]>([]);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [config, setConfig] = useState<{ id: string; categories: Category[] } | null>(null);
   const [filterRestaurant, setFilterRestaurant] = useState<string>("all");
-  const [loading, setLoading] = useState(false);
+  const [filterRespRest, setFilterRespRest] = useState<string>("all");
 
   const [editingShopper, setEditingShopper] = useState<Shopper | null>(null);
   const [newShopper, setNewShopper] = useState(false);
@@ -60,22 +63,27 @@ export default function AdminMysteryShopperPanel() {
   const [newCatName, setNewCatName] = useState("");
   const [newCatWeight, setNewCatWeight] = useState<number>(1);
 
+  const [editingCat, setEditingCat] = useState<number | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [editCatWeight, setEditCatWeight] = useState<number>(1);
+
   const restMap = useMemo(() => Object.fromEntries(restaurants.map((r) => [r.id, r.name])), [restaurants]);
   const shopperMap = useMemo(() => Object.fromEntries(shoppers.map((s) => [s.id, s.name])), [shoppers]);
+  const assignmentMap = useMemo(() => Object.fromEntries(assignments.map((a) => [a.id, a])), [assignments]);
 
   async function load() {
-    setLoading(true);
-    const [s, a, r, c] = await Promise.all([
+    const [s, a, resp, r, c] = await Promise.all([
       supabase.from("mystery_shoppers").select("*").order("name"),
-      supabase.from("mystery_shopper_assignments").select("*").order("created_at", { ascending: false }),
+      supabase.from("mystery_shopper_assignments").select("id, shopper_id, restaurant_id, form_token, result_token, created_at").order("created_at", { ascending: false }),
+      supabase.from("mystery_shopper_responses").select("*").order("submitted_at", { ascending: false }),
       supabase.from("restaurants").select("id, name").order("name"),
       supabase.from("mystery_shopper_config").select("id, categories").order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     if (s.data) setShoppers(s.data as Shopper[]);
     if (a.data) setAssignments(a.data as Assignment[]);
+    if (resp.data) setResponses(resp.data as Response[]);
     if (r.data) setRestaurants(r.data as Restaurant[]);
     if (c.data) setConfig({ id: c.data.id as string, categories: (c.data.categories as any) || [] });
-    setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
@@ -118,8 +126,14 @@ export default function AdminMysteryShopperPanel() {
     load();
   }
   async function deleteAssignment(id: string) {
-    if (!confirm("Excluir este formulário?")) return;
+    if (!confirm("Excluir este formulário e todas as respostas vinculadas?")) return;
     const { error } = await supabase.from("mystery_shopper_assignments").delete().eq("id", id);
+    if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
+    load();
+  }
+  async function deleteResponse(id: string) {
+    if (!confirm("Excluir esta resposta?")) return;
+    const { error } = await supabase.from("mystery_shopper_responses").delete().eq("id", id);
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     load();
   }
@@ -132,6 +146,14 @@ export default function AdminMysteryShopperPanel() {
     () => assignments.filter((a) => filterRestaurant === "all" || a.restaurant_id === filterRestaurant),
     [assignments, filterRestaurant]
   );
+  const filteredResponses = useMemo(
+    () => responses.filter((r) => {
+      if (filterRespRest === "all") return true;
+      const a = assignmentMap[r.assignment_id];
+      return a && a.restaurant_id === filterRespRest;
+    }),
+    [responses, filterRespRest, assignmentMap]
+  );
 
   // ---- Config ----
   async function saveConfig() {
@@ -139,12 +161,6 @@ export default function AdminMysteryShopperPanel() {
     const { error } = await supabase.from("mystery_shopper_config").update({ categories: config.categories as any, updated_at: new Date().toISOString() }).eq("id", config.id);
     if (error) return toast({ title: "Erro", description: error.message, variant: "destructive" });
     toast({ title: "Configuração salva" });
-  }
-  function updateCategory(idx: number, patch: Partial<Category>) {
-    if (!config) return;
-    const next = [...config.categories];
-    next[idx] = { ...next[idx], ...patch };
-    setConfig({ ...config, categories: next });
   }
   function addCategory() {
     setNewCatName("");
@@ -160,8 +176,25 @@ export default function AdminMysteryShopperPanel() {
     setConfig({ ...config, categories: [...config.categories, { key: slugKey(name), name, weight, questions: [] }] });
     setNewCatOpen(false);
   }
+  function startEditCategory(idx: number) {
+    if (!config) return;
+    const c = config.categories[idx];
+    setEditCatName(c.name);
+    setEditCatWeight(c.weight);
+    setEditingCat(idx);
+  }
+  function saveEditCategory() {
+    if (!config || editingCat === null) return;
+    const name = editCatName.trim();
+    if (!name) { toast({ title: "Informe o nome" }); return; }
+    const next = [...config.categories];
+    next[editingCat] = { ...next[editingCat], name, weight: Number(editCatWeight) || 0 };
+    setConfig({ ...config, categories: next });
+    setEditingCat(null);
+  }
   function removeCategory(idx: number) {
     if (!config) return;
+    if (!confirm("Excluir esta categoria e todas as suas perguntas?")) return;
     setConfig({ ...config, categories: config.categories.filter((_, i) => i !== idx) });
   }
   function addQuestion(catIdx: number) {
@@ -191,6 +224,7 @@ export default function AdminMysteryShopperPanel() {
         <TabsList>
           <TabsTrigger value="clientes">Clientes ocultos</TabsTrigger>
           <TabsTrigger value="forms">Formulários</TabsTrigger>
+          <TabsTrigger value="respostas">Respostas</TabsTrigger>
           <TabsTrigger value="config">Configuração</TabsTrigger>
         </TabsList>
 
@@ -236,7 +270,7 @@ export default function AdminMysteryShopperPanel() {
           </Card>
         </TabsContent>
 
-        {/* FORMS */}
+        {/* FORMS — todos os formulários gerados */}
         <TabsContent value="forms" className="space-y-3">
           <div className="flex flex-wrap gap-2 justify-between items-center">
             <div className="flex gap-2 items-center">
@@ -258,7 +292,7 @@ export default function AdminMysteryShopperPanel() {
             {filteredAssignments.length === 0 && (<div className="text-center text-muted-foreground py-6 border rounded-md">Nenhum formulário gerado</div>)}
             {filteredAssignments.map((a) => {
               const formUrl = `${window.location.origin}/cliente-oculto/${a.form_token}`;
-              const resultUrl = `${window.location.origin}/cliente-oculto/respostas/${a.result_token}`;
+              const respCount = responses.filter((r) => r.assignment_id === a.id).length;
               return (
                 <Card key={a.id}>
                   <CardContent className="p-4 space-y-2">
@@ -267,38 +301,86 @@ export default function AdminMysteryShopperPanel() {
                         <div className="font-semibold">{restMap[a.restaurant_id] || "Restaurante"}</div>
                         <div className="text-sm text-muted-foreground">
                           Cliente: {a.shopper_id ? shopperMap[a.shopper_id] || "—" : "Não vinculado"}
-                          {a.visit_date && <> · Visita: {new Date(a.visit_date + "T00:00").toLocaleDateString("pt-BR")}</>}
-                          {a.submitted_at && <> · Enviado: {new Date(a.submitted_at).toLocaleString("pt-BR")}</>}
+                          {" · "}Criado em: {new Date(a.created_at).toLocaleString("pt-BR")}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">{scoreBadge(a.total_score)}</div>
+                      <Badge variant={respCount > 0 ? "default" : "secondary"}>
+                        {respCount} {respCount === 1 ? "resposta" : "respostas"}
+                      </Badge>
                     </div>
 
-                    {a.comments && (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Button size="sm" variant="outline" onClick={() => copy(formUrl, "Link do formulário copiado")}>
+                        <Copy className="w-3.5 h-3.5 mr-1" />Copiar link
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => window.open(formUrl, "_blank")}>
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />Abrir link
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => deleteAssignment(a.id)}>
+                        <Trash2 className="w-3.5 h-3.5 mr-1" />Excluir
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {/* RESPOSTAS — 1 a 1 */}
+        <TabsContent value="respostas" className="space-y-3">
+          <div className="flex gap-2 items-center">
+            <Label className="text-sm">Restaurante:</Label>
+            <Select value={filterRespRest} onValueChange={setFilterRespRest}>
+              <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {restaurants.map((r) => (<SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-3">
+            {filteredResponses.length === 0 && (<div className="text-center text-muted-foreground py-6 border rounded-md">Nenhuma resposta enviada</div>)}
+            {filteredResponses.map((r) => {
+              const a = assignmentMap[r.assignment_id];
+              const formUrl = a ? `${window.location.origin}/cliente-oculto/${a.form_token}` : "";
+              const resultUrl = `${window.location.origin}/cliente-oculto/respostas/${r.result_token}`;
+              return (
+                <Card key={r.id}>
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex flex-wrap justify-between items-start gap-2">
+                      <div>
+                        <div className="font-semibold">{a ? restMap[a.restaurant_id] || "Restaurante" : "—"}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Cliente: {a?.shopper_id ? shopperMap[a.shopper_id] || "—" : "Não vinculado"}
+                          {r.visit_date && <> · Visita: {new Date(r.visit_date + "T00:00").toLocaleDateString("pt-BR")}</>}
+                          {" · "}Enviado: {new Date(r.submitted_at).toLocaleString("pt-BR")}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">{scoreBadge(r.total_score)}</div>
+                    </div>
+
+                    {r.comments && (
                       <div className="text-sm bg-muted/50 rounded p-2 flex gap-2">
                         <MessageSquare className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <span className="whitespace-pre-wrap">{a.comments}</span>
+                        <span className="whitespace-pre-wrap">{r.comments}</span>
                       </div>
                     )}
 
                     <div className="flex flex-wrap gap-2 pt-1">
-                      <Button size="sm" variant="outline" onClick={() => copy(formUrl, "Link do formulário copiado")}>
-                        <Copy className="w-3.5 h-3.5 mr-1" />Copiar link do formulário
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => window.open(formUrl, "_blank")}>
-                        <ExternalLink className="w-3.5 h-3.5 mr-1" />Abrir formulário
-                      </Button>
-                      {a.submitted_at && (
-                        <>
-                          <Button size="sm" variant="outline" onClick={() => copy(resultUrl, "Link das respostas copiado")}>
-                            <Copy className="w-3.5 h-3.5 mr-1" />Copiar link das respostas
-                          </Button>
-                          <Button size="sm" onClick={() => window.open(resultUrl, "_blank")}>
-                            <Eye className="w-3.5 h-3.5 mr-1" />Visualizar respostas
-                          </Button>
-                        </>
+                      {formUrl && (
+                        <Button size="sm" variant="outline" onClick={() => copy(formUrl, "Link do formulário copiado")}>
+                          <Copy className="w-3.5 h-3.5 mr-1" />Link do formulário
+                        </Button>
                       )}
-                      <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => deleteAssignment(a.id)}>
+                      <Button size="sm" variant="outline" onClick={() => copy(resultUrl, "Link das respostas copiado")}>
+                        <Copy className="w-3.5 h-3.5 mr-1" />Link das respostas
+                      </Button>
+                      <Button size="sm" onClick={() => window.open(resultUrl, "_blank")}>
+                        <Eye className="w-3.5 h-3.5 mr-1" />Visualizar respostas
+                      </Button>
+                      <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => deleteResponse(r.id)}>
                         <Trash2 className="w-3.5 h-3.5 mr-1" />Excluir
                       </Button>
                     </div>
@@ -324,20 +406,38 @@ export default function AdminMysteryShopperPanel() {
 
           {config?.categories.map((cat, idx) => (
             <Card key={idx}>
-              <CardHeader className="pb-2">
-                <div className="flex flex-wrap gap-2 items-end">
-                  <div className="flex-1 min-w-[200px]">
-                    <Label>Nome da categoria</Label>
-                    <Input value={cat.name} onChange={(e) => updateCategory(idx, { name: e.target.value })} />
+              <CardHeader className="pb-3 border-b bg-muted/30">
+                {editingCat === idx ? (
+                  <div className="flex flex-wrap gap-2 items-end">
+                    <div className="flex-1 min-w-[200px]">
+                      <Label className="text-xs">Nome</Label>
+                      <Input value={editCatName} onChange={(e) => setEditCatName(e.target.value)} />
+                    </div>
+                    <div className="w-28">
+                      <Label className="text-xs">Peso</Label>
+                      <Input type="number" min={0} step="0.5" value={editCatWeight} onChange={(e) => setEditCatWeight(Number(e.target.value))} />
+                    </div>
+                    <Button size="icon" onClick={saveEditCategory}><Check className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="outline" onClick={() => setEditingCat(null)}><X className="w-4 h-4" /></Button>
                   </div>
-                  <div className="w-28">
-                    <Label>Peso</Label>
-                    <Input type="number" min={0} step="0.5" value={cat.weight} onChange={(e) => updateCategory(idx, { weight: Number(e.target.value) })} />
+                ) : (
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">{cat.name}</CardTitle>
+                      <Badge variant="secondary">Peso {cat.weight}</Badge>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => startEditCategory(idx)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeCategory(idx)}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeCategory(idx)}><Trash2 className="w-4 h-4" /></Button>
-                </div>
+                )}
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-2 pt-3">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Perguntas</Label>
+                {cat.questions.length === 0 && (
+                  <div className="text-sm text-muted-foreground italic">Nenhuma pergunta cadastrada</div>
+                )}
                 {cat.questions.map((q, qIdx) => (
                   <div key={qIdx} className="flex gap-2 items-center">
                     <Input value={q.label} onChange={(e) => updateQuestion(idx, qIdx, e.target.value)} placeholder="Pergunta" />

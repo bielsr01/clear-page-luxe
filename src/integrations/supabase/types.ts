@@ -1960,6 +1960,50 @@ export type Database = {
         }
         Relationships: []
       }
+      mystery_shopper_responses: {
+        Row: {
+          assignment_id: string
+          comments: string | null
+          created_at: string
+          id: string
+          ratings: Json | null
+          result_token: string
+          submitted_at: string
+          total_score: number | null
+          visit_date: string | null
+        }
+        Insert: {
+          assignment_id: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          ratings?: Json | null
+          result_token?: string
+          submitted_at?: string
+          total_score?: number | null
+          visit_date?: string | null
+        }
+        Update: {
+          assignment_id?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          ratings?: Json | null
+          result_token?: string
+          submitted_at?: string
+          total_score?: number | null
+          visit_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mystery_shopper_responses_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "mystery_shopper_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mystery_shoppers: {
         Row: {
           city: string | null
