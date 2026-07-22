@@ -165,7 +165,10 @@ export function AdminDocumentsPanel({
       await sendDocumentViaWhatsApp({
         phone: sendPhone,
         filePath: sendDoc.file_path,
-        fileName: sendDoc.name.endsWith(".pdf") ? sendDoc.name : `${sendDoc.name}.pdf`,
+        fileName: (() => {
+          const pathExt = sendDoc.file_path.split(".").pop() || "pdf";
+          return /\.[a-z0-9]+$/i.test(sendDoc.name) ? sendDoc.name : `${sendDoc.name}.${pathExt}`;
+        })(),
         caption: sendMsg,
       });
       toast.success("Enviado no WhatsApp");
