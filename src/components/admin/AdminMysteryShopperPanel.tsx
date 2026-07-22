@@ -56,6 +56,10 @@ export default function AdminMysteryShopperPanel() {
   const [genRestaurant, setGenRestaurant] = useState<string>("");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
+  const [newCatOpen, setNewCatOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatWeight, setNewCatWeight] = useState<number>(1);
+
   const restMap = useMemo(() => Object.fromEntries(restaurants.map((r) => [r.id, r.name])), [restaurants]);
   const shopperMap = useMemo(() => Object.fromEntries(shoppers.map((s) => [s.id, s.name])), [shoppers]);
 
