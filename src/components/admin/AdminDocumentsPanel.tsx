@@ -19,6 +19,7 @@ import {
 type Doc = {
   id: string;
   name: string;
+  description: string | null;
   file_path: string;
   size_bytes: number | null;
   mime_type: string | null;
