@@ -348,8 +348,37 @@ export default function AdminMysteryShopperPanel() {
               </CardContent>
             </Card>
           ))}
+          {config && config.categories.length > 0 && (
+            <div className="flex justify-end pt-2">
+              <Button onClick={saveConfig}>Salvar configuração</Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
+
+      {/* New category dialog */}
+      <Dialog open={newCatOpen} onOpenChange={setNewCatOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova categoria</DialogTitle>
+            <DialogDescription>Informe o nome e o peso da categoria.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome da categoria</Label>
+              <Input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Ex.: Atendimento" />
+            </div>
+            <div>
+              <Label>Peso</Label>
+              <Input type="number" min={0} step="0.5" value={newCatWeight} onChange={(e) => setNewCatWeight(Number(e.target.value))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewCatOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmAddCategory}>Confirmar e adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Shopper dialog */}
       <Dialog open={newShopper || !!editingShopper} onOpenChange={(o) => { if (!o) { setNewShopper(false); setEditingShopper(null); } }}>
