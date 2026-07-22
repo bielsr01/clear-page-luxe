@@ -59,7 +59,7 @@ export default function MysteryShopperForm() {
       _token: token!,
       _visit_date: format(visitDate, "yyyy-MM-dd"),
       _ratings: ratings as any,
-      _comments: comments || null,
+      _comments: comments || "",
     });
     setSubmitting(false);
     if (error) { alert(error.message); return; }
