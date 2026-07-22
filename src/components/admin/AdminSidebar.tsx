@@ -46,6 +46,7 @@ export type AdminView =
   | "documents:commercial"
   | "documents:investor"
   | "documents:franchisees"
+  | "documents:franchisor"
   | "implantacao:stores"
   | "implantacao:checklist"
   | "crm:tasks"
