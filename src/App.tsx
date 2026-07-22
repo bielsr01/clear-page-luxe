@@ -16,6 +16,8 @@ import KitchenTicketPublic from "./pages/KitchenTicketPublic";
 import CustomerTicketPublic from "./pages/CustomerTicketPublic";
 import NotFound from "./pages/NotFound";
 import LoyaltyLanding from "./pages/LoyaltyLanding";
+import MysteryShopperForm from "./pages/MysteryShopperForm";
+import MysteryShopperResult from "./pages/MysteryShopperResult";
 
 
 const queryClient = new QueryClient({
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="/ticket-cozinha/:orderId" element={<KitchenTicketPublic />} />
             <Route path="/ticket-cliente/:orderId" element={<CustomerTicketPublic />} />
             <Route path="/fidelidade/:slug" element={<LoyaltyLanding />} />
+            <Route path="/cliente-oculto/:token" element={<MysteryShopperForm />} />
+            <Route path="/cliente-oculto/respostas/:token" element={<MysteryShopperResult />} />
             <Route path="*" element={<NotFound />} />
 
           </Routes>

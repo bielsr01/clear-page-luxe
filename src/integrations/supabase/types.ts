@@ -1882,6 +1882,117 @@ export type Database = {
           },
         ]
       }
+      mystery_shopper_assignments: {
+        Row: {
+          comments: string | null
+          created_at: string
+          form_token: string
+          id: string
+          ratings: Json | null
+          restaurant_id: string
+          result_token: string
+          shopper_id: string | null
+          submitted_at: string | null
+          total_score: number | null
+          updated_at: string
+          visit_date: string | null
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          form_token?: string
+          id?: string
+          ratings?: Json | null
+          restaurant_id: string
+          result_token?: string
+          shopper_id?: string | null
+          submitted_at?: string | null
+          total_score?: number | null
+          updated_at?: string
+          visit_date?: string | null
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          form_token?: string
+          id?: string
+          ratings?: Json | null
+          restaurant_id?: string
+          result_token?: string
+          shopper_id?: string | null
+          submitted_at?: string | null
+          total_score?: number | null
+          updated_at?: string
+          visit_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mystery_shopper_assignments_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mystery_shopper_assignments_shopper_id_fkey"
+            columns: ["shopper_id"]
+            isOneToOne: false
+            referencedRelation: "mystery_shoppers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mystery_shopper_config: {
+        Row: {
+          categories: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          categories?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          categories?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mystery_shoppers: {
+        Row: {
+          city: string | null
+          cpf: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          pix_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          pix_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          pix_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       operator_logs: {
         Row: {
           action: string
@@ -3418,6 +3529,21 @@ export type Database = {
       match_product_by_name: {
         Args: { _name: string; _restaurant_id: string }
         Returns: string
+      }
+      mystery_calculate_score: {
+        Args: { _categories: Json; _ratings: Json }
+        Returns: number
+      }
+      mystery_get_form: { Args: { _token: string }; Returns: Json }
+      mystery_get_result: { Args: { _token: string }; Returns: Json }
+      mystery_submit_form: {
+        Args: {
+          _comments: string
+          _ratings: Json
+          _token: string
+          _visit_date: string
+        }
+        Returns: Json
       }
       normalize_br_phone: { Args: { _phone: string }; Returns: string }
       normalize_product_name: { Args: { _n: string }; Returns: string }

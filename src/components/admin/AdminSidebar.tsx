@@ -51,7 +51,8 @@ export type AdminView =
   | "implantacao:checklist"
   | "crm:tasks"
   | "crm:art-library"
-  | "crm:promo-calendar";
+  | "crm:promo-calendar"
+  | "crm:mystery-shopper";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0, promoCalendarBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number; promoCalendarBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -539,6 +540,11 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                               {promoCalendarBadge > 9 ? "9+" : promoCalendarBadge}
                             </span>
                           )}
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "crm:mystery-shopper"} onClick={() => handleChange("crm:mystery-shopper")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight">
+                          <span>Cliente Oculto</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
