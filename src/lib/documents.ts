@@ -1,6 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
+import { uploadToR2 } from "@/lib/r2Upload";
 
 export type DocType = "commercial" | "investor" | "franchisee" | "franchisor";
+
+/**
+ * Documentos são armazenados no Cloudflare R2 (não no Supabase Storage).
+ * O campo `file_path` da tabela `documents` guarda a URL pública do R2.
+ * Documentos antigos (pré-migração) podem ter um path relativo do bucket
+ * `documents` do Supabase Storage — mantemos compatibilidade em leitura/deleção.
+ */
+
+const isR2Url = (p: string) => /^https?:\/\//i.test(p);
 
 export async function uploadDocumentFile(
   docType: DocType,
@@ -8,23 +18,29 @@ export async function uploadDocumentFile(
   restaurantId?: string | null,
 ): Promise<{ path: string }> {
   const clean = file.name.replace(/[^\w.\-]+/g, "_");
-  const prefix = docType === "franchisee" ? `franchisee/${restaurantId || "unknown"}` : docType;
-  const path = `${prefix}/${Date.now()}_${clean}`;
-  const { error } = await supabase.storage.from("documents").upload(path, file, {
-    upsert: false,
-    contentType: file.type || "application/pdf",
-  });
-  if (error) throw error;
-  return { path };
+  const prefix = docType === "franchisee" ? `documents/franchisee/${restaurantId || "unknown"}` : `documents/${docType}`;
+  const filename = `${Date.now()}_${clean}`;
+  const url = await uploadToR2(file, prefix, filename);
+  return { path: url };
 }
 
 export async function getDocumentSignedUrl(path: string, seconds = 3600): Promise<string> {
+  if (isR2Url(path)) return path;
+  // Fallback para documentos legados no Supabase Storage
   const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, seconds);
   if (error) throw error;
   return data.signedUrl;
 }
 
 export async function deleteDocumentFile(path: string) {
+  if (isR2Url(path)) {
+    try {
+      await supabase.functions.invoke("r2-delete", { body: { url: path } });
+    } catch {
+      /* silencioso — não bloqueia exclusão do registro */
+    }
+    return;
+  }
   await supabase.storage.from("documents").remove([path]);
 }
 
