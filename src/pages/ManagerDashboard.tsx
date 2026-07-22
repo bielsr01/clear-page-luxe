@@ -296,7 +296,10 @@ export default function ManagerDashboard() {
                   size="icon"
                   title="Atualizar tudo"
                   onClick={async () => {
+                    const { emitGlobalRefresh } = await import("@/lib/globalRefresh");
+                    emitGlobalRefresh();
                     await qc.invalidateQueries();
+                    await qc.refetchQueries();
                     toast.success("Sistema atualizado");
                   }}
                 >
