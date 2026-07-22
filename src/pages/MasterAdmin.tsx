@@ -254,7 +254,9 @@ export default function MasterAdmin() {
                 <Button variant="outline" size="sm" disabled={refreshing} onClick={async () => {
                   setRefreshing(true);
                   try {
-                    await Promise.all([qc.invalidateQueries(), load()]);
+                    const { emitGlobalRefresh } = await import("@/lib/globalRefresh");
+                    emitGlobalRefresh();
+                    await Promise.all([qc.invalidateQueries(), qc.refetchQueries(), load()]);
                     toast.success("Dados atualizados");
                   } finally {
                     setRefreshing(false);

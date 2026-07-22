@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useGlobalRefresh } from "@/lib/globalRefresh";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +87,7 @@ export default function AdminMysteryShopperPanel() {
     if (c.data) setConfig({ id: c.data.id as string, categories: (c.data.categories as any) || [] });
   }
   useEffect(() => { load(); }, []);
+  useGlobalRefresh(load);
 
   // ---- Shoppers CRUD ----
   const openNewShopper = () => { setShopperForm(emptyShopper); setNewShopper(true); };
