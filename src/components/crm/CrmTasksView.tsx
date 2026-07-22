@@ -126,9 +126,10 @@ export function CrmTasksView({
 
     const now = new Date();
     if (task.isReview) {
-      const y = new Date(now); y.setDate(now.getDate() - 1); y.setHours(0, 0, 0, 0);
+      // Inclui todos os pedidos desde o cutoff até o fim de ontem.
+      // Pendentes continuam aparecendo mesmo depois de virar o dia, até serem enviados.
       const today = new Date(now); today.setHours(0, 0, 0, 0);
-      q = q.gte("last_order_at", y.toISOString()).lt("last_order_at", today.toISOString());
+      q = q.lt("last_order_at", today.toISOString());
     } else if (task.range) {
       const [minD, maxD] = task.range;
       const maxDate = new Date(now.getTime() - minD * 86400000).toISOString();
