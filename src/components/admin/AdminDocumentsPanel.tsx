@@ -211,6 +211,7 @@ export function AdminDocumentsPanel({
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  {withDescription && <TableHead>Descrição</TableHead>}
                   <TableHead>Tamanho</TableHead>
                   <TableHead>Adicionado</TableHead>
                   <TableHead className="text-right w-64">Ações</TableHead>
@@ -220,6 +221,11 @@ export function AdminDocumentsPanel({
                 {docs.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.name}</TableCell>
+                    {withDescription && (
+                      <TableCell className="text-sm text-muted-foreground max-w-xs whitespace-pre-wrap">
+                        {d.description || "—"}
+                      </TableCell>
+                    )}
                     <TableCell>{fmtSize(d.size_bytes)}</TableCell>
                     <TableCell>{new Date(d.created_at).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell>
