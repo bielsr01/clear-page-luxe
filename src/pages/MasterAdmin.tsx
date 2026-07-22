@@ -412,6 +412,15 @@ export default function MasterAdmin() {
             {view === "documents:commercial" && <AdminDocumentsPanel docType="commercial" title="Apresentação comercial" />}
             {view === "documents:investor" && <AdminDocumentsPanel docType="investor" title="Apresentação para investidor" />}
             {view === "documents:franchisees" && <AdminDocumentsFranchiseesPanel />}
+            {view === "documents:franchisor" && (
+              <AdminDocumentsPanel
+                docType="franchisor"
+                title="Documentos da Franqueadora"
+                withDescription
+                accept="application/pdf,.pdf,.doc,.docx,.ppt,.pptx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                fileLabel="Arquivo (PDF, Word ou PowerPoint)"
+              />
+            )}
             {view === "implantacao:stores" && <AdminImplantacaoStoresPanel />}
             {view === "implantacao:checklist" && <AdminImplantacaoChecklistPanel />}
             {view === "crm:tasks" && <AdminCrmTasksPanel />}
