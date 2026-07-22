@@ -147,8 +147,18 @@ export default function AdminMysteryShopperPanel() {
     setConfig({ ...config, categories: next });
   }
   function addCategory() {
+    setNewCatName("");
+    setNewCatWeight(1);
+    setNewCatOpen(true);
+  }
+  function confirmAddCategory() {
     if (!config) return;
-    setConfig({ ...config, categories: [...config.categories, { key: slugKey(`cat_${config.categories.length + 1}`), name: "Nova categoria", weight: 1, questions: [] }] });
+    const name = newCatName.trim();
+    if (!name) { toast({ title: "Informe o nome da categoria" }); return; }
+    const weight = Number(newCatWeight);
+    if (!Number.isFinite(weight) || weight < 0) { toast({ title: "Peso inválido" }); return; }
+    setConfig({ ...config, categories: [...config.categories, { key: slugKey(name), name, weight, questions: [] }] });
+    setNewCatOpen(false);
   }
   function removeCategory(idx: number) {
     if (!config) return;
