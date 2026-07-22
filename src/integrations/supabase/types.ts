@@ -942,6 +942,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           created_by: string | null
+          description: string | null
           doc_type: string
           file_path: string
           id: string
@@ -955,6 +956,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
           doc_type: string
           file_path: string
           id?: string
@@ -968,6 +970,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
           doc_type?: string
           file_path?: string
           id?: string
