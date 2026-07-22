@@ -48,6 +48,7 @@ import { AdminImplantacaoChecklistPanel } from "@/components/admin/AdminImplanta
 import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
 import { AdminPromoCalendarPanel } from "@/components/admin/AdminPromoCalendarPanel";
+import AdminMysteryShopperPanel from "@/components/admin/AdminMysteryShopperPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
