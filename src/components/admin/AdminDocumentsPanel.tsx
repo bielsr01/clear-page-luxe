@@ -19,6 +19,7 @@ import {
 type Doc = {
   id: string;
   name: string;
+  description: string | null;
   file_path: string;
   size_bytes: number | null;
   mime_type: string | null;
@@ -35,9 +36,15 @@ const fmtSize = (b: number | null) => {
 export function AdminDocumentsPanel({
   docType,
   title,
+  accept = "application/pdf,.pdf",
+  fileLabel = "Arquivo PDF",
+  withDescription = false,
 }: {
   docType: DocType;
   title: string;
+  accept?: string;
+  fileLabel?: string;
+  withDescription?: boolean;
 }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +57,7 @@ export function AdminDocumentsPanel({
   const [sending, setSending] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploadName, setUploadName] = useState("");
+  const [uploadDescription, setUploadDescription] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,12 +81,14 @@ export function AdminDocumentsPanel({
   const openEdit = (d: Doc) => {
     setEditing(d);
     setUploadName(d.name);
+    setUploadDescription(d.description ?? "");
     setUploadOpen(true);
   };
 
   const openCreate = () => {
     setEditing(null);
     setUploadName("");
+    setUploadDescription("");
     setUploadOpen(true);
   };
 
@@ -89,6 +99,7 @@ export function AdminDocumentsPanel({
       if (editing) {
         const file = fileRef.current?.files?.[0];
         const patch: any = { name: uploadName.trim() || editing.name };
+        if (withDescription) patch.description = uploadDescription.trim() || null;
         if (file) {
           const { path } = await uploadDocumentFile(docType, file);
           await deleteDocumentFile(editing.file_path);
@@ -106,14 +117,16 @@ export function AdminDocumentsPanel({
         if (!file) return toast.error("Escolha um arquivo");
         const { path } = await uploadDocumentFile(docType, file);
         const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await (supabase as any).from("documents").insert({
+        const payload: any = {
           doc_type: docType,
           name: uploadName.trim() || file.name,
           file_path: path,
           size_bytes: file.size,
           mime_type: file.type,
           created_by: user?.id ?? null,
-        });
+        };
+        if (withDescription) payload.description = uploadDescription.trim() || null;
+        const { error } = await (supabase as any).from("documents").insert(payload);
         if (error) throw error;
         toast.success("Documento adicionado");
       }
@@ -152,7 +165,10 @@ export function AdminDocumentsPanel({
       await sendDocumentViaWhatsApp({
         phone: sendPhone,
         filePath: sendDoc.file_path,
-        fileName: sendDoc.name.endsWith(".pdf") ? sendDoc.name : `${sendDoc.name}.pdf`,
+        fileName: (() => {
+          const pathExt = sendDoc.file_path.split(".").pop() || "pdf";
+          return /\.[a-z0-9]+$/i.test(sendDoc.name) ? sendDoc.name : `${sendDoc.name}.${pathExt}`;
+        })(),
         caption: sendMsg,
       });
       toast.success("Enviado no WhatsApp");
@@ -198,6 +214,7 @@ export function AdminDocumentsPanel({
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  {withDescription && <TableHead>Descrição</TableHead>}
                   <TableHead>Tamanho</TableHead>
                   <TableHead>Adicionado</TableHead>
                   <TableHead className="text-right w-64">Ações</TableHead>
@@ -207,6 +224,11 @@ export function AdminDocumentsPanel({
                 {docs.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.name}</TableCell>
+                    {withDescription && (
+                      <TableCell className="text-sm text-muted-foreground max-w-xs whitespace-pre-wrap">
+                        {d.description || "—"}
+                      </TableCell>
+                    )}
                     <TableCell>{fmtSize(d.size_bytes)}</TableCell>
                     <TableCell>{new Date(d.created_at).toLocaleDateString("pt-BR")}</TableCell>
                     <TableCell>
@@ -230,16 +252,22 @@ export function AdminDocumentsPanel({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? "Editar documento" : "Novo documento"}</DialogTitle>
-            <DialogDescription>Arquivos PDF ficam armazenados de forma privada.</DialogDescription>
+            <DialogDescription>Arquivos ficam armazenados de forma privada.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Nome</Label>
               <Input value={uploadName} onChange={(e) => setUploadName(e.target.value)} placeholder="Ex: Apresentação 2026" />
             </div>
+            {withDescription && (
+              <div>
+                <Label>Descrição</Label>
+                <Textarea rows={3} value={uploadDescription} onChange={(e) => setUploadDescription(e.target.value)} placeholder="Breve descrição do documento" />
+              </div>
+            )}
             <div>
-              <Label>Arquivo PDF {editing && "(deixe vazio para manter o atual)"}</Label>
-              <Input ref={fileRef} type="file" accept="application/pdf,.pdf" />
+              <Label>{fileLabel} {editing && "(deixe vazio para manter o atual)"}</Label>
+              <Input ref={fileRef} type="file" accept={accept} />
             </div>
           </div>
           <DialogFooter>

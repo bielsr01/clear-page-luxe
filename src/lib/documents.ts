@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type DocType = "commercial" | "investor" | "franchisee";
+export type DocType = "commercial" | "investor" | "franchisee" | "franchisor";
 
 export async function uploadDocumentFile(
   docType: DocType,

@@ -46,6 +46,7 @@ export type AdminView =
   | "documents:commercial"
   | "documents:investor"
   | "documents:franchisees"
+  | "documents:franchisor"
   | "implantacao:stores"
   | "implantacao:checklist"
   | "crm:tasks"
@@ -466,6 +467,11 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton isActive={active === "documents:franchisees"} onClick={() => handleChange("documents:franchisees")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
                           <span>Franqueados</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton isActive={active === "documents:franchisor"} onClick={() => handleChange("documents:franchisor")} className="h-auto min-h-7 py-1.5 whitespace-normal leading-tight [&>span:last-child]:truncate-none [&>span:last-child]:whitespace-normal">
+                          <span>Documentos da Franqueadora</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
