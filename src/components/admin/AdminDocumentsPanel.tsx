@@ -81,12 +81,14 @@ export function AdminDocumentsPanel({
   const openEdit = (d: Doc) => {
     setEditing(d);
     setUploadName(d.name);
+    setUploadDescription(d.description ?? "");
     setUploadOpen(true);
   };
 
   const openCreate = () => {
     setEditing(null);
     setUploadName("");
+    setUploadDescription("");
     setUploadOpen(true);
   };
 
@@ -97,6 +99,7 @@ export function AdminDocumentsPanel({
       if (editing) {
         const file = fileRef.current?.files?.[0];
         const patch: any = { name: uploadName.trim() || editing.name };
+        if (withDescription) patch.description = uploadDescription.trim() || null;
         if (file) {
           const { path } = await uploadDocumentFile(docType, file);
           await deleteDocumentFile(editing.file_path);
@@ -114,14 +117,16 @@ export function AdminDocumentsPanel({
         if (!file) return toast.error("Escolha um arquivo");
         const { path } = await uploadDocumentFile(docType, file);
         const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await (supabase as any).from("documents").insert({
+        const payload: any = {
           doc_type: docType,
           name: uploadName.trim() || file.name,
           file_path: path,
           size_bytes: file.size,
           mime_type: file.type,
           created_by: user?.id ?? null,
-        });
+        };
+        if (withDescription) payload.description = uploadDescription.trim() || null;
+        const { error } = await (supabase as any).from("documents").insert(payload);
         if (error) throw error;
         toast.success("Documento adicionado");
       }
