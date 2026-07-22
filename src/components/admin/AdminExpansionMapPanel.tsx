@@ -309,6 +309,10 @@ export function AdminExpansionMapPanel() {
                 <span className="text-foreground text-right font-medium">
                   {fmtInt(c.restaurants_count)}
                 </span>
+                <span>Fast-foods</span>
+                <span className="text-foreground text-right font-medium">
+                  {fmtInt(c.fastfoods_count)}
+                </span>
                 <span>Concorrentes</span>
                 <span className="text-foreground text-right font-medium">
                   {fmtInt(c.competitors_count)}
