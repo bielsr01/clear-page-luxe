@@ -327,7 +327,7 @@ export default function AdminMysteryShopperPanel() {
               <CardHeader className="pb-2">
                 <div className="flex flex-wrap gap-2 items-end">
                   <div className="flex-1 min-w-[200px]">
-                    <Label>Nome</Label>
+                    <Label>Nome da categoria</Label>
                     <Input value={cat.name} onChange={(e) => updateCategory(idx, { name: e.target.value })} />
                   </div>
                   <div className="w-28">
