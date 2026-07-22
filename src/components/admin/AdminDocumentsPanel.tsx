@@ -36,9 +36,15 @@ const fmtSize = (b: number | null) => {
 export function AdminDocumentsPanel({
   docType,
   title,
+  accept = "application/pdf,.pdf",
+  fileLabel = "Arquivo PDF",
+  withDescription = false,
 }: {
   docType: DocType;
   title: string;
+  accept?: string;
+  fileLabel?: string;
+  withDescription?: boolean;
 }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +57,7 @@ export function AdminDocumentsPanel({
   const [sending, setSending] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [uploadName, setUploadName] = useState("");
+  const [uploadDescription, setUploadDescription] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
