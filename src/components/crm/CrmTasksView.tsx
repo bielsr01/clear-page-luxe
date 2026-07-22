@@ -113,10 +113,14 @@ export function CrmTasksView({
   };
 
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
+    // Cutoff: só considerar clientes/pedidos a partir de 01/06/2026
+    const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
+
     let q = supabase
       .from("customers")
       .select("id,restaurant_id,name,phone,orders_count,last_order_at")
       .not("last_order_at", "is", null)
+      .gte("last_order_at", CUTOFF_ISO)
       .limit(500);
     if (restaurantId) q = q.eq("restaurant_id", restaurantId);
 
@@ -139,16 +143,28 @@ export function CrmTasksView({
     const customers = (cust ?? []) as any[];
     if (customers.length === 0) return [];
 
-    // Aggregate ticket médio via orders (phone + restaurant_id)
-    const phones = Array.from(new Set(customers.map((c) => c.phone).filter(Boolean)));
-    const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id)));
-    let ordersQ = supabase
-      .from("orders")
-      .select("customer_phone,total,restaurant_id")
-      .neq("status", "cancelled")
-      .in("restaurant_id", restIds);
-    if (phones.length > 0) ordersQ = ordersQ.in("customer_phone", phones as string[]);
-    const { data: orders } = await ordersQ;
+    // Aggregate ticket médio via orders (phone + restaurant_id), paginando para não bater no limite de 1000
+    const phones = Array.from(new Set(customers.map((c) => c.phone).filter(Boolean))) as string[];
+    const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id))) as string[];
+    const orders: any[] = [];
+    if (phones.length > 0 && restIds.length > 0) {
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: batch, error: oErr } = await supabase
+          .from("orders")
+          .select("customer_phone,total,restaurant_id")
+          .neq("status", "cancelled")
+          .gte("created_at", CUTOFF_ISO)
+          .in("restaurant_id", restIds)
+          .in("customer_phone", phones)
+          .range(from, from + PAGE - 1);
+        if (oErr) break;
+        const arr = batch ?? [];
+        orders.push(...arr);
+        if (arr.length < PAGE) break;
+      }
+    }
+
     const agg = new Map<string, { sum: number; count: number }>();
     (orders ?? []).forEach((o: any) => {
       const key = `${o.restaurant_id}|${o.customer_phone}`;
