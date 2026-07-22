@@ -249,16 +249,22 @@ export function AdminDocumentsPanel({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editing ? "Editar documento" : "Novo documento"}</DialogTitle>
-            <DialogDescription>Arquivos PDF ficam armazenados de forma privada.</DialogDescription>
+            <DialogDescription>Arquivos ficam armazenados de forma privada.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Nome</Label>
               <Input value={uploadName} onChange={(e) => setUploadName(e.target.value)} placeholder="Ex: Apresentação 2026" />
             </div>
+            {withDescription && (
+              <div>
+                <Label>Descrição</Label>
+                <Textarea rows={3} value={uploadDescription} onChange={(e) => setUploadDescription(e.target.value)} placeholder="Breve descrição do documento" />
+              </div>
+            )}
             <div>
-              <Label>Arquivo PDF {editing && "(deixe vazio para manter o atual)"}</Label>
-              <Input ref={fileRef} type="file" accept="application/pdf,.pdf" />
+              <Label>{fileLabel} {editing && "(deixe vazio para manter o atual)"}</Label>
+              <Input ref={fileRef} type="file" accept={accept} />
             </div>
           </div>
           <DialogFooter>
