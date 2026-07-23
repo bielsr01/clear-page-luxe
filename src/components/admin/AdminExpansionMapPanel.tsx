@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, MapPin, Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Loader2, MapPin, Plus, Search, Trash2, Pencil, Map as MapIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,6 +116,7 @@ export function AdminExpansionMapPanel() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [autoLoading, setAutoLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [allMapOpen, setAllMapOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -266,6 +267,9 @@ export function AdminExpansionMapPanel() {
             className="pl-9"
           />
         </div>
+        <Button variant="outline" onClick={() => setAllMapOpen(true)} className="gap-2">
+          <MapIcon className="w-4 h-4" /> Ver mapa
+        </Button>
         <Button onClick={openCreate} className="gap-2">
           <Plus className="w-4 h-4" /> Nova cidade
         </Button>
@@ -383,7 +387,108 @@ export function AdminExpansionMapPanel() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AllCitiesMapDialog open={allMapOpen} onOpenChange={setAllMapOpen} cities={cities} />
     </div>
+  );
+}
+
+function AllCitiesMapDialog({
+  open,
+  onOpenChange,
+  cities,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  cities: ExpansionCity[];
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [noKey, setNoKey] = useState(false);
+
+  const pins = useMemo(
+    () => cities.filter((c) => c.lat != null && c.lng != null),
+    [cities],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setNoKey(false);
+      const key = await getGoogleApiKey();
+      if (!key) { setNoKey(true); setLoading(false); return; }
+      try { await loadGoogleMaps(key); } catch { setLoading(false); return; }
+      let tries = 0;
+      while (!cancelled && (!containerRef.current || containerRef.current.clientWidth === 0) && tries < 40) {
+        await new Promise((r) => setTimeout(r, 50));
+        tries++;
+      }
+      if (cancelled || !containerRef.current) { setLoading(false); return; }
+      const google = window.google;
+      const map = new google.maps.Map(containerRef.current, {
+        center: { lat: -14.235, lng: -51.9253 },
+        zoom: 4,
+        disableDefaultUI: true,
+        zoomControl: true,
+        gestureHandling: "greedy",
+      });
+      const bounds = new google.maps.LatLngBounds();
+      const info = new google.maps.InfoWindow();
+      pins.forEach((c) => {
+        const pos = { lat: c.lat as number, lng: c.lng as number };
+        const marker = new google.maps.Marker({ position: pos, map, title: c.city_name });
+        marker.addListener("click", () => {
+          info.setContent(
+            `<div style="font-size:12px"><strong>${c.city_name}${c.state_uf ? " / " + c.state_uf : ""}</strong><br/>Habitantes: ${fmtInt(c.population)}<br/>Salário médio: ${fmtBRL(c.income_per_capita)}</div>`,
+          );
+          info.open({ anchor: marker, map });
+        });
+        bounds.extend(pos);
+      });
+      if (pins.length === 1) {
+        map.setCenter(bounds.getCenter());
+        map.setZoom(11);
+      } else if (pins.length > 1) {
+        map.fitBounds(bounds, 60);
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [open, pins]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MapIcon className="w-4 h-4 text-primary" /> Mapa de expansão — {pins.length} {pins.length === 1 ? "cidade" : "cidades"}
+          </DialogTitle>
+          <DialogDescription>
+            Arraste o mapa e use os controles de zoom. Clique em um pino para ver os dados.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="relative w-full h-[70vh] rounded-md overflow-hidden border">
+          <div ref={containerRef} className="absolute inset-0" />
+          {loading && (
+            <div className="absolute inset-0 grid place-items-center bg-background/60">
+              <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+          )}
+          {noKey && (
+            <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground p-6 text-center">
+              Chave do Google Maps não disponível.
+            </div>
+          )}
+          {!loading && !noKey && pins.length === 0 && (
+            <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground p-6 text-center">
+              Nenhuma cidade com coordenadas cadastradas. Edite uma cidade e ajuste o pino para vê-la no mapa.
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
