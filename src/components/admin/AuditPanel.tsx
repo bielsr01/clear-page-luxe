@@ -231,7 +231,85 @@ export function AuditPanel() {
       {viewingAudit && (
         <AuditDetailsDialog auditId={viewingAudit} onClose={() => setViewingAudit(null)} />
       )}
+      {externalFor && (
+        <ExternalLinkDialog restaurant={externalFor} month={month} onClose={() => setExternalFor(null)} />
+      )}
     </div>
+  );
+}
+
+/* -------------------- Link externo -------------------- */
+
+function ExternalLinkDialog({ restaurant, month, onClose }: { restaurant: Restaurant; month: string; onClose: () => void }) {
+  const [loading, setLoading] = useState(true);
+  const [url, setUrl] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: existing } = await sb
+          .from("audit_external_links")
+          .select("token")
+          .eq("restaurant_id", restaurant.id)
+          .eq("audit_month", month)
+          .maybeSingle();
+        let token: string | null = existing?.token ?? null;
+        if (!token) {
+          const rand = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+          const { data: ins, error } = await sb
+            .from("audit_external_links")
+            .insert({ restaurant_id: restaurant.id, audit_month: month, token: rand })
+            .select("token")
+            .single();
+          if (error) throw error;
+          token = ins.token;
+        }
+        setUrl(`${window.location.origin}/auditoria/${token}`);
+      } catch (e: any) {
+        toast.error(e.message ?? "Erro ao gerar link");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [restaurant.id, month]);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Link2 className="w-4 h-4" /> Link externo — {restaurant.name}</DialogTitle>
+          <DialogDescription>
+            Envie este link para quem for realizar a auditoria. Não precisa estar logado; o sistema pedirá o nome antes de começar.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          {loading ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <Input readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
+                <Button variant="outline" onClick={copy} title="Copiar"><Copy className="w-4 h-4" /></Button>
+                <Button variant="outline" onClick={() => window.open(url, "_blank")} title="Abrir"><ExternalLink className="w-4 h-4" /></Button>
+              </div>
+              <p className="text-xs text-muted-foreground">O link é único desta loja para o mês <strong>{month}</strong>.</p>
+            </>
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
