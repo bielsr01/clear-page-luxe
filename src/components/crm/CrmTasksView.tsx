@@ -115,19 +115,21 @@ export function CrmTasksView({
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
     // Cutoff: só considerar clientes/pedidos a partir de 01/06/2026
     const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
+    // Cutoff específico da aba "Avaliação (dia seguinte)": recomeçar a contar a partir de hoje.
+    const REVIEW_START_ISO = "2026-11-19T00:00:00.000Z";
 
     let q = supabase
       .from("customers")
       .select("id,restaurant_id,name,phone,orders_count,last_order_at")
       .not("last_order_at", "is", null)
-      .gte("last_order_at", CUTOFF_ISO)
+      .gte("last_order_at", task.isReview ? REVIEW_START_ISO : CUTOFF_ISO)
       .limit(500);
     if (restaurantId) q = q.eq("restaurant_id", restaurantId);
 
     const now = new Date();
     if (task.isReview) {
-      // Inclui todos os pedidos desde o cutoff até o fim de ontem.
-      // Pendentes continuam aparecendo mesmo depois de virar o dia, até serem enviados.
+      // Inclui pedidos desde o novo cutoff (hoje) até o fim de ontem.
+      // Como o cutoff é hoje, a lista fica vazia até que amanhã existam pedidos de hoje.
       const today = new Date(now); today.setHours(0, 0, 0, 0);
       q = q.lt("last_order_at", today.toISOString());
     } else if (task.range) {
@@ -144,11 +146,11 @@ export function CrmTasksView({
     const customers = (cust ?? []) as any[];
     if (customers.length === 0) return [];
 
-    // Aggregate ticket médio via orders (phone + restaurant_id), paginando para não bater no limite de 1000
-    const phones = Array.from(new Set(customers.map((c) => c.phone).filter(Boolean))) as string[];
+    // Aggregate ticket médio via orders (restaurant_id), match por dígitos do telefone
+    // (customers e orders podem armazenar telefones em formatos diferentes — com/sem espaço).
     const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id))) as string[];
     const orders: any[] = [];
-    if (phones.length > 0 && restIds.length > 0) {
+    if (restIds.length > 0) {
       const PAGE = 1000;
       for (let from = 0; ; from += PAGE) {
         const { data: batch, error: oErr } = await supabase
@@ -157,7 +159,6 @@ export function CrmTasksView({
           .neq("status", "cancelled")
           .gte("created_at", CUTOFF_ISO)
           .in("restaurant_id", restIds)
-          .in("customer_phone", phones)
           .range(from, from + PAGE - 1);
         if (oErr) break;
         const arr = batch ?? [];
@@ -168,7 +169,9 @@ export function CrmTasksView({
 
     const agg = new Map<string, { sum: number; count: number }>();
     (orders ?? []).forEach((o: any) => {
-      const key = `${o.restaurant_id}|${o.customer_phone}`;
+      const digits = onlyDigits(o.customer_phone);
+      if (!digits) return;
+      const key = `${o.restaurant_id}|${digits}`;
       const cur = agg.get(key) ?? { sum: 0, count: 0 };
       cur.sum += Number(o.total ?? 0);
       cur.count += 1;
@@ -187,7 +190,7 @@ export function CrmTasksView({
     });
 
     return customers.map((c) => {
-      const key = `${c.restaurant_id}|${c.phone}`;
+      const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
       const a = agg.get(key);
       const refDate = (c.last_order_at ?? "").slice(0, 10);
       const s = sendMap.get(`${c.id}|${refDate}`);
