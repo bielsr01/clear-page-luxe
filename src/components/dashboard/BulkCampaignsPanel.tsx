@@ -28,18 +28,18 @@ import { Select as RSelect, SelectContent, SelectItem, SelectTrigger, SelectValu
 
 const sb = supabase as any;
 
-type ClientType = "elite" | "best" | "frequent" | "new" | "none";
+type ClientType = "diamond" | "elite" | "best" | "frequent" | "new" | "none";
 type ClientStatus = "active" | "inactive" | "sleeping" | "risk";
 
 const TYPE_LABELS: Record<ClientType, string> = {
-  elite: "Comprador Elite (+8)", best: "Melhor Comprador (5–7)",
+  diamond: "Comprador Diamond (+15)", elite: "Comprador Elite (8–15)", best: "Melhor Comprador (5–7)",
   frequent: "Comprador Frequente (3–4)", new: "Novo Cliente (1–2)", none: "Sem pedido",
 };
 const STATUS_LABELS: Record<ClientStatus, string> = {
   active: "Ativo (≤15 dias)", inactive: "Inativo (16–30 dias)",
   sleeping: "Dormindo (31–90 dias)", risk: "Em risco (+90 dias)",
 };
-function getClientType(o: number): ClientType { if (o >= 8) return "elite"; if (o >= 5) return "best"; if (o >= 3) return "frequent"; if (o >= 1) return "new"; return "none"; }
+function getClientType(o: number): ClientType { if (o > 15) return "diamond"; if (o >= 8) return "elite"; if (o >= 5) return "best"; if (o >= 3) return "frequent"; if (o >= 1) return "new"; return "none"; }
 function getClientStatus(t: string | null): ClientStatus | null {
   if (!t) return null; const d = (Date.now() - new Date(t).getTime()) / 86400000;
   if (d <= 15) return "active"; if (d <= 30) return "inactive"; if (d <= 90) return "sleeping"; return "risk";
