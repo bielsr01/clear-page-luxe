@@ -20,3 +20,7 @@ verify_jwt = false
 
 [functions.auto-store-hours]
 verify_jwt = false
+
+[functions.r2-download]
+verify_jwt = false
+

@@ -183,12 +183,25 @@ export function AdminDocumentsPanel({
 
   const downloadDoc = async (d: Doc) => {
     try {
+      const pathExt = d.file_path.split(".").pop() || "pdf";
+      const filename = /\.[a-z0-9]+$/i.test(d.name) ? d.name : `${d.name}.${pathExt}`;
+      const isR2 = /^https?:\/\//i.test(d.file_path);
+      if (isR2) {
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+        const endpoint = `${SUPABASE_URL}/functions/v1/r2-download?url=${encodeURIComponent(d.file_path)}&filename=${encodeURIComponent(filename)}`;
+        const a = document.createElement("a");
+        a.href = endpoint;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+      // Legado (Supabase Storage): baixa via blob
       const url = await getDocumentSignedUrl(d.file_path);
       const res = await fetch(url);
       if (!res.ok) throw new Error("Falha ao baixar arquivo");
       const blob = await res.blob();
-      const pathExt = d.file_path.split(".").pop() || "pdf";
-      const filename = /\.[a-z0-9]+$/i.test(d.name) ? d.name : `${d.name}.${pathExt}`;
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objUrl;
