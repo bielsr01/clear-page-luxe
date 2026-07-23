@@ -21,11 +21,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePermissions } from "@/hooks/usePermissions";
 
-type ClientType = "elite" | "best" | "frequent" | "new" | "none";
+type ClientType = "diamond" | "elite" | "best" | "frequent" | "new" | "none";
 type ClientStatus = "active" | "inactive" | "sleeping" | "risk";
 
 const TYPE_LABELS: Record<ClientType, string> = {
-  elite: "Comprador Elite (+8)",
+  diamond: "Comprador Diamond (+15)",
+  elite: "Comprador Elite (8–15)",
   best: "Melhor Comprador (5–7)",
   frequent: "Comprador Frequente (3–4)",
   new: "Novo Cliente (1–2)",
@@ -39,6 +40,7 @@ const STATUS_LABELS: Record<ClientStatus, string> = {
 };
 
 function getClientType(orders: number): ClientType | null {
+  if (orders > 15) return "diamond";
   if (orders >= 8) return "elite";
   if (orders >= 5) return "best";
   if (orders >= 3) return "frequent";
@@ -57,6 +59,7 @@ function getClientStatus(lastOrderAt: string | null): ClientStatus | null {
 }
 
 const TYPE_BADGE: Record<ClientType, string> = {
+  diamond: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
   elite: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200",
   best: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200",
   frequent: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200",
