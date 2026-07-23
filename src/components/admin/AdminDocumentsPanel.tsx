@@ -15,6 +15,7 @@ import {
   DocType, uploadDocumentFile, getDocumentSignedUrl, deleteDocumentFile,
   sendDocumentViaWhatsApp,
 } from "@/lib/documents";
+import { formatPhone } from "@/lib/format";
 
 type Doc = {
   id: string;
