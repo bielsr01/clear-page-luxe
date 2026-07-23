@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import LoyaltyLanding from "./pages/LoyaltyLanding";
 import MysteryShopperForm from "./pages/MysteryShopperForm";
 import MysteryShopperResult from "./pages/MysteryShopperResult";
+import AuditExternal from "./pages/AuditExternal";
 
 
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/fidelidade/:slug" element={<LoyaltyLanding />} />
             <Route path="/cliente-oculto/:token" element={<MysteryShopperForm />} />
             <Route path="/cliente-oculto/respostas/:token" element={<MysteryShopperResult />} />
+            <Route path="/auditoria/:token" element={<AuditExternal />} />
             <Route path="*" element={<NotFound />} />
 
           </Routes>
