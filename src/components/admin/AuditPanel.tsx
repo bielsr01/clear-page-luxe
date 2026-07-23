@@ -84,6 +84,18 @@ export function AuditPanel() {
     },
   });
 
+  const creatorIds = useMemo(() => Array.from(new Set((audits ?? []).map((a) => a.created_by).filter(Boolean) as string[])), [audits]);
+  const { data: creators } = useQuery({
+    queryKey: ["audit-creators", creatorIds.sort().join(",")],
+    enabled: creatorIds.length > 0,
+    queryFn: async () => {
+      const { data } = await sb.from("profiles").select("id, full_name").in("id", creatorIds);
+      const m: Record<string, string> = {};
+      (data ?? []).forEach((p: any) => { m[p.id] = p.full_name || ""; });
+      return m;
+    },
+  });
+
   const auditByRest = useMemo(() => {
     const m = new Map<string, Audit>();
     (audits ?? []).forEach((a) => { if (!m.has(a.restaurant_id)) m.set(a.restaurant_id, a); });
