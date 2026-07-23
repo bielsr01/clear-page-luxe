@@ -187,14 +187,10 @@ export function AdminDocumentsPanel({
       const filename = /\.[a-z0-9]+$/i.test(d.name) ? d.name : `${d.name}.${pathExt}`;
       const isR2 = /^https?:\/\//i.test(d.file_path);
       if (isR2) {
-        const { data, error } = await supabase.functions.invoke("r2-signed-download", {
-          body: { url: d.file_path, filename },
-          method: "GET" as any,
-        }).catch(() => ({ data: null, error: null as any }));
-        // functions.invoke doesn't reliably support GET; use fetch instead
         const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
         const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
         const qs = new URLSearchParams({ url: d.file_path, filename }).toString();
+
         const res = await fetch(`${SUPABASE_URL}/functions/v1/r2-signed-download?${qs}`, {
           headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
         });
