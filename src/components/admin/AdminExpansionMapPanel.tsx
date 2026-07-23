@@ -267,6 +267,9 @@ export function AdminExpansionMapPanel() {
             className="pl-9"
           />
         </div>
+        <Button variant="outline" onClick={() => setAllMapOpen(true)} className="gap-2">
+          <MapIcon className="w-4 h-4" /> Ver mapa
+        </Button>
         <Button onClick={openCreate} className="gap-2">
           <Plus className="w-4 h-4" /> Nova cidade
         </Button>
