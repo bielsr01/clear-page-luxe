@@ -8,9 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Store { id: string; name: string; }
 interface Item { id: string; name: string; sort_order: number; is_active: boolean; }
@@ -26,6 +29,8 @@ export function AdminImplantacaoChecklistPanel() {
   const [editing, setEditing] = useState<Item | null>(null);
   const [itemName, setItemName] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const load = async () => {
     const [{ data: st }, { data: it }] = await Promise.all([
@@ -94,7 +99,22 @@ export function AdminImplantacaoChecklistPanel() {
     load();
   };
 
+  const onDragEnd = async (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = items.findIndex((i) => i.id === active.id);
+    const newIdx = items.findIndex((i) => i.id === over.id);
+    if (oldIdx < 0 || newIdx < 0) return;
+    const reordered = arrayMove(items, oldIdx, newIdx).map((it, i) => ({ ...it, sort_order: i }));
+    setItems(reordered);
+    const { error } = await Promise.all(
+      reordered.map((it, i) => supabase.from("implantacao_checklist_items").update({ sort_order: i }).eq("id", it.id))
+    ).then(() => ({ error: null as any })).catch((err) => ({ error: err }));
+    if (error) { toast.error("Erro ao salvar ordem"); load(); }
+  };
+
   const completed = status.filter((s) => s.checked).length;
+  const ids = items.map((i) => i.id);
 
   return (
     <div className="space-y-4">
@@ -132,47 +152,80 @@ export function AdminImplantacaoChecklistPanel() {
           </div>
           <Card>
             <CardContent className="p-0">
-              <div className="divide-y">
-                {items.map((i) => {
-                  const s = map.get(i.id);
-                  const checked = s?.checked ?? false;
-                  return (
-                    <div key={i.id} className="p-3 flex items-center gap-3">
-                      <Checkbox checked={checked} onCheckedChange={(v) => toggle(i.id, !!v)} />
-                      <div className="flex-1 min-w-0">
-                        <div className={checked ? "line-through text-muted-foreground" : ""}>{i.name}</div>
-                        {s?.checked_at && (
-                          <div className="text-xs text-muted-foreground">
-                            Marcado em {new Date(s.checked_at).toLocaleString("pt-BR")}
-                          </div>
-                        )}
-                      </div>
-                      <Button size="sm" variant="ghost" onClick={() => openEditItem(i)}><Pencil className="w-4 h-4" /></Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost"><Trash2 className="w-4 h-4" /></Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir item?</AlertDialogTitle>
-                            <AlertDialogDescription>O item será removido do checklist de todas as lojas.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => removeItem(i)}>Excluir</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  );
-                })}
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+                  <div className="divide-y">
+                    {items.map((i) => (
+                      <SortableChecklistRow
+                        key={i.id}
+                        item={i}
+                        status={map.get(i.id)}
+                        onToggle={(checked) => toggle(i.id, checked)}
+                        onEdit={() => openEditItem(i)}
+                        onRemove={() => removeItem(i)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             </CardContent>
           </Card>
         </>
       ) : (
         <Card><CardContent className="p-8 text-center text-muted-foreground">Selecione uma loja para preencher o checklist.</CardContent></Card>
       )}
+    </div>
+  );
+}
+
+function SortableChecklistRow({
+  item, status, onToggle, onEdit, onRemove,
+}: {
+  item: Item;
+  status?: Status;
+  onToggle: (checked: boolean) => void;
+  onEdit: () => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const checked = status?.checked ?? false;
+  return (
+    <div ref={setNodeRef} style={style} className="p-3 flex items-center gap-3 bg-background">
+      <button
+        type="button"
+        className="touch-none cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1"
+        {...attributes}
+        {...listeners}
+        aria-label="Arrastar para reordenar"
+      >
+        <GripVertical className="w-5 h-5" />
+      </button>
+      <Checkbox checked={checked} onCheckedChange={(v) => onToggle(!!v)} />
+      <div className="flex-1 min-w-0">
+        <div className={checked ? "line-through text-muted-foreground" : ""}>{item.name}</div>
+        {status?.checked_at && (
+          <div className="text-xs text-muted-foreground">
+            Marcado em {new Date(status.checked_at).toLocaleString("pt-BR")}
+          </div>
+        )}
+      </div>
+      <Button size="sm" variant="ghost" onClick={onEdit}><Pencil className="w-4 h-4" /></Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button size="sm" variant="ghost"><Trash2 className="w-4 h-4" /></Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir item?</AlertDialogTitle>
+            <AlertDialogDescription>O item será removido do checklist de todas as lojas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={onRemove}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
