@@ -188,13 +188,16 @@ export function AdminDocumentsPanel({
       const isR2 = /^https?:\/\//i.test(d.file_path);
       if (isR2) {
         const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-        const endpoint = `${SUPABASE_URL}/functions/v1/r2-download?url=${encodeURIComponent(d.file_path)}&filename=${encodeURIComponent(filename)}`;
-        const a = document.createElement("a");
-        a.href = endpoint;
-        a.rel = "noopener";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+        const qs = new URLSearchParams({ url: d.file_path, filename }).toString();
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/r2-signed-download?${qs}`, {
+          headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+        });
+        if (!res.ok) throw new Error("Falha ao gerar link de download");
+        const json = await res.json();
+        if (!json?.url) throw new Error(json?.error || "URL inválida");
+        window.location.href = json.url;
         return;
       }
       // Legado (Supabase Storage): baixa via blob
@@ -212,6 +215,7 @@ export function AdminDocumentsPanel({
       setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
     } catch (e: any) { toast.error(e.message); }
   };
+
 
   return (
     <div className="space-y-4">
