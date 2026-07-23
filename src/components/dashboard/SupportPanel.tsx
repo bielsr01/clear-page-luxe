@@ -16,6 +16,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Paperclip, X, LifeBuoy, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToR2 } from "@/lib/r2Upload";
@@ -52,6 +53,7 @@ export function SupportPanel({ restaurantId }: { restaurantId: string }) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<Status>("open");
 
   const load = async () => {
     setLoading(true);
@@ -80,6 +82,13 @@ export function SupportPanel({ restaurantId }: { restaurantId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
 
+  const counts = {
+    open: tickets.filter((t) => t.status === "open").length,
+    in_progress: tickets.filter((t) => t.status === "in_progress").length,
+    completed: tickets.filter((t) => t.status === "completed").length,
+  };
+  const filtered = tickets.filter((t) => t.status === tab);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -105,21 +114,30 @@ export function SupportPanel({ restaurantId }: { restaurantId: string }) {
         </CardContent>
       </Card>
 
-      {loading ? (
-        <div className="text-sm text-muted-foreground p-6 text-center">Carregando chamados...</div>
-      ) : tickets.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhum chamado ainda. Clique em "Abrir novo chamado" para começar.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {tickets.map((t) => (
-            <TicketCard key={t.id} ticket={t} />
-          ))}
-        </div>
-      )}
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Status)}>
+        <TabsList>
+          <TabsTrigger value="open">Aberto ({counts.open})</TabsTrigger>
+          <TabsTrigger value="in_progress">Em atendimento ({counts.in_progress})</TabsTrigger>
+          <TabsTrigger value="completed">Concluído ({counts.completed})</TabsTrigger>
+        </TabsList>
+        <TabsContent value={tab} className="mt-4">
+          {loading ? (
+            <div className="text-sm text-muted-foreground p-6 text-center">Carregando chamados...</div>
+          ) : filtered.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Nenhum chamado nesta aba.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((t) => (
+                <TicketCard key={t.id} ticket={t} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
