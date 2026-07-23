@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, MessageCircle, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { brl } from "@/lib/format";
+import { brl, formatPhone } from "@/lib/format";
 
 type LeadStatus = "em_espera" | "com_interesse" | "em_atendimento" | "desinteressado" | "contrato_fechado";
 
@@ -242,7 +242,7 @@ export function AdminLeadsPanel() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Telefone</Label>
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 90000-0000" />
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} placeholder="(11) 90000-0000" inputMode="tel" />
               </div>
               <div className="space-y-1.5">
                 <Label>Cidade</Label>
