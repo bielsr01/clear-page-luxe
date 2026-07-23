@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, ClipboardCheck, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronUp, ChevronDown, Store, CheckCircle2, Clock, Pencil } from "lucide-react";
+import { Settings, ClipboardCheck, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronUp, ChevronDown, Store, CheckCircle2, Clock, Pencil, Link2, Copy, ExternalLink, User } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToR2 } from "@/lib/r2Upload";
 
@@ -39,7 +39,7 @@ function monthOptions(count = 12): { value: string; label: string }[] {
 
 type AuditGroup = { id: string; name: string; sort_order: number; is_active: boolean };
 type Restaurant = { id: string; name: string };
-type Audit = { id: string; restaurant_id: string; audit_month: string; avg_score: number; status: string; created_at: string; notes: string | null };
+type Audit = { id: string; restaurant_id: string; audit_month: string; avg_score: number; status: string; created_at: string; notes: string | null; created_by: string | null; auditor_name: string | null; source: string | null };
 
 export function AuditPanel() {
   const monthOpts = useMemo(() => monthOptions(12), []);
@@ -47,6 +47,7 @@ export function AuditPanel() {
   const [configOpen, setConfigOpen] = useState(false);
   const [wizardFor, setWizardFor] = useState<{ restaurant: Restaurant; editingAuditId?: string } | null>(null);
   const [viewingAudit, setViewingAudit] = useState<string | null>(null);
+  const [externalFor, setExternalFor] = useState<Restaurant | null>(null);
   const qc = useQueryClient();
 
   const deleteAudit = async (auditId: string) => {
