@@ -190,7 +190,7 @@ export function CrmTasksView({
     });
 
     return customers.map((c) => {
-      const key = `${c.restaurant_id}|${c.phone}`;
+      const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
       const a = agg.get(key);
       const refDate = (c.last_order_at ?? "").slice(0, 10);
       const s = sendMap.get(`${c.id}|${refDate}`);
