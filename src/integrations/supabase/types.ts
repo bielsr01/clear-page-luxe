@@ -802,6 +802,51 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_custom_tasks: {
+        Row: {
+          active: boolean
+          applies_to_all: boolean
+          client_type: string | null
+          created_at: string
+          created_by: string | null
+          filter_days: number | null
+          id: string
+          message_template: string
+          min_orders: number | null
+          restaurant_ids: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          applies_to_all?: boolean
+          client_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          filter_days?: number | null
+          id?: string
+          message_template?: string
+          min_orders?: number | null
+          restaurant_ids?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          applies_to_all?: boolean
+          client_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          filter_days?: number | null
+          id?: string
+          message_template?: string
+          min_orders?: number | null
+          restaurant_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crm_task_messages: {
         Row: {
           created_at: string
