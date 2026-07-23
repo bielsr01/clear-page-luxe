@@ -194,10 +194,31 @@ export function AdminDocumentsFranchiseesPanel() {
 
   const downloadDoc = async (d: Doc) => {
     try {
+      const pathExt = d.file_path.split(".").pop() || "pdf";
+      const filename = /\.[a-z0-9]+$/i.test(d.name) ? d.name : `${d.name}.${pathExt}`;
+      const isR2 = /^https?:\/\//i.test(d.file_path);
+      if (isR2) {
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+        const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+        const qs = new URLSearchParams({ url: d.file_path, filename }).toString();
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/r2-signed-download?${qs}`, {
+          headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+        });
+        if (!res.ok) throw new Error("Falha ao gerar link de download");
+        const json = await res.json();
+        if (!json?.url) throw new Error(json?.error || "URL inválida");
+        window.location.href = json.url;
+        return;
+      }
       const url = await getDocumentSignedUrl(d.file_path);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Falha ao baixar arquivo");
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = d.name;
+      a.href = objUrl; a.download = filename;
       document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
     } catch (e: any) { toast.error(e.message); }
   };
 

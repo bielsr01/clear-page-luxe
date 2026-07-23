@@ -133,6 +133,20 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
 
   const handleDownload = async (item: ArtItem) => {
     try {
+      const isR2 = /^https?:\/\//i.test(item.file_url);
+      if (isR2) {
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+        const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+        const qs = new URLSearchParams({ url: item.file_url, filename: item.file_name }).toString();
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/r2-signed-download?${qs}`, {
+          headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+        });
+        if (!res.ok) throw new Error("Falha ao gerar link de download");
+        const json = await res.json();
+        if (!json?.url) throw new Error(json?.error || "URL inválida");
+        window.location.href = json.url;
+        return;
+      }
       const res = await fetch(item.file_url);
       const blob = await res.blob();
       const a = document.createElement("a");
