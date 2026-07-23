@@ -184,12 +184,19 @@ export function AdminDocumentsPanel({
   const downloadDoc = async (d: Doc) => {
     try {
       const url = await getDocumentSignedUrl(d.file_path);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Falha ao baixar arquivo");
+      const blob = await res.blob();
+      const pathExt = d.file_path.split(".").pop() || "pdf";
+      const filename = /\.[a-z0-9]+$/i.test(d.name) ? d.name : `${d.name}.${pathExt}`;
+      const objUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = d.name;
+      a.href = objUrl;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
     } catch (e: any) { toast.error(e.message); }
   };
 
