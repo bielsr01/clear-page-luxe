@@ -152,9 +152,14 @@ export function AuditPanel() {
                     <Store className="w-4 h-4 shrink-0 text-muted-foreground" />
                     <span className="font-medium truncate">{r.name}</span>
                   </div>
-                  <Button size="sm" disabled={activeGroups.length === 0} onClick={() => setWizardFor({ restaurant: r })}>
-                    Fazer auditoria
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" disabled={activeGroups.length === 0} onClick={() => setWizardFor({ restaurant: r })}>
+                      Fazer auditoria
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={activeGroups.length === 0} onClick={() => setExternalFor(r)} title="Gerar link externo">
+                      <Link2 className="w-4 h-4 mr-1" /> Link externo
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -165,6 +170,10 @@ export function AuditPanel() {
               <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhuma auditoria realizada neste mês.</CardContent></Card>
             ) : done.map((r) => {
               const a = auditByRest.get(r.id)!;
+              const who = a.source === "external"
+                ? (a.auditor_name || "Auditor externo")
+                : (a.created_by ? (creators?.[a.created_by] || "Usuário do sistema") : "Usuário do sistema");
+              const when = new Date(a.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
               return (
                 <Card key={r.id}>
                   <CardContent className="p-4 flex items-center justify-between gap-2 flex-wrap">
@@ -172,8 +181,13 @@ export function AuditPanel() {
                       <Store className="w-4 h-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0">
                         <div className="font-medium truncate">{r.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(a.created_at).toLocaleDateString("pt-BR")}
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 flex-wrap">
+                          <Clock className="w-3 h-3" /> {when}
+                          <span className="mx-1">•</span>
+                          <User className="w-3 h-3" /> {who}
+                          <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                            {a.source === "external" ? "Externa" : "Sistema"}
+                          </Badge>
                         </div>
                       </div>
                     </div>
@@ -186,6 +200,9 @@ export function AuditPanel() {
                         {Number(a.avg_score).toFixed(0)}%
                       </Badge>
                       <Button size="sm" variant="outline" onClick={() => setViewingAudit(a.id)}>Ver detalhes</Button>
+                      <Button size="sm" variant="outline" onClick={() => setExternalFor(r)} title="Link externo">
+                        <Link2 className="w-4 h-4" />
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => setWizardFor({ restaurant: r, editingAuditId: a.id })} title="Editar">
                         <Pencil className="w-4 h-4" />
                       </Button>
