@@ -16,6 +16,7 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Paperclip, X, LifeBuoy, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToR2 } from "@/lib/r2Upload";
