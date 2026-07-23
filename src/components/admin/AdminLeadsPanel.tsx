@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, MessageCircle, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { brl } from "@/lib/format";
+import { brl, formatPhone } from "@/lib/format";
 
 type LeadStatus = "em_espera" | "com_interesse" | "em_atendimento" | "desinteressado" | "contrato_fechado";
 
