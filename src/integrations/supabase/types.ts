@@ -242,6 +242,41 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_external_links: {
+        Row: {
+          audit_month: string
+          created_at: string
+          created_by: string | null
+          id: string
+          restaurant_id: string
+          token: string
+        }
+        Insert: {
+          audit_month: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          restaurant_id: string
+          token: string
+        }
+        Update: {
+          audit_month?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          restaurant_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_external_links_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_groups: {
         Row: {
           created_at: string
@@ -317,32 +352,38 @@ export type Database = {
       audits: {
         Row: {
           audit_month: string
+          auditor_name: string | null
           avg_score: number
           created_at: string
           created_by: string | null
           id: string
           notes: string | null
           restaurant_id: string
+          source: string
           status: string
         }
         Insert: {
           audit_month: string
+          auditor_name?: string | null
           avg_score?: number
           created_at?: string
           created_by?: string | null
           id?: string
           notes?: string | null
           restaurant_id: string
+          source?: string
           status?: string
         }
         Update: {
           audit_month?: string
+          auditor_name?: string | null
           avg_score?: number
           created_at?: string
           created_by?: string | null
           id?: string
           notes?: string | null
           restaurant_id?: string
+          source?: string
           status?: string
         }
         Relationships: [
