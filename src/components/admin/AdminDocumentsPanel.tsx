@@ -291,7 +291,7 @@ export function AdminDocumentsPanel({
           <div className="space-y-3">
             <div>
               <Label>Número do WhatsApp</Label>
-              <Input placeholder="(11) 99999-9999" value={sendPhone} onChange={(e) => setSendPhone(e.target.value)} />
+              <Input placeholder="(11) 99999-9999" value={sendPhone} onChange={(e) => setSendPhone(formatPhone(e.target.value))} inputMode="tel" />
             </div>
             <div>
               <Label>Mensagem (legenda)</Label>
