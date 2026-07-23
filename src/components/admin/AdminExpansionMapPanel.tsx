@@ -116,6 +116,7 @@ export function AdminExpansionMapPanel() {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [autoLoading, setAutoLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [allMapOpen, setAllMapOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
