@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MessageCircle, Settings, Send, RefreshCw, Plus, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { MessageCircle, Settings, Send, RefreshCw, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Store, Users } from "lucide-react";
 import { toast } from "sonner";
 import { brl } from "@/lib/format";
 
@@ -52,6 +52,29 @@ interface CustomerRow {
   sent_at?: string | null;
 }
 
+type ClientStatus = "active" | "inactive" | "sleeping" | "risk";
+
+const CLIENT_STATUS_OPTIONS: { value: ClientStatus; label: string; min: number; max: number | null }[] = [
+  { value: "active", label: "Ativo (≤15 dias)", min: 0, max: 15 },
+  { value: "inactive", label: "Inativo (16–30 dias)", min: 16, max: 30 },
+  { value: "sleeping", label: "Dormindo (31–90 dias)", min: 31, max: 90 },
+  { value: "risk", label: "Em risco (+90 dias)", min: 91, max: null },
+];
+
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+}
+
+function clientStatusOf(iso: string | null): ClientStatus | null {
+  const d = daysSince(iso);
+  if (d === null) return null;
+  for (const s of CLIENT_STATUS_OPTIONS) {
+    if (d >= s.min && (s.max === null || d <= s.max)) return s.value;
+  }
+  return null;
+}
+
 interface CustomTask {
   id: string;
   title: string;
@@ -61,6 +84,8 @@ interface CustomTask {
   filter_days: number | null;
   min_orders: number | null;
   client_type: string | null;
+  client_statuses: string[];
+  selected_customer_ids: string[];
   active: boolean;
 }
 
@@ -91,13 +116,12 @@ export function CrmTasksView({
   restaurantId,
   isAdmin = false,
 }: {
-  restaurantId: string | null; // null = "todos" (admin)
+  restaurantId: string | null;
   isAdmin?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<TaskKey | "custom">("review_next_day");
   const [rows, setRows] = useState<Record<TaskKey, CustomerRow[]>>({} as any);
   const [messages, setMessages] = useState<Record<TaskKey, string>>({} as any);
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "sent">("all");
   const [groupFilter, setGroupFilter] = useState<Record<TaskKey, "pending" | "sent">>({} as any);
 
   const [loading, setLoading] = useState(false);
@@ -108,13 +132,18 @@ export function CrmTasksView({
   const [adminSettingsId, setAdminSettingsId] = useState<string | null>(null);
   const [restaurantInfo, setRestaurantInfo] = useState<{ id: string; name: string; phone: string | null; whatsapp_url: string | null } | null>(null);
 
-  // custom tasks state
   const [customTasks, setCustomTasks] = useState<CustomTask[]>([]);
   const [allRestaurants, setAllRestaurants] = useState<{ id: string; name: string }[]>([]);
   const [customEditor, setCustomEditor] = useState<CustomTask | null>(null);
   const [customExpanded, setCustomExpanded] = useState<Record<string, boolean>>({});
   const [customCustomers, setCustomCustomers] = useState<Record<string, CustomerRow[]>>({});
   const [customLoading, setCustomLoading] = useState<Record<string, boolean>>({});
+
+  // Editor sub-state
+  const [restSelectOpen, setRestSelectOpen] = useState(false);
+  const [restSelectDraft, setRestSelectDraft] = useState<{ all: boolean; ids: string[] }>({ all: true, ids: [] });
+  const [editorCandidates, setEditorCandidates] = useState<CustomerRow[] | null>(null);
+  const [editorCandidatesLoading, setEditorCandidatesLoading] = useState(false);
 
   const loadMessages = async () => {
     if (!restaurantId) { setMessages({} as any); return; }
@@ -156,9 +185,7 @@ export function CrmTasksView({
   };
 
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
-    // Cutoff: só considerar clientes/pedidos a partir de 01/06/2026
     const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
-    // Cutoff específico da aba "Avaliação (dia seguinte)": recomeçar a contar a partir de hoje.
     const REVIEW_START_ISO = "2026-11-19T00:00:00.000Z";
 
     let q = supabase
@@ -259,105 +286,133 @@ export function CrmTasksView({
     }
   };
 
-  const loadCustomTaskCustomers = async (task: CustomTask) => {
-    setCustomLoading((p) => ({ ...p, [task.id]: true }));
-    try {
-      const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
-      const targetRests = restaurantId
-        ? [restaurantId]
-        : task.applies_to_all
-          ? allRestaurants.map((r) => r.id)
-          : task.restaurant_ids;
-      if (targetRests.length === 0) {
-        setCustomCustomers((p) => ({ ...p, [task.id]: [] }));
-        return;
-      }
+  // Fetch customers for a given filter set (used both at runtime for a task and in editor preview)
+  const fetchCustomersFor = async (opts: {
+    restaurantIds: string[];
+    minOrders?: number | null;
+    clientType?: string | null;
+    clientStatuses?: string[];
+    selectedCustomerIds?: string[];
+    withTicket?: boolean;
+    taskKey?: string;
+  }): Promise<CustomerRow[]> => {
+    const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
+    if (opts.restaurantIds.length === 0) return [];
 
-      let q = supabase
-        .from("customers")
-        .select("id,restaurant_id,name,phone,orders_count,last_order_at")
-        .in("restaurant_id", targetRests)
-        .not("last_order_at", "is", null)
-        .gte("last_order_at", CUTOFF_ISO)
-        .limit(1000);
+    const hasSelection = (opts.selectedCustomerIds ?? []).length > 0;
 
-      if (task.filter_days) {
-        const since = new Date(Date.now() - task.filter_days * 86400000).toISOString();
-        q = q.gte("last_order_at", since);
-      }
-      if (task.min_orders && task.min_orders > 0) {
-        q = q.gte("orders_count", task.min_orders);
-      }
-      if (task.client_type) {
-        const opt = CLIENT_TYPE_OPTIONS.find((o) => o.value === task.client_type);
+    let q = supabase
+      .from("customers")
+      .select("id,restaurant_id,name,phone,orders_count,last_order_at")
+      .in("restaurant_id", opts.restaurantIds)
+      .limit(2000);
+
+    if (hasSelection) {
+      q = q.in("id", opts.selectedCustomerIds as string[]);
+    } else {
+      q = q.not("last_order_at", "is", null).gte("last_order_at", CUTOFF_ISO);
+      if (opts.minOrders && opts.minOrders > 0) q = q.gte("orders_count", opts.minOrders);
+      if (opts.clientType) {
+        const opt = CLIENT_TYPE_OPTIONS.find((o) => o.value === opts.clientType);
         if (opt) {
           q = q.gte("orders_count", opt.min);
           if (opt.max !== null) q = q.lte("orders_count", opt.max);
         }
       }
+    }
 
-      const { data: cust, error } = await q;
-      if (error) { toast.error(error.message); return; }
-      const customers = (cust ?? []) as any[];
+    const { data, error } = await q;
+    if (error) { toast.error(error.message); return []; }
+    let customers = (data ?? []) as any[];
 
-      // ticket medio
-      const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id))) as string[];
-      const agg = new Map<string, { sum: number; count: number }>();
-      if (restIds.length > 0) {
-        const PAGE = 1000;
-        for (let from = 0; ; from += PAGE) {
-          const { data: batch, error: oErr } = await supabase
-            .from("orders")
-            .select("customer_phone,total,restaurant_id")
-            .neq("status", "cancelled")
-            .gte("created_at", CUTOFF_ISO)
-            .in("restaurant_id", restIds)
-            .range(from, from + PAGE - 1);
-          if (oErr) break;
-          const arr = batch ?? [];
-          arr.forEach((o: any) => {
-            const digits = onlyDigits(o.customer_phone);
-            if (!digits) return;
-            const key = `${o.restaurant_id}|${digits}`;
-            const cur = agg.get(key) ?? { sum: 0, count: 0 };
-            cur.sum += Number(o.total ?? 0);
-            cur.count += 1;
-            agg.set(key, cur);
-          });
-          if (arr.length < PAGE) break;
-        }
+    // In-memory client_statuses filter (only when not using explicit selection)
+    if (!hasSelection && (opts.clientStatuses ?? []).length > 0) {
+      const set = new Set(opts.clientStatuses);
+      customers = customers.filter((c) => {
+        const s = clientStatusOf(c.last_order_at);
+        return s && set.has(s);
+      });
+    }
+
+    const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id))) as string[];
+
+    // Ticket médio (optional)
+    const agg = new Map<string, { sum: number; count: number }>();
+    if (opts.withTicket && restIds.length > 0) {
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: batch, error: oErr } = await supabase
+          .from("orders")
+          .select("customer_phone,total,restaurant_id")
+          .neq("status", "cancelled")
+          .gte("created_at", CUTOFF_ISO)
+          .in("restaurant_id", restIds)
+          .range(from, from + PAGE - 1);
+        if (oErr) break;
+        const arr = batch ?? [];
+        arr.forEach((o: any) => {
+          const digits = onlyDigits(o.customer_phone);
+          if (!digits) return;
+          const key = `${o.restaurant_id}|${digits}`;
+          const cur = agg.get(key) ?? { sum: 0, count: 0 };
+          cur.sum += Number(o.total ?? 0);
+          cur.count += 1;
+          agg.set(key, cur);
+        });
+        if (arr.length < PAGE) break;
       }
+    }
 
-      const taskKey = `custom:${task.id}`;
+    // Sends map (only if a taskKey given)
+    const sendMap = new Map<string, { status: string; sent_at: string | null }>();
+    if (opts.taskKey && restIds.length > 0) {
       const { data: sends } = await supabase
         .from("crm_task_sends")
         .select("customer_id,reference_date,status,sent_at")
-        .eq("task_key", taskKey)
+        .eq("task_key", opts.taskKey)
         .in("restaurant_id", restIds);
-      const sendMap = new Map<string, { status: string; sent_at: string | null }>();
       (sends ?? []).forEach((s: any) => {
         sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
       });
+    }
 
-      const refDate = new Date().toISOString().slice(0, 10);
-      const result: CustomerRow[] = customers.map((c) => {
-        const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
-        const a = agg.get(key);
-        const s = sendMap.get(`${c.id}|${refDate}`);
-        return {
-          id: c.id,
-          restaurant_id: c.restaurant_id,
-          name: c.name,
-          phone: c.phone,
-          orders_count: c.orders_count,
-          last_order_at: c.last_order_at,
-          ticket_medio: a && a.count > 0 ? a.sum / a.count : 0,
-          reference_date: refDate,
-          status: (s?.status === "sent" ? "sent" : "pending") as "pending" | "sent",
-          sent_at: s?.sent_at ?? null,
-        };
+    const refDate = new Date().toISOString().slice(0, 10);
+    return customers.map((c) => {
+      const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
+      const a = agg.get(key);
+      const s = sendMap.get(`${c.id}|${refDate}`);
+      return {
+        id: c.id,
+        restaurant_id: c.restaurant_id,
+        name: c.name,
+        phone: c.phone,
+        orders_count: c.orders_count,
+        last_order_at: c.last_order_at,
+        ticket_medio: a && a.count > 0 ? a.sum / a.count : 0,
+        reference_date: refDate,
+        status: (s?.status === "sent" ? "sent" : "pending") as "pending" | "sent",
+        sent_at: s?.sent_at ?? null,
+      };
+    });
+  };
+
+  const loadCustomTaskCustomers = async (task: CustomTask, withTicket = true) => {
+    setCustomLoading((p) => ({ ...p, [task.id]: true }));
+    try {
+      const targetRests = restaurantId
+        ? [restaurantId]
+        : task.applies_to_all
+          ? allRestaurants.map((r) => r.id)
+          : task.restaurant_ids;
+      const result = await fetchCustomersFor({
+        restaurantIds: targetRests,
+        minOrders: task.min_orders,
+        clientType: task.client_type,
+        clientStatuses: task.client_statuses ?? [],
+        selectedCustomerIds: task.selected_customer_ids ?? [],
+        withTicket,
+        taskKey: `custom:${task.id}`,
       });
-
       setCustomCustomers((p) => ({ ...p, [task.id]: result }));
     } finally {
       setCustomLoading((p) => ({ ...p, [task.id]: false }));
@@ -365,7 +420,34 @@ export function CrmTasksView({
   };
 
   useEffect(() => { loadMessages(); loadRestaurantInfo(); loadAll(); loadCustomTasks(); }, [restaurantId]);
-  useEffect(() => { if (isAdmin) { loadAdminSettings(); loadAllRestaurants(); } }, [isAdmin]);
+  useEffect(() => { if (isAdmin) { loadAdminSettings(); } loadAllRestaurants(); }, [isAdmin]);
+
+  // Custom tasks visible to current context
+  const visibleCustomTasks = useMemo(() => {
+    if (isAdmin) return customTasks;
+    if (!restaurantId) return [];
+    return customTasks.filter((t) => t.applies_to_all || t.restaurant_ids.includes(restaurantId));
+  }, [customTasks, isAdmin, restaurantId]);
+
+  // Auto-load counts for all visible custom tasks (without ticket enrichment for perf)
+  useEffect(() => {
+    if (visibleCustomTasks.length === 0) return;
+    visibleCustomTasks.forEach((t) => {
+      if (customCustomers[t.id] === undefined && !customLoading[t.id]) {
+        loadCustomTaskCustomers(t, false);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleCustomTasks, allRestaurants]);
+
+  const customPendingTotal = useMemo(() => {
+    let total = 0;
+    visibleCustomTasks.forEach((t) => {
+      const list = customCustomers[t.id] ?? [];
+      total += list.filter((r) => r.status === "pending").length;
+    });
+    return total;
+  }, [visibleCustomTasks, customCustomers]);
 
   const openConfig = (key: TaskKey) => {
     if (!restaurantId) { toast.error("Selecione um restaurante para configurar a mensagem"); return; }
@@ -453,24 +535,61 @@ export function CrmTasksView({
     window.open(link, "_blank", "noopener,noreferrer");
   };
 
-  const filtered = (list: CustomerRow[] | undefined) => {
-    const arr = list ?? [];
-    if (statusFilter === "all") return arr;
-    return arr.filter((r) => r.status === statusFilter);
-  };
-
-  // Custom tasks visible to current context
-  const visibleCustomTasks = useMemo(() => {
-    if (isAdmin) return customTasks;
-    if (!restaurantId) return [];
-    return customTasks.filter((t) => t.applies_to_all || t.restaurant_ids.includes(restaurantId));
-  }, [customTasks, isAdmin, restaurantId]);
-
   const toggleCustomExpand = (task: CustomTask) => {
     const isOpen = customExpanded[task.id];
     setCustomExpanded((p) => ({ ...p, [task.id]: !isOpen }));
-    if (!isOpen && !customCustomers[task.id]) {
-      loadCustomTaskCustomers(task);
+    if (!isOpen) {
+      // reload with ticket info
+      loadCustomTaskCustomers(task, true);
+    }
+  };
+
+  const openNewCustom = () => {
+    setEditorCandidates(null);
+    setCustomEditor({
+      id: "", title: "", message_template: "", restaurant_ids: [],
+      applies_to_all: true, filter_days: null, min_orders: null, client_type: null,
+      client_statuses: [], selected_customer_ids: [], active: true,
+    });
+  };
+
+  const openEditCustom = (task: CustomTask) => {
+    setEditorCandidates(null);
+    setCustomEditor({
+      ...task,
+      client_statuses: task.client_statuses ?? [],
+      selected_customer_ids: task.selected_customer_ids ?? [],
+    });
+  };
+
+  const loadEditorCandidates = async () => {
+    if (!customEditor) return;
+    if (!customEditor.applies_to_all && customEditor.restaurant_ids.length === 0) {
+      toast.error("Selecione ao menos um restaurante");
+      return;
+    }
+    setEditorCandidatesLoading(true);
+    try {
+      const targetRests = customEditor.applies_to_all
+        ? allRestaurants.map((r) => r.id)
+        : customEditor.restaurant_ids;
+      // when loading candidates we ignore selected_customer_ids so users can pick anew from filter matches
+      const result = await fetchCustomersFor({
+        restaurantIds: targetRests,
+        minOrders: customEditor.min_orders,
+        clientType: customEditor.client_type,
+        clientStatuses: customEditor.client_statuses,
+        withTicket: false,
+      });
+      // sort by last_order_at desc
+      result.sort((a, b) => (b.last_order_at ?? "").localeCompare(a.last_order_at ?? ""));
+      setEditorCandidates(result);
+      // if no prior selection, pre-select all found
+      if ((customEditor.selected_customer_ids ?? []).length === 0) {
+        setCustomEditor({ ...customEditor, selected_customer_ids: result.map((r) => r.id) });
+      }
+    } finally {
+      setEditorCandidatesLoading(false);
     }
   };
 
@@ -489,6 +608,8 @@ export function CrmTasksView({
       filter_days: customEditor.filter_days,
       min_orders: customEditor.min_orders,
       client_type: customEditor.client_type,
+      client_statuses: customEditor.client_statuses,
+      selected_customer_ids: customEditor.selected_customer_ids,
       active: customEditor.active,
     };
     let res;
@@ -500,6 +621,9 @@ export function CrmTasksView({
     if (res.error) return toast.error(res.error.message);
     toast.success("Tarefa salva");
     setCustomEditor(null);
+    setEditorCandidates(null);
+    // reset customCustomers so counts refresh
+    setCustomCustomers({});
     loadCustomTasks();
   };
 
@@ -514,13 +638,60 @@ export function CrmTasksView({
   const restaurantNames = (ids: string[]) =>
     ids.map((id) => allRestaurants.find((r) => r.id === id)?.name ?? "").filter(Boolean);
 
+  const openRestSelect = () => {
+    if (!customEditor) return;
+    setRestSelectDraft({ all: customEditor.applies_to_all, ids: [...customEditor.restaurant_ids] });
+    setRestSelectOpen(true);
+  };
+
+  const confirmRestSelect = () => {
+    if (!customEditor) return;
+    setCustomEditor({
+      ...customEditor,
+      applies_to_all: restSelectDraft.all,
+      restaurant_ids: restSelectDraft.all ? [] : restSelectDraft.ids,
+    });
+    setRestSelectOpen(false);
+    setEditorCandidates(null);
+  };
+
+  const toggleEditorStatus = (s: ClientStatus) => {
+    if (!customEditor) return;
+    const cur = new Set(customEditor.client_statuses);
+    cur.has(s) ? cur.delete(s) : cur.add(s);
+    setCustomEditor({ ...customEditor, client_statuses: Array.from(cur) });
+    setEditorCandidates(null);
+  };
+
+  const toggleCandidate = (id: string) => {
+    if (!customEditor) return;
+    const cur = new Set(customEditor.selected_customer_ids);
+    cur.has(id) ? cur.delete(id) : cur.add(id);
+    setCustomEditor({ ...customEditor, selected_customer_ids: Array.from(cur) });
+  };
+
+  const restSelectLabel = customEditor
+    ? customEditor.applies_to_all
+      ? `Todos os restaurantes (${allRestaurants.length})`
+      : customEditor.restaurant_ids.length === 0
+        ? "Selecionar restaurantes..."
+        : customEditor.restaurant_ids.length === 1
+          ? (allRestaurants.find((r) => r.id === customEditor.restaurant_ids[0])?.name ?? "1 restaurante")
+          : `${customEditor.restaurant_ids.length} restaurantes`
+    : "";
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 justify-end">
-        <Button variant="outline" size="sm" onClick={() => { loadAll(); loadCustomTasks(); }} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => { loadAll(); loadCustomTasks(); setCustomCustomers({}); }} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
           Atualizar
         </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={openNewCustom}>
+            <Plus className="w-4 h-4 mr-2" />Tarefa personalizada
+          </Button>
+        )}
         {isAdmin && (
           <>
             <Button variant="outline" size="sm" onClick={() => setNotifyOpen(true)}>
@@ -545,7 +716,7 @@ export function CrmTasksView({
           ))}
           <TabsTrigger value="custom" className="text-xs">
             Personalizado
-            <Badge variant="secondary" className="ml-2">{visibleCustomTasks.length}</Badge>
+            <Badge variant="secondary" className="ml-2">{customPendingTotal}</Badge>
           </TabsTrigger>
         </TabsList>
 
@@ -626,19 +797,9 @@ export function CrmTasksView({
         })}
 
         <TabsContent value="custom" className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Tarefas personalizadas criadas pelo admin, com filtros customizados de clientes.
-            </p>
-            {isAdmin && (
-              <Button size="sm" onClick={() => setCustomEditor({
-                id: "", title: "", message_template: "", restaurant_ids: [],
-                applies_to_all: true, filter_days: null, min_orders: null, client_type: null, active: true,
-              })}>
-                <Plus className="w-4 h-4 mr-2" />Nova tarefa
-              </Button>
-            )}
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Tarefas personalizadas criadas pelo admin, com filtros customizados de clientes.
+          </p>
 
           {visibleCustomTasks.length === 0 ? (
             <Card><CardContent className="p-8 text-center text-muted-foreground">Nenhuma tarefa personalizada.</CardContent></Card>
@@ -650,11 +811,17 @@ export function CrmTasksView({
                 const pending = list.filter((r) => r.status === "pending");
                 const sent = list.filter((r) => r.status === "sent");
                 const filterBadges: string[] = [];
-                if (task.filter_days) filterBadges.push(`Últimos ${task.filter_days} dias`);
                 if (task.min_orders) filterBadges.push(`Mín. ${task.min_orders} pedidos`);
                 if (task.client_type) {
                   const ct = CLIENT_TYPE_OPTIONS.find((o) => o.value === task.client_type);
                   if (ct) filterBadges.push(ct.label);
+                }
+                (task.client_statuses ?? []).forEach((s) => {
+                  const opt = CLIENT_STATUS_OPTIONS.find((o) => o.value === s);
+                  if (opt) filterBadges.push(opt.label);
+                });
+                if ((task.selected_customer_ids ?? []).length > 0) {
+                  filterBadges.push(`${task.selected_customer_ids.length} contatos selecionados`);
                 }
                 return (
                   <Card key={task.id}>
@@ -664,6 +831,7 @@ export function CrmTasksView({
                           <button className="flex items-center gap-2 text-left" onClick={() => toggleCustomExpand(task)}>
                             {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                             <div className="font-medium">{task.title}</div>
+                            <Badge variant="secondary" className="ml-1">{pending.length} pendentes</Badge>
                           </button>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {task.applies_to_all
@@ -679,7 +847,7 @@ export function CrmTasksView({
                         </div>
                         {isAdmin && (
                           <div className="flex gap-1">
-                            <Button size="icon" variant="outline" onClick={() => setCustomEditor(task)}>
+                            <Button size="icon" variant="outline" onClick={() => openEditCustom(task)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
                             <Button size="icon" variant="outline" onClick={() => deleteCustomTask(task.id)}>
@@ -775,8 +943,8 @@ export function CrmTasksView({
       </Dialog>
 
       {/* Custom task editor */}
-      <Dialog open={customEditor !== null} onOpenChange={(o) => !o && setCustomEditor(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={customEditor !== null} onOpenChange={(o) => { if (!o) { setCustomEditor(null); setEditorCandidates(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{customEditor?.id ? "Editar tarefa personalizada" : "Nova tarefa personalizada"}</DialogTitle>
           </DialogHeader>
@@ -788,7 +956,7 @@ export function CrmTasksView({
               </div>
               <div className="space-y-2">
                 <Label>Mensagem</Label>
-                <Textarea rows={5} value={customEditor.message_template}
+                <Textarea rows={4} value={customEditor.message_template}
                   onChange={(e) => setCustomEditor({ ...customEditor, message_template: e.target.value })}
                   placeholder="Ex.: Olá {nome}, temos uma oferta especial para você!" />
                 <p className="text-xs text-muted-foreground">Use <code>{"{nome}"}</code> para o nome do cliente.</p>
@@ -796,59 +964,35 @@ export function CrmTasksView({
 
               <div className="space-y-2">
                 <Label>Restaurantes</Label>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={customEditor.applies_to_all}
-                    onCheckedChange={(v) => setCustomEditor({ ...customEditor, applies_to_all: !!v, restaurant_ids: v ? [] : customEditor.restaurant_ids })}
-                  />
-                  <span className="text-sm">Aplicar a todos os restaurantes</span>
-                </div>
-                {!customEditor.applies_to_all && (
-                  <div className="border rounded p-2 max-h-56 overflow-auto space-y-1">
-                    {allRestaurants.map((r) => {
-                      const checked = customEditor.restaurant_ids.includes(r.id);
-                      return (
-                        <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer px-1 py-0.5 hover:bg-accent rounded">
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={(v) => {
-                              const ids = v
-                                ? [...customEditor.restaurant_ids, r.id]
-                                : customEditor.restaurant_ids.filter((x) => x !== r.id);
-                              setCustomEditor({ ...customEditor, restaurant_ids: ids });
-                            }}
-                          />
-                          {r.name}
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
+                <Button type="button" variant="outline" onClick={openRestSelect} className="w-full justify-start">
+                  <Store className="w-4 h-4 mr-2" />
+                  <span className="truncate">{restSelectLabel}</span>
+                </Button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label>Compraram nos últimos</Label>
-                  <Select
-                    value={customEditor.filter_days?.toString() ?? "none"}
-                    onValueChange={(v) => setCustomEditor({ ...customEditor, filter_days: v === "none" ? null : Number(v) })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Qualquer data</SelectItem>
-                      <SelectItem value="15">15 dias</SelectItem>
-                      <SelectItem value="30">30 dias</SelectItem>
-                      <SelectItem value="60">60 dias</SelectItem>
-                      <SelectItem value="90">90 dias</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-2">
+                <Label>Status do cliente (mesmo filtro da aba Clientes)</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {CLIENT_STATUS_OPTIONS.map((o) => {
+                    const checked = customEditor.client_statuses.includes(o.value);
+                    return (
+                      <label key={o.value} className="flex items-center gap-2 text-sm cursor-pointer border rounded px-2 py-1.5 hover:bg-accent">
+                        <Checkbox checked={checked} onCheckedChange={() => toggleEditorStatus(o.value)} />
+                        <span className="truncate">{o.label}</span>
+                      </label>
+                    );
+                  })}
                 </div>
+                <p className="text-xs text-muted-foreground">Sem seleção = qualquer status.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Mínimo de pedidos</Label>
                   <Input
                     type="number" min={0}
                     value={customEditor.min_orders ?? ""}
-                    onChange={(e) => setCustomEditor({ ...customEditor, min_orders: e.target.value ? Number(e.target.value) : null })}
+                    onChange={(e) => { setCustomEditor({ ...customEditor, min_orders: e.target.value ? Number(e.target.value) : null }); setEditorCandidates(null); }}
                     placeholder="Sem mínimo"
                   />
                 </div>
@@ -856,7 +1000,7 @@ export function CrmTasksView({
                   <Label>Categoria de cliente</Label>
                   <Select
                     value={customEditor.client_type ?? "none"}
-                    onValueChange={(v) => setCustomEditor({ ...customEditor, client_type: v === "none" ? null : v })}
+                    onValueChange={(v) => { setCustomEditor({ ...customEditor, client_type: v === "none" ? null : v }); setEditorCandidates(null); }}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -869,6 +1013,68 @@ export function CrmTasksView({
                 </div>
               </div>
 
+              <div className="border rounded-lg p-3 space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 font-medium text-sm">
+                    <Users className="w-4 h-4" /> Contatos
+                    {editorCandidates && (
+                      <Badge variant="secondary">
+                        {customEditor.selected_customer_ids.length} de {editorCandidates.length} selecionados
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {editorCandidates && editorCandidates.length > 0 && (
+                      <>
+                        <Button type="button" size="sm" variant="outline"
+                          onClick={() => setCustomEditor({ ...customEditor, selected_customer_ids: editorCandidates.map((r) => r.id) })}>
+                          Todos
+                        </Button>
+                        <Button type="button" size="sm" variant="outline"
+                          onClick={() => setCustomEditor({ ...customEditor, selected_customer_ids: [] })}>
+                          Nenhum
+                        </Button>
+                      </>
+                    )}
+                    <Button type="button" size="sm" onClick={loadEditorCandidates} disabled={editorCandidatesLoading}>
+                      <RefreshCw className={`w-4 h-4 mr-2 ${editorCandidatesLoading ? "animate-spin" : ""}`} />
+                      Carregar contatos
+                    </Button>
+                  </div>
+                </div>
+
+                {editorCandidates === null ? (
+                  <div className="text-xs text-muted-foreground text-center py-6">
+                    Ajuste os filtros e clique em <b>Carregar contatos</b> para escolher os clientes desta tarefa.
+                  </div>
+                ) : editorCandidates.length === 0 ? (
+                  <div className="text-xs text-muted-foreground text-center py-6">
+                    Nenhum cliente encontrado com esses filtros.
+                  </div>
+                ) : (
+                  <div className="max-h-72 overflow-auto border rounded divide-y">
+                    {editorCandidates.map((c) => {
+                      const checked = customEditor.selected_customer_ids.includes(c.id);
+                      const type = CLIENT_TYPE_OPTIONS.find((o) => (c.orders_count ?? 0) >= o.min && (o.max === null || (c.orders_count ?? 0) <= o.max));
+                      return (
+                        <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent cursor-pointer text-sm">
+                          <Checkbox checked={checked} onCheckedChange={() => toggleCandidate(c.id)} />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium truncate">{c.name}</div>
+                            <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
+                              <span>{c.phone ?? "—"}</span>
+                              <span>Último: {c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("pt-BR") : "—"}</span>
+                              <span>{c.orders_count ?? 0} pedidos</span>
+                              {type && <span>{type.label}</span>}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={customEditor.active}
@@ -879,8 +1085,55 @@ export function CrmTasksView({
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCustomEditor(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => { setCustomEditor(null); setEditorCandidates(null); }}>Cancelar</Button>
             <Button onClick={saveCustomTask}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sub-dialog: restaurant selection */}
+      <Dialog open={restSelectOpen} onOpenChange={setRestSelectOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Selecionar restaurantes</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm cursor-pointer border rounded px-2 py-1.5 hover:bg-accent">
+              <Checkbox
+                checked={restSelectDraft.all}
+                onCheckedChange={(v) => setRestSelectDraft({ all: !!v, ids: !!v ? [] : restSelectDraft.ids })}
+              />
+              <span>Aplicar a todos os restaurantes</span>
+            </label>
+            {!restSelectDraft.all && (
+              <>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => setRestSelectDraft({ all: false, ids: allRestaurants.map((r) => r.id) })}>Todos</Button>
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => setRestSelectDraft({ all: false, ids: [] })}>Nenhum</Button>
+                </div>
+                <div className="border rounded p-2 max-h-72 overflow-auto space-y-1">
+                  {allRestaurants.map((r) => {
+                    const checked = restSelectDraft.ids.includes(r.id);
+                    return (
+                      <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer px-1 py-0.5 hover:bg-accent rounded">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            const ids = v ? [...restSelectDraft.ids, r.id] : restSelectDraft.ids.filter((x) => x !== r.id);
+                            setRestSelectDraft({ all: false, ids });
+                          }}
+                        />
+                        {r.name}
+                      </label>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestSelectOpen(false)}>Cancelar</Button>
+            <Button onClick={confirmRestSelect}>Confirmar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
