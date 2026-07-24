@@ -205,6 +205,7 @@ export type Database = {
       }
       art_library: {
         Row: {
+          category_id: string | null
           created_at: string
           created_by: string | null
           file_key: string
@@ -212,11 +213,13 @@ export type Database = {
           file_size: number | null
           file_type: string | null
           file_url: string
+          format: string | null
           id: string
           title: string
           updated_at: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           created_by?: string | null
           file_key: string
@@ -224,11 +227,13 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           file_url: string
+          format?: string | null
           id?: string
           title: string
           updated_at?: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           created_by?: string | null
           file_key?: string
@@ -236,8 +241,44 @@ export type Database = {
           file_size?: number | null
           file_type?: string | null
           file_url?: string
+          format?: string | null
           id?: string
           title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "art_library_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "art_library_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      art_library_categories: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
           updated_at?: string
         }
         Relationships: []
