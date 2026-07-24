@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Download, Trash2, Upload, FileText, FileArchive, Image as ImageIcon, Loader2, Search, Pencil } from "lucide-react";
+import { Download, Trash2, Upload, FileText, FileArchive, Image as ImageIcon, Loader2, Search, Pencil, Eye } from "lucide-react";
 
 
 type ArtItem = {
@@ -45,6 +45,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
   const [editItem, setEditItem] = useState<ArtItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [previewItem, setPreviewItem] = useState<ArtItem | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const stripExt = (name: string) => name.replace(/\.[^.]+$/, "");
@@ -221,6 +222,11 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                     <p className="text-xs text-muted-foreground">{humanSize(item.file_size)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {isImage(item.file_type) && (
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Visualizar">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleDownload(item)} title="Baixar">
                       <Download className="h-4 w-4" />
                     </Button>
@@ -295,6 +301,25 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
             <Button variant="outline" onClick={() => setEditItem(null)} disabled={savingEdit}>Cancelar</Button>
             <Button onClick={saveEdit} disabled={savingEdit}>
               {savingEdit ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando...</> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!previewItem} onOpenChange={(o) => !o && setPreviewItem(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="break-words pr-6">{previewItem?.title}</DialogTitle>
+          </DialogHeader>
+          {previewItem && (
+            <div className="flex items-center justify-center bg-muted rounded-md overflow-auto max-h-[70vh]">
+              <img src={previewItem.file_url} alt={previewItem.title} className="max-w-full max-h-[70vh] object-contain" />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewItem(null)}>Fechar</Button>
+            <Button onClick={() => previewItem && handleDownload(previewItem)}>
+              <Download className="h-4 w-4 mr-2" /> Baixar
             </Button>
           </DialogFooter>
         </DialogContent>
