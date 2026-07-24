@@ -806,6 +806,7 @@ export type Database = {
         Row: {
           active: boolean
           applies_to_all: boolean
+          client_statuses: string[]
           client_type: string | null
           created_at: string
           created_by: string | null
@@ -814,12 +815,14 @@ export type Database = {
           message_template: string
           min_orders: number | null
           restaurant_ids: string[]
+          selected_customer_ids: string[]
           title: string
           updated_at: string
         }
         Insert: {
           active?: boolean
           applies_to_all?: boolean
+          client_statuses?: string[]
           client_type?: string | null
           created_at?: string
           created_by?: string | null
@@ -828,12 +831,14 @@ export type Database = {
           message_template?: string
           min_orders?: number | null
           restaurant_ids?: string[]
+          selected_customer_ids?: string[]
           title: string
           updated_at?: string
         }
         Update: {
           active?: boolean
           applies_to_all?: boolean
+          client_statuses?: string[]
           client_type?: string | null
           created_at?: string
           created_by?: string | null
@@ -842,6 +847,7 @@ export type Database = {
           message_template?: string
           min_orders?: number | null
           restaurant_ids?: string[]
+          selected_customer_ids?: string[]
           title?: string
           updated_at?: string
         }
