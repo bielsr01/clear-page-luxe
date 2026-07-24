@@ -1060,6 +1060,7 @@ export function CrmTasksView({
                     {editorCandidates.map((c) => {
                       const checked = customEditor.selected_customer_ids.includes(c.id);
                       const type = CLIENT_TYPE_OPTIONS.find((o) => (c.orders_count ?? 0) >= o.min && (o.max === null || (c.orders_count ?? 0) <= o.max));
+                      const restName = allRestaurants.find((r) => r.id === c.restaurant_id)?.name ?? "—";
                       return (
                         <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent cursor-pointer text-sm">
                           <Checkbox checked={checked} onCheckedChange={() => toggleCandidate(c.id)} />
@@ -1067,6 +1068,7 @@ export function CrmTasksView({
                             <div className="font-medium truncate">{c.name}</div>
                             <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3">
                               <span>{c.phone ?? "—"}</span>
+                              <span>Restaurante: {restName}</span>
                               <span>Último: {c.last_order_at ? new Date(c.last_order_at).toLocaleDateString("pt-BR") : "—"}</span>
                               <span>{c.orders_count ?? 0} pedidos</span>
                               {type && <span>{type.label}</span>}
