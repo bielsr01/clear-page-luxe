@@ -305,6 +305,25 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!previewItem} onOpenChange={(o) => !o && setPreviewItem(null)}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="break-words pr-6">{previewItem?.title}</DialogTitle>
+          </DialogHeader>
+          {previewItem && (
+            <div className="flex items-center justify-center bg-muted rounded-md overflow-auto max-h-[70vh]">
+              <img src={previewItem.file_url} alt={previewItem.title} className="max-w-full max-h-[70vh] object-contain" />
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewItem(null)}>Fechar</Button>
+            <Button onClick={() => previewItem && handleDownload(previewItem)}>
+              <Download className="h-4 w-4 mr-2" /> Baixar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
