@@ -222,6 +222,11 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                     <p className="text-xs text-muted-foreground">{humanSize(item.file_size)}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {isImage(item.file_type) && (
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => setPreviewItem(item)} title="Visualizar">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleDownload(item)} title="Baixar">
                       <Download className="h-4 w-4" />
                     </Button>
