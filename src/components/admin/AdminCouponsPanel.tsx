@@ -132,7 +132,8 @@ export function AdminCouponsPanel() {
   }, [all]);
 
   const openNew = () => {
-    setEditing({ ...emptyForm(), target_ids: selected.slice() });
+    const hasFilter = selected.length > 0 && selected.length < all.length;
+    setEditing({ ...emptyForm(), scope: "specific", target_ids: hasFilter ? selected.slice() : [] });
     setOpen(true);
   };
   const openEdit = (c: Coupon) => {
