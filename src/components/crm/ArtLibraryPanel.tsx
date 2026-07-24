@@ -45,6 +45,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
   const [editItem, setEditItem] = useState<ArtItem | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [previewItem, setPreviewItem] = useState<ArtItem | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const stripExt = (name: string) => name.replace(/\.[^.]+$/, "");
