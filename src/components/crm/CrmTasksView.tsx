@@ -834,11 +834,15 @@ export function CrmTasksView({
                             <Badge variant="secondary" className="ml-1">{pending.length} pendentes</Badge>
                           </button>
                           <div className="mt-1 flex flex-wrap gap-1">
-                            {task.applies_to_all
-                              ? <Badge variant="secondary">Todos os restaurantes</Badge>
-                              : restaurantNames(task.restaurant_ids).map((n) => (
-                                  <Badge key={n} variant="outline">{n}</Badge>
-                                ))}
+                            {isAdmin ? (
+                              task.applies_to_all
+                                ? <Badge variant="secondary">Todos os restaurantes</Badge>
+                                : restaurantNames(task.restaurant_ids).map((n) => (
+                                    <Badge key={n} variant="outline">{n}</Badge>
+                                  ))
+                            ) : (
+                              restaurantInfo && <Badge variant="outline">{restaurantInfo.name}</Badge>
+                            )}
                             {filterBadges.map((b) => <Badge key={b} variant="outline">{b}</Badge>)}
                           </div>
                           {task.message_template && (
