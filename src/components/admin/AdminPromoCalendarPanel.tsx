@@ -17,7 +17,7 @@ import { isRowPending, nextOccurrence, type PromoCalendarRow } from "@/hooks/use
 type Restaurant = { id: string; name: string; phone: string | null; whatsapp_url: string | null };
 
 const emptyForm = {
-  restaurant_id: "__all__",
+  restaurant_ids: [] as string[], // [] = none; ["__all__"] = todos (null)
   name: "",
   event_date: "",
   message: "",
@@ -90,14 +90,14 @@ export function AdminPromoCalendarPanel() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...emptyForm, restaurant_id: filterRestaurant });
+    setForm({ ...emptyForm, restaurant_ids: [] });
     setDialogOpen(true);
   };
 
   const openEdit = (row: PromoCalendarRow) => {
     setEditing(row);
     setForm({
-      restaurant_id: row.restaurant_id ?? "__all__",
+      restaurant_ids: [row.restaurant_id ?? "__all__"],
       name: row.name,
       event_date: row.event_date,
       message: row.message,
@@ -108,11 +108,20 @@ export function AdminPromoCalendarPanel() {
     setDialogOpen(true);
   };
 
+  const toggleFormRestaurant = (id: string) => {
+    setForm((f) => {
+      if (id === "__all__") return { ...f, restaurant_ids: f.restaurant_ids.includes("__all__") ? [] : ["__all__"] };
+      const withoutAll = f.restaurant_ids.filter((x) => x !== "__all__");
+      const next = withoutAll.includes(id) ? withoutAll.filter((x) => x !== id) : [...withoutAll, id];
+      return { ...f, restaurant_ids: next };
+    });
+  };
+
   const save = async () => {
     if (!form.name.trim()) return toast.error("Informe o nome da data");
     if (!form.event_date) return toast.error("Informe a data");
-    const payload = {
-      restaurant_id: form.restaurant_id === "__all__" ? null : form.restaurant_id,
+    if (form.restaurant_ids.length === 0) return toast.error("Selecione ao menos um restaurante");
+    const base = {
       name: form.name.trim(),
       event_date: form.event_date,
       message: form.message,
@@ -120,14 +129,20 @@ export function AdminPromoCalendarPanel() {
       is_recurring: form.is_recurring,
     };
     if (editing) {
-      const { error } = await supabase.from("promo_calendar_dates").update(payload).eq("id", editing.id);
+      const rid = form.restaurant_ids[0];
+      const { error } = await supabase
+        .from("promo_calendar_dates")
+        .update({ ...base, restaurant_id: rid === "__all__" ? null : rid })
+        .eq("id", editing.id);
       if (error) return toast.error(error.message);
       toast.success("Data atualizada");
     } else {
       const { data: u } = await supabase.auth.getUser();
-      const { error } = await supabase.from("promo_calendar_dates").insert({ ...payload, created_by: u.user?.id ?? null });
+      const targets = form.restaurant_ids.includes("__all__") ? [null] : form.restaurant_ids;
+      const payload = targets.map((rid) => ({ ...base, restaurant_id: rid, created_by: u.user?.id ?? null }));
+      const { error } = await supabase.from("promo_calendar_dates").insert(payload);
       if (error) return toast.error(error.message);
-      toast.success("Data cadastrada");
+      toast.success(targets.length > 1 ? `${targets.length} datas cadastradas` : "Data cadastrada");
     }
     setDialogOpen(false);
     load();
@@ -289,16 +304,51 @@ export function AdminPromoCalendarPanel() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Restaurante</Label>
-              <Select value={form.restaurant_id} onValueChange={(v) => setForm((f) => ({ ...f, restaurant_id: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos os restaurantes</SelectItem>
-                  {restaurants.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Restaurante{editing ? "" : "s"}</Label>
+              {editing ? (
+                <Select
+                  value={form.restaurant_ids[0] ?? "__all__"}
+                  onValueChange={(v) => setForm((f) => ({ ...f, restaurant_ids: [v] }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todos os restaurantes</SelectItem>
+                    {restaurants.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="border rounded-md p-2 max-h-56 overflow-y-auto space-y-1">
+                  <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={form.restaurant_ids.includes("__all__")}
+                      onChange={() => toggleFormRestaurant("__all__")}
+                    />
+                    <span>Todos os restaurantes</span>
+                  </label>
+                  <div className="border-t my-1" />
+                  {restaurants.map((r) => {
+                    const allChecked = form.restaurant_ids.includes("__all__");
+                    const checked = allChecked || form.restaurant_ids.includes(r.id);
+                    return (
+                      <label key={r.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={allChecked}
+                          onChange={() => toggleFormRestaurant(r.id)}
+                        />
+                        <span>{r.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              {!editing && form.restaurant_ids.length > 0 && !form.restaurant_ids.includes("__all__") && (
+                <p className="text-xs text-muted-foreground">{form.restaurant_ids.length} restaurante{form.restaurant_ids.length > 1 ? "s" : ""} selecionado{form.restaurant_ids.length > 1 ? "s" : ""} · será criada uma data para cada.</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1 col-span-2">
