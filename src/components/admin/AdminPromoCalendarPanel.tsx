@@ -31,7 +31,21 @@ function fmtDate(iso: string) {
   return new Date(y, m - 1, d).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
 }
 
+const SENT_STORAGE_KEY = "promo-calendar-sent-v1";
+
+function loadSentIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SENT_STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
 function buildWhatsApp(phone: string | null | undefined, whatsapp_url?: string | null) {
+
   if (whatsapp_url && whatsapp_url.trim()) return whatsapp_url;
   if (!phone) return null;
   let d = phone.replace(/\D/g, "");
@@ -48,7 +62,7 @@ export function AdminPromoCalendarPanel() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PromoCalendarRow | null>(null);
   const [notifyTarget, setNotifyTarget] = useState<{ row: PromoCalendarRow } | null>(null);
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [sentIds, setSentIds] = useState<Set<string>>(() => loadSentIds());
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
@@ -169,7 +183,7 @@ export function AdminPromoCalendarPanel() {
     load();
   };
 
-  const openNotify = (row: PromoCalendarRow) => { setSentIds(new Set()); setNotifyTarget({ row }); };
+  const openNotify = (row: PromoCalendarRow) => { setNotifyTarget({ row }); };
 
   const notifyTargets = useMemo(() => {
     if (!notifyTarget) return [] as Restaurant[];
@@ -180,6 +194,28 @@ export function AdminPromoCalendarPanel() {
     }
     return restaurants;
   }, [notifyTarget, restaurants, restById]);
+
+  const sentKey = (row: PromoCalendarRow, restaurantId: string) =>
+    `${row.id}:${nextOccurrence(row).year}:${restaurantId}`;
+
+  const markSent = (row: PromoCalendarRow, restaurantId: string) => {
+    setSentIds((prev) => {
+      const next = new Set(prev);
+      next.add(sentKey(row, restaurantId));
+      try { localStorage.setItem(SENT_STORAGE_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const rowFullySent = (row: PromoCalendarRow) => {
+    const targets = row.restaurant_id
+      ? (restById[row.restaurant_id] ? [restById[row.restaurant_id]] : [])
+      : restaurants;
+    const withPhone = targets.filter((r) => !!buildWhatsApp(r.phone, r.whatsapp_url));
+    if (withPhone.length === 0) return false;
+    return withPhone.every((r) => sentIds.has(sentKey(row, r.id)));
+  };
+
 
   const buildMessage = (row: PromoCalendarRow, r: Restaurant) => {
     const occ = nextOccurrence(row).date;
@@ -275,9 +311,22 @@ export function AdminPromoCalendarPanel() {
                   )}
 
                   <div className="flex flex-wrap gap-2 pt-1">
-                    <Button size="sm" onClick={() => openNotify(row)}>
-                      <MessageCircle className="w-4 h-4 mr-2" />Avisar restaurante{row.restaurant_id ? "" : "s"} no WhatsApp
-                    </Button>
+                    {(() => {
+                      const done = rowFullySent(row);
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => openNotify(row)}
+                          className={done ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                        >
+                          {done ? <Check className="w-4 h-4 mr-2" /> : <MessageCircle className="w-4 h-4 mr-2" />}
+                          {done
+                            ? `Enviado${row.restaurant_id ? "" : " a todos"}`
+                            : `Avisar restaurante${row.restaurant_id ? "" : "s"} no WhatsApp`}
+                        </Button>
+                      );
+                    })()}
+
                     {pending && (
                       <Button size="sm" variant="outline" onClick={() => dismiss(row)}>
                         <Check className="w-4 h-4 mr-2" />Marcar como visto
@@ -402,7 +451,7 @@ export function AdminPromoCalendarPanel() {
               const link = buildWhatsApp(r.phone, r.whatsapp_url);
               const msg = notifyTarget ? buildMessage(notifyTarget.row, r) : "";
               const href = link ? `${link}?text=${encodeURIComponent(msg)}` : null;
-              const sent = sentIds.has(r.id);
+              const sent = !!notifyTarget && sentIds.has(sentKey(notifyTarget.row, r.id));
               return (
                 <div key={r.id} className="flex items-center justify-between gap-2 border rounded-md p-2">
                   <div className="min-w-0">
@@ -414,9 +463,9 @@ export function AdminPromoCalendarPanel() {
                     disabled={!href}
                     className={sent ? "bg-green-600 hover:bg-green-700 text-white" : ""}
                     onClick={() => {
-                      if (!href) return;
+                      if (!href || !notifyTarget) return;
+                      markSent(notifyTarget.row, r.id);
                       window.open(href, "_blank", "noopener,noreferrer");
-                      setSentIds((prev) => new Set(prev).add(r.id));
                     }}
                   >
                     {sent ? <Check className="w-4 h-4 mr-2" /> : <MessageCircle className="w-4 h-4 mr-2" />}
@@ -424,6 +473,7 @@ export function AdminPromoCalendarPanel() {
                   </Button>
                 </div>
               );
+
             })}
           </div>
         </DialogContent>
