@@ -169,7 +169,7 @@ export function AdminPromoCalendarPanel() {
     load();
   };
 
-  const openNotify = (row: PromoCalendarRow) => { setSentIds(new Set()); setNotifyTarget({ row }); };
+  const openNotify = (row: PromoCalendarRow) => { setNotifyTarget({ row }); };
 
   const notifyTargets = useMemo(() => {
     if (!notifyTarget) return [] as Restaurant[];
@@ -180,6 +180,28 @@ export function AdminPromoCalendarPanel() {
     }
     return restaurants;
   }, [notifyTarget, restaurants, restById]);
+
+  const sentKey = (row: PromoCalendarRow, restaurantId: string) =>
+    `${row.id}:${nextOccurrence(row).year}:${restaurantId}`;
+
+  const markSent = (row: PromoCalendarRow, restaurantId: string) => {
+    setSentIds((prev) => {
+      const next = new Set(prev);
+      next.add(sentKey(row, restaurantId));
+      try { localStorage.setItem(SENT_STORAGE_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const rowFullySent = (row: PromoCalendarRow) => {
+    const targets = row.restaurant_id
+      ? (restById[row.restaurant_id] ? [restById[row.restaurant_id]] : [])
+      : restaurants;
+    const withPhone = targets.filter((r) => !!buildWhatsApp(r.phone, r.whatsapp_url));
+    if (withPhone.length === 0) return false;
+    return withPhone.every((r) => sentIds.has(sentKey(row, r.id)));
+  };
+
 
   const buildMessage = (row: PromoCalendarRow, r: Restaurant) => {
     const occ = nextOccurrence(row).date;
