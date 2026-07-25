@@ -54,7 +54,7 @@ export default function MysteryShopperResult() {
             <img src={logoIcon} alt="Logo" className="w-14 h-14 mx-auto object-contain mb-2" />
             <CardTitle className="text-2xl">{data.restaurant_name}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Cliente oculto: {data.shopper_name || "—"}
+              Avaliação de Cliente Oculto
               {data.visit_date && <> · Visita: {new Date(data.visit_date + "T00:00").toLocaleDateString("pt-BR")}</>}
             </p>
             <div className="pt-2">{totalBadge(data.total_score != null ? Number(data.total_score) : null)}</div>
