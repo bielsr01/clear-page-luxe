@@ -438,7 +438,7 @@ export function AdminPromoCalendarPanel() {
               const link = buildWhatsApp(r.phone, r.whatsapp_url);
               const msg = notifyTarget ? buildMessage(notifyTarget.row, r) : "";
               const href = link ? `${link}?text=${encodeURIComponent(msg)}` : null;
-              const sent = sentIds.has(r.id);
+              const sent = !!notifyTarget && sentIds.has(sentKey(notifyTarget.row, r.id));
               return (
                 <div key={r.id} className="flex items-center justify-between gap-2 border rounded-md p-2">
                   <div className="min-w-0">
@@ -450,9 +450,9 @@ export function AdminPromoCalendarPanel() {
                     disabled={!href}
                     className={sent ? "bg-green-600 hover:bg-green-700 text-white" : ""}
                     onClick={() => {
-                      if (!href) return;
+                      if (!href || !notifyTarget) return;
+                      markSent(notifyTarget.row, r.id);
                       window.open(href, "_blank", "noopener,noreferrer");
-                      setSentIds((prev) => new Set(prev).add(r.id));
                     }}
                   >
                     {sent ? <Check className="w-4 h-4 mr-2" /> : <MessageCircle className="w-4 h-4 mr-2" />}
@@ -460,6 +460,7 @@ export function AdminPromoCalendarPanel() {
                   </Button>
                 </div>
               );
+
             })}
           </div>
         </DialogContent>
