@@ -304,16 +304,51 @@ export function AdminPromoCalendarPanel() {
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Restaurante</Label>
-              <Select value={form.restaurant_id} onValueChange={(v) => setForm((f) => ({ ...f, restaurant_id: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">Todos os restaurantes</SelectItem>
-                  {restaurants.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Restaurante{editing ? "" : "s"}</Label>
+              {editing ? (
+                <Select
+                  value={form.restaurant_ids[0] ?? "__all__"}
+                  onValueChange={(v) => setForm((f) => ({ ...f, restaurant_ids: [v] }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todos os restaurantes</SelectItem>
+                    {restaurants.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="border rounded-md p-2 max-h-56 overflow-y-auto space-y-1">
+                  <label className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      checked={form.restaurant_ids.includes("__all__")}
+                      onChange={() => toggleFormRestaurant("__all__")}
+                    />
+                    <span>Todos os restaurantes</span>
+                  </label>
+                  <div className="border-t my-1" />
+                  {restaurants.map((r) => {
+                    const allChecked = form.restaurant_ids.includes("__all__");
+                    const checked = allChecked || form.restaurant_ids.includes(r.id);
+                    return (
+                      <label key={r.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={allChecked}
+                          onChange={() => toggleFormRestaurant(r.id)}
+                        />
+                        <span>{r.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              {!editing && form.restaurant_ids.length > 0 && !form.restaurant_ids.includes("__all__") && (
+                <p className="text-xs text-muted-foreground">{form.restaurant_ids.length} restaurante{form.restaurant_ids.length > 1 ? "s" : ""} selecionado{form.restaurant_ids.length > 1 ? "s" : ""} · será criada uma data para cada.</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1 col-span-2">
