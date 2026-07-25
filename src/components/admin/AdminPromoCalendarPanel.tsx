@@ -31,7 +31,21 @@ function fmtDate(iso: string) {
   return new Date(y, m - 1, d).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
 }
 
+const SENT_STORAGE_KEY = "promo-calendar-sent-v1";
+
+function loadSentIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SENT_STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
 function buildWhatsApp(phone: string | null | undefined, whatsapp_url?: string | null) {
+
   if (whatsapp_url && whatsapp_url.trim()) return whatsapp_url;
   if (!phone) return null;
   let d = phone.replace(/\D/g, "");
