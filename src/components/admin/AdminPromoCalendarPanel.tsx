@@ -311,9 +311,22 @@ export function AdminPromoCalendarPanel() {
                   )}
 
                   <div className="flex flex-wrap gap-2 pt-1">
-                    <Button size="sm" onClick={() => openNotify(row)}>
-                      <MessageCircle className="w-4 h-4 mr-2" />Avisar restaurante{row.restaurant_id ? "" : "s"} no WhatsApp
-                    </Button>
+                    {(() => {
+                      const done = rowFullySent(row);
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => openNotify(row)}
+                          className={done ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                        >
+                          {done ? <Check className="w-4 h-4 mr-2" /> : <MessageCircle className="w-4 h-4 mr-2" />}
+                          {done
+                            ? `Enviado${row.restaurant_id ? "" : " a todos"}`
+                            : `Avisar restaurante${row.restaurant_id ? "" : "s"} no WhatsApp`}
+                        </Button>
+                      );
+                    })()}
+
                     {pending && (
                       <Button size="sm" variant="outline" onClick={() => dismiss(row)}>
                         <Check className="w-4 h-4 mr-2" />Marcar como visto
