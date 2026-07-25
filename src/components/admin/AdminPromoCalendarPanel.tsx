@@ -90,14 +90,14 @@ export function AdminPromoCalendarPanel() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...emptyForm, restaurant_id: filterRestaurant });
+    setForm({ ...emptyForm, restaurant_ids: [] });
     setDialogOpen(true);
   };
 
   const openEdit = (row: PromoCalendarRow) => {
     setEditing(row);
     setForm({
-      restaurant_id: row.restaurant_id ?? "__all__",
+      restaurant_ids: [row.restaurant_id ?? "__all__"],
       name: row.name,
       event_date: row.event_date,
       message: row.message,
@@ -108,11 +108,20 @@ export function AdminPromoCalendarPanel() {
     setDialogOpen(true);
   };
 
+  const toggleFormRestaurant = (id: string) => {
+    setForm((f) => {
+      if (id === "__all__") return { ...f, restaurant_ids: f.restaurant_ids.includes("__all__") ? [] : ["__all__"] };
+      const withoutAll = f.restaurant_ids.filter((x) => x !== "__all__");
+      const next = withoutAll.includes(id) ? withoutAll.filter((x) => x !== id) : [...withoutAll, id];
+      return { ...f, restaurant_ids: next };
+    });
+  };
+
   const save = async () => {
     if (!form.name.trim()) return toast.error("Informe o nome da data");
     if (!form.event_date) return toast.error("Informe a data");
-    const payload = {
-      restaurant_id: form.restaurant_id === "__all__" ? null : form.restaurant_id,
+    if (form.restaurant_ids.length === 0) return toast.error("Selecione ao menos um restaurante");
+    const base = {
       name: form.name.trim(),
       event_date: form.event_date,
       message: form.message,
@@ -120,14 +129,20 @@ export function AdminPromoCalendarPanel() {
       is_recurring: form.is_recurring,
     };
     if (editing) {
-      const { error } = await supabase.from("promo_calendar_dates").update(payload).eq("id", editing.id);
+      const rid = form.restaurant_ids[0];
+      const { error } = await supabase
+        .from("promo_calendar_dates")
+        .update({ ...base, restaurant_id: rid === "__all__" ? null : rid })
+        .eq("id", editing.id);
       if (error) return toast.error(error.message);
       toast.success("Data atualizada");
     } else {
       const { data: u } = await supabase.auth.getUser();
-      const { error } = await supabase.from("promo_calendar_dates").insert({ ...payload, created_by: u.user?.id ?? null });
+      const targets = form.restaurant_ids.includes("__all__") ? [null] : form.restaurant_ids;
+      const payload = targets.map((rid) => ({ ...base, restaurant_id: rid, created_by: u.user?.id ?? null }));
+      const { error } = await supabase.from("promo_calendar_dates").insert(payload);
       if (error) return toast.error(error.message);
-      toast.success("Data cadastrada");
+      toast.success(targets.length > 1 ? `${targets.length} datas cadastradas` : "Data cadastrada");
     }
     setDialogOpen(false);
     load();
