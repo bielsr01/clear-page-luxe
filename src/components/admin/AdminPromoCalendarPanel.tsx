@@ -17,7 +17,7 @@ import { isRowPending, nextOccurrence, type PromoCalendarRow } from "@/hooks/use
 type Restaurant = { id: string; name: string; phone: string | null; whatsapp_url: string | null };
 
 const emptyForm = {
-  restaurant_id: "__all__",
+  restaurant_ids: [] as string[], // [] = none; ["__all__"] = todos (null)
   name: "",
   event_date: "",
   message: "",
