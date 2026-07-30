@@ -575,13 +575,18 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
               {typeRows.map((t) => (
                 <div key={t.key} className="rounded-md border p-3 space-y-1">
                   <div className="flex items-center gap-2 font-medium"><t.icon className="w-4 h-4" style={{ color: t.color }} />{t.label}</div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-4 gap-2 text-xs">
                     <div><div className="text-muted-foreground">Pedidos</div><div className="font-medium text-sm">{t.count}</div></div>
-                    <div><div className="text-muted-foreground">Vendas</div><div className="font-medium text-sm">{brl(t.revenue)}</div></div>
+                    <div><div className="text-muted-foreground">Bruto</div><div className="font-medium text-sm">{brl(t.revenue)}</div></div>
+                    <div><div className="text-muted-foreground">Líquido</div><div className="font-medium text-sm">{brl(t.net)}</div></div>
                     <div><div className="text-muted-foreground">Ticket</div><div className="font-medium text-sm">{brl(t.avg)}</div></div>
                   </div>
                 </div>
               ))}
+              <div className="rounded-md border p-3 bg-muted/40 text-xs flex items-center justify-between">
+                <span className="font-medium">Total</span>
+                <span className="font-medium">{ordersCountCur} · {brl(grossCur)} · {brl(netCur)}</span>
+              </div>
             </div>
             {/* Desktop: table */}
             <Table className="hidden md:table">
@@ -589,7 +594,8 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
                 <TableRow>
                   <TableHead>Tipo</TableHead>
                   <TableHead className="text-right">Pedidos</TableHead>
-                  <TableHead className="text-right">Vendas</TableHead>
+                  <TableHead className="text-right">Faturamento bruto</TableHead>
+                  <TableHead className="text-right">Faturamento líquido</TableHead>
                   <TableHead className="text-right">Ticket médio</TableHead>
                 </TableRow>
               </TableHeader>
@@ -599,11 +605,20 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
                     <TableCell className="flex items-center gap-2 whitespace-nowrap"><t.icon className="w-4 h-4" style={{ color: t.color }} />{t.label}</TableCell>
                     <TableCell className="text-right font-medium">{t.count}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">{brl(t.revenue)}</TableCell>
+                    <TableCell className="text-right whitespace-nowrap">{brl(t.net)}</TableCell>
                     <TableCell className="text-right whitespace-nowrap">{brl(t.avg)}</TableCell>
                   </TableRow>
                 ))}
+                <TableRow className="bg-muted/40 font-medium">
+                  <TableCell>Total</TableCell>
+                  <TableCell className="text-right">{ordersCountCur}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">{brl(grossCur)}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">{brl(netCur)}</TableCell>
+                  <TableCell className="text-right whitespace-nowrap">{brl(ticketCur)}</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
+
           </CardContent>
         </Card>
         <Card>
