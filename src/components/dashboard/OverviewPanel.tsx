@@ -415,11 +415,26 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
     { key: "ifood", label: "iFood", icon: Bike, color: "#ef4444", match: (o: any) => o.external_source === "ifood" },
     { key: "quero", label: "Quero Delivery", icon: Truck, color: "#f97316", match: (o: any) => o.external_source === "quero" },
   ];
-  const typeRows = types.map((t) => {
-    const arr = cur.filter(t.match);
-    const rev = sum(arr, "total");
-    return { ...t, count: arr.length, revenue: rev, avg: arr.length ? rev / arr.length : 0 };
+  // Usa exatamente as mesmas métricas dos KPIs (orderMetrics) para que a soma
+  // por tipo bata 100% com o Faturamento bruto e o Faturamento líquido.
+  const buildTypeRow = (t: any, arr: any[]) => {
+    const a = aggregate(arr);
+    return { ...t, count: arr.length, revenue: a.vendas, net: a.net, avg: arr.length ? a.vendas / arr.length : 0 };
+  };
+  const matched = new Set<any>();
+  const typeRowsBase = types.map((t) => {
+    const arr = cur.filter((o) => {
+      const ok = t.match(o);
+      if (ok) matched.add(o);
+      return ok;
+    });
+    return buildTypeRow(t, arr);
   });
+  const rest = cur.filter((o) => !matched.has(o));
+  const typeRows = rest.length
+    ? [...typeRowsBase, buildTypeRow({ key: "outros", label: "Outros", icon: ShoppingBag, color: "#64748b" }, rest)]
+    : typeRowsBase;
+
 
 
   // by source pie
