@@ -10,7 +10,7 @@ export function AdminOverviewPanel() {
 
   return (
     <div className="space-y-4">
-      <Card><CardContent className="p-4"><RestaurantMultiSelect all={all} selected={selected} onChange={setSelected} /></CardContent></Card>
+      <Card><CardContent className="p-4"><RestaurantMultiSelect all={all} selected={selected} onChange={setSelected} autoSelectAll={false} /></CardContent></Card>
 
       {selected.length === 0 ? (
         <Card><CardContent className="p-12 text-center text-muted-foreground">Selecione ao menos um restaurante para visualizar.</CardContent></Card>
