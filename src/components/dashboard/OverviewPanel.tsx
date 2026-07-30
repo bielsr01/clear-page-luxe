@@ -82,7 +82,7 @@ function rangeFor(preset: Preset, custom?: DateRange): { from: Date; to: Date } 
     }
     case "7d": return { from: brasiliaAddDaysUTC(now, -6), to: brasiliaEndOfDayUTC(now) };
     case "30d": return { from: brasiliaAddDaysUTC(now, -29), to: brasiliaEndOfDayUTC(now) };
-    case "month": return { from: brasiliaMonthStartUTC(now), to: brasiliaMonthEndUTC(now) };
+    case "month": return { from: brasiliaMonthStartUTC(now), to: brasiliaEndOfDayUTC(now) };
     case "lastmonth": {
       const lm = new Date(brasiliaMonthStartUTC(now).getTime() - 1);
       return { from: brasiliaMonthStartUTC(lm), to: brasiliaMonthEndUTC(lm) };
@@ -102,6 +102,28 @@ function classifySource(o: any): SourceFilter {
 }
 
 const COLORS = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+
+/**
+ * O PostgREST limita cada resposta a 1000 linhas. Sem paginação, períodos longos
+ * (30 dias, mês, várias lojas) eram truncados e mostravam valores MENORES que
+ * períodos curtos. Este helper busca todas as páginas.
+ */
+const PAGE = 1000;
+async function fetchAll(buildQuery: () => any): Promise<any[]> {
+  const out: any[] = [];
+  let from = 0;
+  // Limite de segurança: 200 páginas (200k linhas)
+  for (let page = 0; page < 200; page++) {
+    const { data, error } = await buildQuery().range(from, from + PAGE - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as any[];
+    out.push(...chunk);
+    if (chunk.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
+}
+
 
 export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: string; restaurantIds?: string[] }) {
   const ids = restaurantIds && restaurantIds.length > 0 ? restaurantIds : restaurantId ? [restaurantId] : [];
@@ -123,34 +145,37 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const ordersQ = useQuery({
     queryKey: ["overview-orders", idsKey, prevRange.from.toISOString(), range.to.toISOString()],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await sb
-        .from("orders")
-        .select("id, restaurant_id, created_at, total, subtotal, discount, delivery_fee, service_fee, coupon_code, status, order_type, payment_method, external_source, customer_phone, customer_name, ifood_subsidy, merchant_subsidy")
-        .in("restaurant_id", ids)
-        .gte("created_at", prevRange.from.toISOString())
-        .lte("created_at", range.to.toISOString())
-        .neq("status", "cancelled");
-      return (data ?? []) as any[];
-    },
+    queryFn: async () =>
+      fetchAll(() =>
+        sb
+          .from("orders")
+          .select("id, restaurant_id, created_at, total, subtotal, discount, delivery_fee, service_fee, coupon_code, status, order_type, payment_method, external_source, customer_phone, customer_name, ifood_subsidy, merchant_subsidy")
+          .in("restaurant_id", ids)
+          .gte("created_at", prevRange.from.toISOString())
+          .lte("created_at", range.to.toISOString())
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true }),
+      ),
     staleTime: 30_000,
   });
 
   const itemsQ = useQuery({
     queryKey: ["overview-items", idsKey, range.from.toISOString(), range.to.toISOString()],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await sb
-        .from("order_items")
-        .select("product_name, quantity, unit_price, order_id, orders!inner(restaurant_id, created_at, status)")
-        .in("orders.restaurant_id", ids)
-        .gte("orders.created_at", range.from.toISOString())
-        .lte("orders.created_at", range.to.toISOString())
-        .neq("orders.status", "cancelled");
-      return (data ?? []) as any[];
-    },
+    queryFn: async () =>
+      fetchAll(() =>
+        sb
+          .from("order_items")
+          .select("product_name, quantity, unit_price, order_id, orders!inner(restaurant_id, created_at, status)")
+          .in("orders.restaurant_id", ids)
+          .gte("orders.created_at", range.from.toISOString())
+          .lte("orders.created_at", range.to.toISOString())
+          .neq("orders.status", "cancelled")
+          .order("id", { ascending: true }),
+      ),
     staleTime: 30_000,
   });
+
 
   const customersQ = useQuery({
     queryKey: ["overview-customers", idsKey],
@@ -161,6 +186,27 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
     },
     staleTime: 60_000,
   });
+
+  // Clientes únicos com pedido nos últimos 30 dias (independente do período filtrado)
+  const active30Q = useQuery({
+    queryKey: ["overview-active30", idsKey],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const since = brasiliaAddDaysUTC(new Date(), -29).toISOString();
+      const rows = await fetchAll(() =>
+        sb
+          .from("orders")
+          .select("customer_phone, created_at")
+          .in("restaurant_id", ids)
+          .gte("created_at", since)
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true }),
+      );
+      return new Set(rows.map((o: any) => o.customer_phone).filter(Boolean)).size;
+    },
+    staleTime: 60_000,
+  });
+
 
   const feesQ = useQuery({
     queryKey: ["overview-ifood-fees", idsKey],
@@ -197,16 +243,18 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const compareOrdersQ = useQuery({
     queryKey: ["overview-compare", idsKey, compareWindow.from.toISOString()],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await sb
-        .from("orders")
-        .select("id, restaurant_id, created_at, total, subtotal, delivery_fee, service_fee, order_type, payment_method, external_source, ifood_subsidy, merchant_subsidy")
-        .in("restaurant_id", ids)
-        .gte("created_at", compareWindow.from.toISOString())
-        .lte("created_at", compareWindow.to.toISOString())
-        .neq("status", "cancelled");
-      return (data ?? []) as any[];
-    },
+    queryFn: async () =>
+      fetchAll(() =>
+        sb
+          .from("orders")
+          .select("id, restaurant_id, created_at, total, subtotal, delivery_fee, service_fee, order_type, payment_method, external_source, ifood_subsidy, merchant_subsidy")
+          .in("restaurant_id", ids)
+          .gte("created_at", compareWindow.from.toISOString())
+          .lte("created_at", compareWindow.to.toISOString())
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true }),
+      ),
+
     staleTime: 30_000,
   });
 
@@ -329,9 +377,8 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const ticketPerCustomer = phonesCur.size ? grossCur / phonesCur.size : 0;
   const purchaseFreq = phonesCur.size ? cur.length / phonesCur.size : 0;
 
-  // active 30d (all orders, ignoring filter)
-  const last30 = brasiliaAddDaysUTC(new Date(), -30);
-  const active30 = new Set(all.filter((o) => new Date(o.created_at) >= last30).map((o) => o.customer_phone).filter(Boolean)).size;
+  // clientes ativos nos últimos 30 dias (query própria, independente do filtro/período)
+  const active30 = active30Q.data ?? 0;
 
   // top customers
   const customerAgg = new Map<string, { name: string; phone: string; total: number; count: number }>();
@@ -344,13 +391,10 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   });
   const topCustomers = Array.from(customerAgg.values()).sort((a, b) => b.total - a.total).slice(0, 10);
 
-  // top products
-  const items = (itemsQ.data ?? []).filter((it) => {
-    if (source === "all") return true;
-    // we don't have order_type on items join easily; rely on orders set
-    const o = cur.find((c) => c.id === it.order_id);
-    return !!o;
-  });
+  // top products — restritos aos pedidos do período/filtro atual
+  const curIds = new Set(cur.map((o) => o.id));
+  const items = (itemsQ.data ?? []).filter((it) => curIds.has(it.order_id));
+
   const productAgg = new Map<string, { qty: number; revenue: number }>();
   items.forEach((it) => {
     const cur2 = productAgg.get(it.product_name) ?? { qty: 0, revenue: 0 };
