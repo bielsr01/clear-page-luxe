@@ -356,9 +356,8 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const ticketPerCustomer = phonesCur.size ? grossCur / phonesCur.size : 0;
   const purchaseFreq = phonesCur.size ? cur.length / phonesCur.size : 0;
 
-  // active 30d (all orders, ignoring filter)
-  const last30 = brasiliaAddDaysUTC(new Date(), -30);
-  const active30 = new Set(all.filter((o) => new Date(o.created_at) >= last30).map((o) => o.customer_phone).filter(Boolean)).size;
+  // clientes ativos nos últimos 30 dias (query própria, independente do filtro/período)
+  const active30 = active30Q.data ?? 0;
 
   // top customers
   const customerAgg = new Map<string, { name: string; phone: string; total: number; count: number }>();
@@ -371,13 +370,10 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   });
   const topCustomers = Array.from(customerAgg.values()).sort((a, b) => b.total - a.total).slice(0, 10);
 
-  // top products
-  const items = (itemsQ.data ?? []).filter((it) => {
-    if (source === "all") return true;
-    // we don't have order_type on items join easily; rely on orders set
-    const o = cur.find((c) => c.id === it.order_id);
-    return !!o;
-  });
+  // top products — restritos aos pedidos do período/filtro atual
+  const curIds = new Set(cur.map((o) => o.id));
+  const items = (itemsQ.data ?? []).filter((it) => curIds.has(it.order_id));
+
   const productAgg = new Map<string, { qty: number; revenue: number }>();
   items.forEach((it) => {
     const cur2 = productAgg.get(it.product_name) ?? { qty: 0, revenue: 0 };
