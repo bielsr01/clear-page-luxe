@@ -187,6 +187,27 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
     staleTime: 60_000,
   });
 
+  // Clientes únicos com pedido nos últimos 30 dias (independente do período filtrado)
+  const active30Q = useQuery({
+    queryKey: ["overview-active30", idsKey],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const since = brasiliaAddDaysUTC(new Date(), -29).toISOString();
+      const rows = await fetchAll(() =>
+        sb
+          .from("orders")
+          .select("customer_phone, created_at")
+          .in("restaurant_id", ids)
+          .gte("created_at", since)
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true }),
+      );
+      return new Set(rows.map((o: any) => o.customer_phone).filter(Boolean)).size;
+    },
+    staleTime: 60_000,
+  });
+
+
   const feesQ = useQuery({
     queryKey: ["overview-ifood-fees", idsKey],
     enabled: ids.length > 0,
