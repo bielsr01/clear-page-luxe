@@ -596,7 +596,8 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={typeRows.filter((t) => t.count > 0)} dataKey="count" nameKey="label" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                  {typeRows.map((t, i) => <Cell key={i} fill={t.color} />)}
+                  {typeRows.filter((t) => t.count > 0).map((t, i) => <Cell key={i} fill={t.color} />)}
+
                 </Pie>
                 <RTooltip />
                 <Legend />
