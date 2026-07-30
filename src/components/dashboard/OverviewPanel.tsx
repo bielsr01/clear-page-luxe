@@ -32,6 +32,8 @@ import {
   Trophy,
   Tag,
   Truck,
+  Bike,
+
   Store,
   ShoppingCart,
   Globe,
@@ -404,18 +406,21 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   });
   const topProducts = Array.from(productAgg.entries()).map(([name, v]) => ({ name, ...v })).sort((a, b) => b.qty - a.qty).slice(0, 10);
 
-  // service type breakdown
-  const byType = (type: string) => cur.filter((o) => o.order_type === type);
+  // service type breakdown (canais diretos + marketplaces)
+  const isExternal = (o: any) => o.external_source === "ifood" || o.external_source === "quero";
   const types = [
-    { key: "delivery", label: "Delivery", icon: Truck, color: "#f59e0b" },
-    { key: "pickup", label: "Retirada", icon: ShoppingCart, color: "#10b981" },
-    { key: "pdv", label: "PDV / Balcão", icon: Store, color: "#3b82f6" },
+    { key: "delivery", label: "Delivery", icon: Truck, color: "#f59e0b", match: (o: any) => !isExternal(o) && o.order_type === "delivery" },
+    { key: "pickup", label: "Retirada", icon: ShoppingCart, color: "#10b981", match: (o: any) => !isExternal(o) && o.order_type === "pickup" },
+    { key: "pdv", label: "PDV / Balcão", icon: Store, color: "#3b82f6", match: (o: any) => !isExternal(o) && o.order_type === "pdv" },
+    { key: "ifood", label: "iFood", icon: Bike, color: "#ef4444", match: (o: any) => o.external_source === "ifood" },
+    { key: "quero", label: "Quero Delivery", icon: Truck, color: "#f97316", match: (o: any) => o.external_source === "quero" },
   ];
   const typeRows = types.map((t) => {
-    const arr = byType(t.key);
+    const arr = cur.filter(t.match);
     const rev = sum(arr, "total");
     return { ...t, count: arr.length, revenue: rev, avg: arr.length ? rev / arr.length : 0 };
   });
+
 
   // by source pie
   const sourceCounts = { web: 0, pdv: 0 } as Record<string, number>;
@@ -591,7 +596,8 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={typeRows.filter((t) => t.count > 0)} dataKey="count" nameKey="label" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                  {typeRows.map((t, i) => <Cell key={i} fill={t.color} />)}
+                  {typeRows.filter((t) => t.count > 0).map((t, i) => <Cell key={i} fill={t.color} />)}
+
                 </Pie>
                 <RTooltip />
                 <Legend />
