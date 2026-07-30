@@ -423,8 +423,9 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
 
 
   // by source pie
-  const sourceCounts = { web: 0, pdv: 0 } as Record<string, number>;
+  const sourceCounts = { web: 0, pdv: 0, ifood: 0, quero: 0 } as Record<string, number>;
   cur.forEach((o) => { sourceCounts[classifySource(o)]++; });
+
 
   // payment methods
   const payAgg = new Map<string, number>();
