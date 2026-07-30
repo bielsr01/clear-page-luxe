@@ -32,6 +32,8 @@ import {
   Trophy,
   Tag,
   Truck,
+  Bike,
+
   Store,
   ShoppingCart,
   Globe,
