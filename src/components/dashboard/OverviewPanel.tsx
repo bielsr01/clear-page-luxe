@@ -103,6 +103,28 @@ function classifySource(o: any): SourceFilter {
 
 const COLORS = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
+/**
+ * O PostgREST limita cada resposta a 1000 linhas. Sem paginação, períodos longos
+ * (30 dias, mês, várias lojas) eram truncados e mostravam valores MENORES que
+ * períodos curtos. Este helper busca todas as páginas.
+ */
+const PAGE = 1000;
+async function fetchAll(buildQuery: () => any): Promise<any[]> {
+  const out: any[] = [];
+  let from = 0;
+  // Limite de segurança: 200 páginas (200k linhas)
+  for (let page = 0; page < 200; page++) {
+    const { data, error } = await buildQuery().range(from, from + PAGE - 1);
+    if (error) throw error;
+    const chunk = (data ?? []) as any[];
+    out.push(...chunk);
+    if (chunk.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
+}
+
+
 export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: string; restaurantIds?: string[] }) {
   const ids = restaurantIds && restaurantIds.length > 0 ? restaurantIds : restaurantId ? [restaurantId] : [];
   const idsKey = ids.slice().sort().join(",");
