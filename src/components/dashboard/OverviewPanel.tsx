@@ -222,16 +222,18 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const compareOrdersQ = useQuery({
     queryKey: ["overview-compare", idsKey, compareWindow.from.toISOString()],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await sb
-        .from("orders")
-        .select("id, restaurant_id, created_at, total, subtotal, delivery_fee, service_fee, order_type, payment_method, external_source, ifood_subsidy, merchant_subsidy")
-        .in("restaurant_id", ids)
-        .gte("created_at", compareWindow.from.toISOString())
-        .lte("created_at", compareWindow.to.toISOString())
-        .neq("status", "cancelled");
-      return (data ?? []) as any[];
-    },
+    queryFn: async () =>
+      fetchAll(() =>
+        sb
+          .from("orders")
+          .select("id, restaurant_id, created_at, total, subtotal, delivery_fee, service_fee, order_type, payment_method, external_source, ifood_subsidy, merchant_subsidy")
+          .in("restaurant_id", ids)
+          .gte("created_at", compareWindow.from.toISOString())
+          .lte("created_at", compareWindow.to.toISOString())
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true }),
+      ),
+
     staleTime: 30_000,
   });
 
