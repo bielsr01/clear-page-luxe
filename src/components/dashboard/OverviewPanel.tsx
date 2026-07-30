@@ -82,7 +82,7 @@ function rangeFor(preset: Preset, custom?: DateRange): { from: Date; to: Date } 
     }
     case "7d": return { from: brasiliaAddDaysUTC(now, -6), to: brasiliaEndOfDayUTC(now) };
     case "30d": return { from: brasiliaAddDaysUTC(now, -29), to: brasiliaEndOfDayUTC(now) };
-    case "month": return { from: brasiliaMonthStartUTC(now), to: brasiliaMonthEndUTC(now) };
+    case "month": return { from: brasiliaMonthStartUTC(now), to: brasiliaEndOfDayUTC(now) };
     case "lastmonth": {
       const lm = new Date(brasiliaMonthStartUTC(now).getTime() - 1);
       return { from: brasiliaMonthStartUTC(lm), to: brasiliaMonthEndUTC(lm) };
