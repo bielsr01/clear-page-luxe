@@ -633,14 +633,21 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
           <CardContent style={{ height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={[
-                { name: "WEB", value: sourceCounts.web },
-                { name: "PDV", value: sourceCounts.pdv },
+                { name: "WEB", value: sourceCounts.web, color: "#8b5cf6" },
+                { name: "PDV", value: sourceCounts.pdv, color: "#3b82f6" },
+                { name: "iFood", value: sourceCounts.ifood, color: "#ef4444" },
+                { name: "Quero", value: sourceCounts.quero, color: "#f97316" },
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis allowDecimals={false} />
                 <RTooltip />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  {[["web", "#8b5cf6"], ["pdv", "#3b82f6"], ["ifood", "#ef4444"], ["quero", "#f97316"]].map(([k, c]) => (
+                    <Cell key={k} fill={c} />
+                  ))}
+                </Bar>
+
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
