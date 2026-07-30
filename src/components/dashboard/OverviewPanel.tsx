@@ -145,34 +145,37 @@ export function OverviewPanel({ restaurantId, restaurantIds }: { restaurantId?: 
   const ordersQ = useQuery({
     queryKey: ["overview-orders", idsKey, prevRange.from.toISOString(), range.to.toISOString()],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await sb
-        .from("orders")
-        .select("id, restaurant_id, created_at, total, subtotal, discount, delivery_fee, service_fee, coupon_code, status, order_type, payment_method, external_source, customer_phone, customer_name, ifood_subsidy, merchant_subsidy")
-        .in("restaurant_id", ids)
-        .gte("created_at", prevRange.from.toISOString())
-        .lte("created_at", range.to.toISOString())
-        .neq("status", "cancelled");
-      return (data ?? []) as any[];
-    },
+    queryFn: async () =>
+      fetchAll(() =>
+        sb
+          .from("orders")
+          .select("id, restaurant_id, created_at, total, subtotal, discount, delivery_fee, service_fee, coupon_code, status, order_type, payment_method, external_source, customer_phone, customer_name, ifood_subsidy, merchant_subsidy")
+          .in("restaurant_id", ids)
+          .gte("created_at", prevRange.from.toISOString())
+          .lte("created_at", range.to.toISOString())
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true }),
+      ),
     staleTime: 30_000,
   });
 
   const itemsQ = useQuery({
     queryKey: ["overview-items", idsKey, range.from.toISOString(), range.to.toISOString()],
     enabled: ids.length > 0,
-    queryFn: async () => {
-      const { data } = await sb
-        .from("order_items")
-        .select("product_name, quantity, unit_price, order_id, orders!inner(restaurant_id, created_at, status)")
-        .in("orders.restaurant_id", ids)
-        .gte("orders.created_at", range.from.toISOString())
-        .lte("orders.created_at", range.to.toISOString())
-        .neq("orders.status", "cancelled");
-      return (data ?? []) as any[];
-    },
+    queryFn: async () =>
+      fetchAll(() =>
+        sb
+          .from("order_items")
+          .select("product_name, quantity, unit_price, order_id, orders!inner(restaurant_id, created_at, status)")
+          .in("orders.restaurant_id", ids)
+          .gte("orders.created_at", range.from.toISOString())
+          .lte("orders.created_at", range.to.toISOString())
+          .neq("orders.status", "cancelled")
+          .order("id", { ascending: true }),
+      ),
     staleTime: 30_000,
   });
+
 
   const customersQ = useQuery({
     queryKey: ["overview-customers", idsKey],
