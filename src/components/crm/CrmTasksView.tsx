@@ -186,9 +186,11 @@ export function CrmTasksView({
 
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
     const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
-    // Get today at 00:00
+    // Get today at 00:00 in Brasilia time (GMT-3)
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Brasilia is UTC-3. To get the start of the day in Brasilia:
+    const brDate = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const today = new Date(brDate.getFullYear(), brDate.getMonth(), brDate.getDate());
     
     // For review_next_day, we only look at orders from yesterday onwards
     // BUT we also apply the 5-day expiration rule for pending items
