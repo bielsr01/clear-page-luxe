@@ -262,6 +262,32 @@ async function handlePlaced(integration: any, ev: IHubEvent) {
       if (optRows.length) await supabase.from("order_item_options").insert(optRows);
     }
   }
+
+  // Sincroniza o cliente na tabela public.customers para aparecer no CRM
+  try {
+    const addr =
+      od?.delivery?.deliveryAddress ??
+      od?.deliveryAddress ??
+      od?.takeout?.takeoutAddress ??
+      od?.takeoutAddress ??
+      {};
+
+    await supabase.rpc("upsert_customer_on_order", {
+      _restaurant_id: integration.restaurant_id,
+      _name: customer.name ?? "Cliente iFood",
+      _phone: phone,
+      _address_cep: addr.postalCode ?? null,
+      _address_street: addr.streetName ?? null,
+      _address_number: addr.streetNumber ?? null,
+      _address_complement: addr.complement ?? null,
+      _address_neighborhood: addr.neighborhood ?? null,
+      _address_city: addr.city ?? null,
+      _address_state: addr.state ?? null
+    });
+  } catch (syncErr) {
+    console.error("[ihub-webhook] Erro ao sincronizar cliente:", syncErr);
+  }
+
   return data.id;
 }
 

@@ -192,7 +192,7 @@ export function CrmTasksView({
     
     // For review_next_day, we only look at orders from yesterday onwards
     // BUT we also apply the 5-day expiration rule for pending items
-    const REVIEW_START_ISO = new Date(today.getTime() - 6 * 86400000).toISOString();
+    const REVIEW_START_ISO = new Date(today.getTime() - 7 * 86400000).toISOString();
 
     let q = supabase
       .from("customers")
