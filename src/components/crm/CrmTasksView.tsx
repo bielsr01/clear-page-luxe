@@ -185,7 +185,7 @@ export function CrmTasksView({
   };
 
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
-    const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
+    const CUTOFF_ISO = "2026-08-05T00:00:00.000Z";
     // Get today at 00:00 in Brasilia time (GMT-3)
     const now = new Date();
     // Brasilia is UTC-3. To get the start of the day in Brasilia:
@@ -315,7 +315,7 @@ export function CrmTasksView({
     withTicket?: boolean;
     taskKey?: string;
   }): Promise<CustomerRow[]> => {
-    const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
+    const CUTOFF_ISO = "2026-08-05T00:00:00.000Z";
     if (opts.restaurantIds.length === 0) return [];
 
     const hasSelection = (opts.selectedCustomerIds ?? []).length > 0;
