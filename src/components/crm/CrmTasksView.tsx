@@ -186,7 +186,13 @@ export function CrmTasksView({
 
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
     const CUTOFF_ISO = "2026-06-01T00:00:00.000Z";
-    const REVIEW_START_ISO = "2026-11-19T00:00:00.000Z";
+    // Get today at 00:00
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // For review_next_day, we only look at orders from yesterday onwards
+    // BUT we also apply the 5-day expiration rule for pending items
+    const REVIEW_START_ISO = new Date(today.getTime() - 6 * 86400000).toISOString();
 
     let q = supabase
       .from("customers")
@@ -196,16 +202,15 @@ export function CrmTasksView({
       .limit(500);
     if (restaurantId) q = q.eq("restaurant_id", restaurantId);
 
-    const now = new Date();
     if (task.isReview) {
-      const today = new Date(now); today.setHours(0, 0, 0, 0);
+      // Pedidos que ocorreram ANTES de hoje (ontem ou antes até 5 dias atrás)
       q = q.lt("last_order_at", today.toISOString());
     } else if (task.range) {
       const [minD, maxD] = task.range;
-      const maxDate = new Date(now.getTime() - minD * 86400000).toISOString();
+      const maxDate = new Date(today.getTime() - minD * 86400000).toISOString();
       q = q.lte("last_order_at", maxDate);
       if (maxD !== null) {
-        const minDate = new Date(now.getTime() - (maxD + 1) * 86400000).toISOString();
+        const minDate = new Date(today.getTime() - (maxD + 1) * 86400000).toISOString();
         q = q.gt("last_order_at", minDate);
       }
     }
@@ -254,24 +259,36 @@ export function CrmTasksView({
       sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
     });
 
-    return customers.map((c) => {
-      const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
-      const a = agg.get(key);
-      const refDate = (c.last_order_at ?? "").slice(0, 10);
-      const s = sendMap.get(`${c.id}|${refDate}`);
-      return {
-        id: c.id,
-        restaurant_id: c.restaurant_id,
-        name: c.name,
-        phone: c.phone,
-        orders_count: c.orders_count,
-        last_order_at: c.last_order_at,
-        ticket_medio: a && a.count > 0 ? a.sum / a.count : 0,
-        reference_date: refDate,
-        status: (s?.status === "sent" ? "sent" : "pending") as "pending" | "sent",
-        sent_at: s?.sent_at ?? null,
-      };
-    });
+    return customers
+      .map((c) => {
+        const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
+        const a = agg.get(key);
+        const refDate = (c.last_order_at ?? "").slice(0, 10);
+        const s = sendMap.get(`${c.id}|${refDate}`);
+        
+        return {
+          id: c.id,
+          restaurant_id: c.restaurant_id,
+          name: c.name,
+          phone: c.phone,
+          orders_count: c.orders_count,
+          last_order_at: c.last_order_at,
+          ticket_medio: a && a.count > 0 ? a.sum / a.count : 0,
+          reference_date: refDate,
+          status: (s?.status === "sent" ? "sent" : "pending") as "pending" | "sent",
+          sent_at: s?.sent_at ?? null,
+        };
+      })
+      .filter((row) => {
+        // Regra de 5 dias para Avaliação (dia seguinte)
+        if (task.isReview && row.status === "pending") {
+          const orderDate = new Date(row.last_order_at!);
+          const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+          const diffDays = Math.floor((today.getTime() - orderDay.getTime()) / 86400000);
+          return diffDays <= 5;
+        }
+        return true;
+      });
   };
 
   const loadAll = async () => {
