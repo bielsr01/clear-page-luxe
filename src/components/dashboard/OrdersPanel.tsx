@@ -415,11 +415,23 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
     // No iFood, "delivered" é atualizado automaticamente pelo webhook (CONCLUDED) — não enviamos ação.
     if (o.external_source === "ifood") {
       if (next === "delivered") {
-        patchOrder(o.id, { status: prevStatus });
-        toast.info("Pedidos do iFood são marcados como entregues automaticamente pelo iFood.");
-        setPending(o.id, false);
-        return;
+        // O iFood normalmente marca como entregue via webhook (CONCLUDED).
+        // Se o evento CONCLUDED já chegou e o pedido ficou preso no painel,
+        // permitimos finalizar manualmente.
+        const { data: concluded } = await supabase
+          .from("ihub_events")
+          .select("id")
+          .eq("order_id", o.external_order_id ?? "")
+          .in("full_code", ["CONCLUDED", "CONCLUDED_ORDER"])
+          .limit(1);
+        if (!concluded || concluded.length === 0) {
+          patchOrder(o.id, { status: prevStatus });
+          toast.info("Pedidos do iFood são marcados como entregues automaticamente pelo iFood.");
+          setPending(o.id, false);
+          return;
+        }
       }
+
       // Defesa: precisa ter external_order_id para mandar a ação só desse pedido
       if (!o.external_order_id) {
         patchOrder(o.id, { status: prevStatus });
