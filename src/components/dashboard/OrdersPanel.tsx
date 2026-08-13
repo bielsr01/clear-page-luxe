@@ -478,14 +478,28 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       }
     }
 
-    const { error } = await supabase.from("orders").update({ status: next }).eq("id", o.id);
+    // Atualiza somente se o status no banco ainda for o que o painel viu.
+    // Evita que um clique com tela desatualizada "puxe o pedido para trás"
+    // (ex.: webhook do iFood já marcou CONCLUDED enquanto o card mostrava "Preparando").
+    const { data: updated, error } = await supabase
+      .from("orders")
+      .update({ status: next })
+      .eq("id", o.id)
+      .eq("status", prevStatus)
+      .select("id, status");
     if (error) {
       patchOrder(o.id, { status: prevStatus });
       toast.error(error.message);
+    } else if (!updated || updated.length === 0) {
+      const { data: fresh } = await supabase.from("orders").select("status").eq("id", o.id).maybeSingle();
+      const current = (fresh?.status ?? prevStatus) as Order["status"];
+      patchOrder(o.id, { status: current });
+      toast.info(`Pedido #${displayOrderNumber(o)} já estava em "${orderStatusLabel[current]}".`);
     } else {
       toast.success(`Pedido #${displayOrderNumber(o)} → "${orderStatusLabel[next]}"`);
     }
     setPending(o.id, false);
+
   };
 
   const cancel = async (o: Order, opts?: { cancelReason?: string; cancelCode?: string }) => {
