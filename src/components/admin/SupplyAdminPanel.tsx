@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Package, ShoppingBag, Truck, CheckCircle2, X, Store } from "lucide-react";
@@ -648,6 +648,9 @@ export function SupplyCatalogTab() {
                             const hasGroups = adminStockGroupIds.length > 0;
                             const availSubs = adminSubgroups.filter(s => adminStockGroupIds.includes(s.group_id));
                             const groupNameById = new Map(adminGroups.map(g => [g.id, g.name]));
+                            const subsByGroup: Record<string, AdminStockSubgroup[]> = {};
+                            availSubs.forEach(s => { (subsByGroup[s.group_id] ??= []).push(s); });
+                            const groupIdsOrdered = adminStockGroupIds.filter(gid => subsByGroup[gid] && subsByGroup[gid].length > 0);
                             return (
                               <div key={i} className="flex items-center gap-2 rounded-md border bg-background p-2">
                                 <span className="font-medium text-sm flex-1 truncate">{o.name}</span>
@@ -665,10 +668,13 @@ export function SupplyCatalogTab() {
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="none">{hasGroups ? "Sem vínculo" : "Selecione o(s) grupo(s) admin"}</SelectItem>
-                                      {availSubs.map(s => (
-                                        <SelectItem key={s.id} value={s.id}>
-                                          {adminStockGroupIds.length > 1 ? `${groupNameById.get(s.group_id) ?? ""} — ${s.name}` : s.name}
-                                        </SelectItem>
+                                      {groupIdsOrdered.map(gid => (
+                                        <SelectGroup key={gid}>
+                                          <SelectLabel>{groupNameById.get(gid) ?? "Grupo"}</SelectLabel>
+                                          {subsByGroup[gid].map(s => (
+                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                          ))}
+                                        </SelectGroup>
                                       ))}
                                     </SelectContent>
                                   </Select>
