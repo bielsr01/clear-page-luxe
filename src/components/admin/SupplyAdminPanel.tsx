@@ -586,7 +586,7 @@ export function SupplyCatalogTab() {
                   <div className="mt-1 space-y-2">
                     {adminStockGroupIds.map(gid => (
                       <div key={gid} className="flex items-center gap-2">
-                        <span className="text-sm w-40 shrink-0 truncate">{groupNameById.get(gid) ?? "Grupo"}</span>
+                        <span className="text-sm w-40 shrink-0 truncate">{adminGroups.find(g => g.id === gid)?.name ?? "Grupo"}</span>
                         <Select
                           value={groupStockMap[gid] || "none"}
                           onValueChange={(v) => setGroupStockMap(prev => ({ ...prev, [gid]: v === "none" ? "" : v }))}
