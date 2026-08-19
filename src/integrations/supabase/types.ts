@@ -3417,6 +3417,7 @@ export type Database = {
       supply_products: {
         Row: {
           admin_stock_group_id: string | null
+          admin_stock_group_ids: string[]
           created_at: string
           description: string | null
           expense_category_id: string | null
@@ -3435,6 +3436,7 @@ export type Database = {
         }
         Insert: {
           admin_stock_group_id?: string | null
+          admin_stock_group_ids?: string[]
           created_at?: string
           description?: string | null
           expense_category_id?: string | null
@@ -3453,6 +3455,7 @@ export type Database = {
         }
         Update: {
           admin_stock_group_id?: string | null
+          admin_stock_group_ids?: string[]
           created_at?: string
           description?: string | null
           expense_category_id?: string | null
