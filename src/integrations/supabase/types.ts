@@ -3416,6 +3416,7 @@ export type Database = {
       }
       supply_products: {
         Row: {
+          admin_group_stock_map: Json
           admin_stock_group_id: string | null
           admin_stock_group_ids: string[]
           created_at: string
@@ -3435,6 +3436,7 @@ export type Database = {
           variant_group_name: string | null
         }
         Insert: {
+          admin_group_stock_map?: Json
           admin_stock_group_id?: string | null
           admin_stock_group_ids?: string[]
           created_at?: string
@@ -3454,6 +3456,7 @@ export type Database = {
           variant_group_name?: string | null
         }
         Update: {
+          admin_group_stock_map?: Json
           admin_stock_group_id?: string | null
           admin_stock_group_ids?: string[]
           created_at?: string

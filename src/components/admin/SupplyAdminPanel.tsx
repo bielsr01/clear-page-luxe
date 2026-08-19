@@ -311,6 +311,8 @@ export function SupplyCatalogTab() {
   const [stockGroupId, setStockGroupId] = useState<string>("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string>("");
   const [adminStockGroupIds, setAdminStockGroupIds] = useState<string[]>([]);
+  const [groupStockMap, setGroupStockMap] = useState<Record<string, string>>({});
+
   const [saving, setSaving] = useState(false);
   const [imgUrl, setImgUrl] = useState<string>("");
   const [uploadingImg, setUploadingImg] = useState(false);
@@ -372,6 +374,8 @@ export function SupplyCatalogTab() {
     setStockGroupId("");
     setExpenseCategoryId("");
     setAdminStockGroupIds([]);
+    setGroupStockMap({});
+
     setImgUrl("");
     setOpen(true);
   };
@@ -391,6 +395,8 @@ export function SupplyCatalogTab() {
         ? p.admin_stock_group_ids
         : (p.admin_stock_group_id ? [p.admin_stock_group_id] : [])
     );
+    setGroupStockMap(((p as any).admin_group_stock_map ?? {}) as Record<string, string>);
+
     setImgUrl(p.image_url ?? "");
     setOpen(true);
   };
@@ -430,6 +436,10 @@ export function SupplyCatalogTab() {
       expense_category_id: expenseCategoryId || null,
       admin_stock_group_id: adminStockGroupIds[0] || null,
       admin_stock_group_ids: adminStockGroupIds,
+      admin_group_stock_map: Object.fromEntries(
+        adminStockGroupIds.filter(gid => groupStockMap[gid]).map(gid => [gid, groupStockMap[gid]])
+      ),
+
     };
     if (!payload.name) return toast.error("Nome obrigatório");
     if (hasVariants) {
@@ -577,6 +587,31 @@ export function SupplyCatalogTab() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Selecione um ou mais grupos. As opções (sabores) abaixo poderão ser vinculadas aos subgrupos de todos os grupos marcados. Quando o pedido for entregue, cada opção descontará a quantidade do subgrupo correspondente.</p>
               </div>
+
+              {adminStockGroupIds.length > 0 && (
+                <div>
+                  <Label>Destino no estoque do restaurante (por grupo)</Label>
+                  <div className="mt-1 space-y-2">
+                    {adminStockGroupIds.map(gid => (
+                      <div key={gid} className="flex items-center gap-2">
+                        <span className="text-sm w-40 shrink-0 truncate">{adminGroups.find(g => g.id === gid)?.name ?? "Grupo"}</span>
+                        <Select
+                          value={groupStockMap[gid] || "none"}
+                          onValueChange={(v) => setGroupStockMap(prev => ({ ...prev, [gid]: v === "none" ? "" : v }))}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Usar grupo padrão" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Usar grupo padrão</SelectItem>
+                            {stockGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Na entrega, a quantidade de cada sabor entra no grupo de estoque do restaurante mapeado aqui (ex.: 1000 coxinhas + 1400 churros). O que não estiver mapeado vai para o grupo de estoque padrão acima.</p>
+                </div>
+              )}
+
 
 
               <div>
