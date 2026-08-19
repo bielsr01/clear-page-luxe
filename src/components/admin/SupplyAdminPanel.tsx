@@ -374,6 +374,8 @@ export function SupplyCatalogTab() {
     setStockGroupId("");
     setExpenseCategoryId("");
     setAdminStockGroupIds([]);
+    setGroupStockMap({});
+
     setImgUrl("");
     setOpen(true);
   };
