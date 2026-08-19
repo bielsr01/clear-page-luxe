@@ -395,6 +395,8 @@ export function SupplyCatalogTab() {
         ? p.admin_stock_group_ids
         : (p.admin_stock_group_id ? [p.admin_stock_group_id] : [])
     );
+    setGroupStockMap(((p as any).admin_group_stock_map ?? {}) as Record<string, string>);
+
     setImgUrl(p.image_url ?? "");
     setOpen(true);
   };
