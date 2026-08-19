@@ -436,6 +436,10 @@ export function SupplyCatalogTab() {
       expense_category_id: expenseCategoryId || null,
       admin_stock_group_id: adminStockGroupIds[0] || null,
       admin_stock_group_ids: adminStockGroupIds,
+      admin_group_stock_map: Object.fromEntries(
+        adminStockGroupIds.filter(gid => groupStockMap[gid]).map(gid => [gid, groupStockMap[gid]])
+      ),
+
     };
     if (!payload.name) return toast.error("Nome obrigatório");
     if (hasVariants) {
