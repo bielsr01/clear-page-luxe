@@ -2456,6 +2456,7 @@ export type Database = {
           cash_session_id: string | null
           change_for: number | null
           coupon_code: string | null
+          coupon_counted: boolean
           created_at: string
           created_by: string | null
           customer_name: string
@@ -2495,6 +2496,7 @@ export type Database = {
           cash_session_id?: string | null
           change_for?: number | null
           coupon_code?: string | null
+          coupon_counted?: boolean
           created_at?: string
           created_by?: string | null
           customer_name: string
@@ -2534,6 +2536,7 @@ export type Database = {
           cash_session_id?: string | null
           change_for?: number | null
           coupon_code?: string | null
+          coupon_counted?: boolean
           created_at?: string
           created_by?: string | null
           customer_name?: string
