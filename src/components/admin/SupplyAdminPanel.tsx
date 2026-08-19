@@ -614,7 +614,7 @@ export function SupplyCatalogTab() {
                 <p className="text-xs text-muted-foreground mt-1">Usado apenas para o que não estiver vinculado acima (insumos sem sabores ou quantidade restante).</p>
               </div>
 
-              )}
+
 
 
 
