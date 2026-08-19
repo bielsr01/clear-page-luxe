@@ -597,12 +597,6 @@ export function SupplyCatalogTab() {
                   <p className="text-xs text-muted-foreground mt-1">Ex.: caixa com 2400 = 1000 coxinha de frango + 1400 churros de doce de leite → entram 1000 no grupo Coxinhas e 1400 no grupo Churros da loja, e saem dos subgrupos correspondentes da fábrica.</p>
                 </div>
               )}
-
-
-
-
-
-
               <div>
                 <Label>Vincular à categoria de despesa</Label>
                 <Select value={expenseCategoryId || "none"} onValueChange={(v) => setExpenseCategoryId(v === "none" ? "" : v)}>
