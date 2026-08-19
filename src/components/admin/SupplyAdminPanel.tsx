@@ -25,6 +25,7 @@ type SupplyProduct = {
   stock_group_id: string | null;
   expense_category_id: string | null;
   admin_stock_group_id: string | null;
+  admin_stock_group_ids?: string[] | null;
 };
 type StockGroup = { id: string; name: string };
 type ExpenseCategory = { id: string; name: string };
@@ -309,7 +310,7 @@ export function SupplyCatalogTab() {
   const [newOpt, setNewOpt] = useState("");
   const [stockGroupId, setStockGroupId] = useState<string>("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string>("");
-  const [adminStockGroupId, setAdminStockGroupId] = useState<string>("");
+  const [adminStockGroupIds, setAdminStockGroupIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [imgUrl, setImgUrl] = useState<string>("");
   const [uploadingImg, setUploadingImg] = useState(false);
