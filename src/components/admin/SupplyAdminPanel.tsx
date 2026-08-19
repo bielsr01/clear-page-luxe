@@ -428,7 +428,8 @@ export function SupplyCatalogTab() {
       quantity_step: hasVariants ? Math.max(1, Number(step) || 50) : 50,
       stock_group_id: stockGroupId || null,
       expense_category_id: expenseCategoryId || null,
-      admin_stock_group_id: adminStockGroupId || null,
+      admin_stock_group_id: adminStockGroupIds[0] || null,
+      admin_stock_group_ids: adminStockGroupIds,
     };
     if (!payload.name) return toast.error("Nome obrigatório");
     if (hasVariants) {
@@ -539,16 +540,44 @@ export function SupplyCatalogTab() {
               </div>
 
               <div>
-                <Label>Grupo do estoque admin (fábrica)</Label>
-                <Select value={adminStockGroupId || "none"} onValueChange={(v) => setAdminStockGroupId(v === "none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Não vincular ao estoque admin" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Não vincular ao estoque admin</SelectItem>
-                    {adminGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">Quando o pedido for entregue, cada opção (sabor) descontará a quantidade pedida do subgrupo correspondente no estoque admin.</p>
+                <Label>Grupos do estoque admin (fábrica)</Label>
+                <div className="mt-1 rounded-md border divide-y max-h-48 overflow-y-auto">
+                  {adminGroups.length === 0 && (
+                    <div className="p-2 text-xs text-muted-foreground">Nenhum grupo cadastrado no estoque admin</div>
+                  )}
+                  {adminGroups.map(g => {
+                    const checked = adminStockGroupIds.includes(g.id);
+                    return (
+                      <label key={g.id} className="flex items-center gap-2 p-2 text-sm cursor-pointer hover:bg-muted/50">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-primary"
+                          checked={checked}
+                          onChange={(e) => {
+                            setAdminStockGroupIds(prev => {
+                              const next = e.target.checked ? [...prev, g.id] : prev.filter(x => x !== g.id);
+                              if (!e.target.checked) {
+                                const stillValid = new Set(
+                                  adminSubgroups.filter(s => next.includes(s.group_id)).map(s => s.id)
+                                );
+                                setOptions(arr => arr.map(o => (
+                                  o.admin_stock_subgroup_id && !stillValid.has(o.admin_stock_subgroup_id)
+                                    ? { ...o, admin_stock_subgroup_id: null }
+                                    : o
+                                )));
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                        <span>{g.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Selecione um ou mais grupos. As opções (sabores) abaixo poderão ser vinculadas aos subgrupos de todos os grupos marcados. Quando o pedido for entregue, cada opção descontará a quantidade do subgrupo correspondente.</p>
               </div>
+
 
               <div>
                 <Label>Vincular à categoria de despesa</Label>
