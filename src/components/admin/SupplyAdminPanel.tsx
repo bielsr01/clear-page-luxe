@@ -538,19 +538,7 @@ export function SupplyCatalogTab() {
               </div>
 
               <div>
-                <Label>Grupo de estoque</Label>
-                <Select value={stockGroupId || "none"} onValueChange={(v) => setStockGroupId(v === "none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Não vincular ao estoque" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Não vincular ao estoque</SelectItem>
-                    {stockGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">Quando o pedido for marcado como entregue, a quantidade entra automaticamente neste grupo no estoque do restaurante.</p>
-              </div>
-
-              <div>
-                <Label>Grupos do estoque admin (fábrica)</Label>
+                <Label>1) Grupos do estoque admin (fábrica)</Label>
                 <div className="mt-1 rounded-md border divide-y max-h-48 overflow-y-auto">
                   {adminGroups.length === 0 && (
                     <div className="p-2 text-xs text-muted-foreground">Nenhum grupo cadastrado no estoque admin</div>
@@ -575,6 +563,7 @@ export function SupplyCatalogTab() {
                                     ? { ...o, admin_stock_subgroup_id: null }
                                     : o
                                 )));
+                                setGroupStockMap(m => { const n = { ...m }; delete n[g.id]; return n; });
                               }
                               return next;
                             });
@@ -585,31 +574,46 @@ export function SupplyCatalogTab() {
                     );
                   })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Selecione um ou mais grupos. As opções (sabores) abaixo poderão ser vinculadas aos subgrupos de todos os grupos marcados. Quando o pedido for entregue, cada opção descontará a quantidade do subgrupo correspondente.</p>
+                <p className="text-xs text-muted-foreground mt-1">Na fábrica o desconto é por subgrupo (sabor). Vincule cada opção abaixo ao subgrupo correspondente.</p>
               </div>
 
               {adminStockGroupIds.length > 0 && (
                 <div>
-                  <Label>Destino no estoque do restaurante (por grupo)</Label>
+                  <Label>2) Grupo do estoque da loja para cada grupo da fábrica</Label>
                   <div className="mt-1 space-y-2">
                     {adminStockGroupIds.map(gid => (
                       <div key={gid} className="flex items-center gap-2">
                         <span className="text-sm w-40 shrink-0 truncate">{adminGroups.find(g => g.id === gid)?.name ?? "Grupo"}</span>
+                        <span className="text-muted-foreground text-sm">→</span>
                         <Select
                           value={groupStockMap[gid] || "none"}
                           onValueChange={(v) => setGroupStockMap(prev => ({ ...prev, [gid]: v === "none" ? "" : v }))}
                         >
-                          <SelectTrigger><SelectValue placeholder="Usar grupo padrão" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="Selecione o grupo da loja" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">Usar grupo padrão</SelectItem>
+                            <SelectItem value="none">Não vincular</SelectItem>
                             {stockGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Na entrega, a quantidade de cada sabor entra no grupo de estoque do restaurante mapeado aqui (ex.: 1000 coxinhas + 1400 churros). O que não estiver mapeado vai para o grupo de estoque padrão acima.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Ex.: caixa com 2400 = 1000 coxinha de frango + 1400 churros de doce de leite → entram 1000 no grupo Coxinhas e 1400 no grupo Churros da loja, e saem dos subgrupos correspondentes da fábrica.</p>
                 </div>
+              )}
+
+              <div>
+                <Label>Grupo de estoque da loja (padrão)</Label>
+                <Select value={stockGroupId || "none"} onValueChange={(v) => setStockGroupId(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Não vincular ao estoque" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Não vincular ao estoque</SelectItem>
+                    {stockGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Usado apenas para o que não estiver vinculado acima (insumos sem sabores ou quantidade restante).</p>
+              </div>
+
               )}
 
 
