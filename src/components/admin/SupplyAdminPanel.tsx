@@ -653,8 +653,6 @@ export function SupplyCatalogTab() {
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
-
-                                    </SelectContent>
                                   </Select>
                                 </div>
                                 <button type="button" onClick={() => setOptions(arr => arr.filter((_, idx) => idx !== i))}
