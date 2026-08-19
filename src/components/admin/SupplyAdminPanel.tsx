@@ -311,6 +311,8 @@ export function SupplyCatalogTab() {
   const [stockGroupId, setStockGroupId] = useState<string>("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string>("");
   const [adminStockGroupIds, setAdminStockGroupIds] = useState<string[]>([]);
+  const [groupStockMap, setGroupStockMap] = useState<Record<string, string>>({});
+
   const [saving, setSaving] = useState(false);
   const [imgUrl, setImgUrl] = useState<string>("");
   const [uploadingImg, setUploadingImg] = useState(false);
