@@ -371,7 +371,7 @@ export function SupplyCatalogTab() {
     setHasVariants(false); setGroupName(""); setTotalQty(""); setStep(50); setOptions([]); setNewOpt("");
     setStockGroupId("");
     setExpenseCategoryId("");
-    setAdminStockGroupId("");
+    setAdminStockGroupIds([]);
     setImgUrl("");
     setOpen(true);
   };
@@ -386,7 +386,11 @@ export function SupplyCatalogTab() {
     setNewOpt("");
     setStockGroupId(p.stock_group_id ?? "");
     setExpenseCategoryId(p.expense_category_id ?? "");
-    setAdminStockGroupId(p.admin_stock_group_id ?? "");
+    setAdminStockGroupIds(
+      (p.admin_stock_group_ids && p.admin_stock_group_ids.length > 0)
+        ? p.admin_stock_group_ids
+        : (p.admin_stock_group_id ? [p.admin_stock_group_id] : [])
+    );
     setImgUrl(p.image_url ?? "");
     setOpen(true);
   };
