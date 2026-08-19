@@ -308,7 +308,6 @@ export function SupplyCatalogTab() {
   const [step, setStep] = useState<number>(50);
   const [options, setOptions] = useState<{ id?: string; name: string; admin_stock_subgroup_id: string | null }[]>([]);
   const [newOpt, setNewOpt] = useState("");
-  const [stockGroupId, setStockGroupId] = useState<string>("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string>("");
   const [adminStockGroupIds, setAdminStockGroupIds] = useState<string[]>([]);
   const [groupStockMap, setGroupStockMap] = useState<Record<string, string>>({});
@@ -371,7 +370,6 @@ export function SupplyCatalogTab() {
   const openNew = () => {
     setEditing(null);
     setHasVariants(false); setGroupName(""); setTotalQty(""); setStep(50); setOptions([]); setNewOpt("");
-    setStockGroupId("");
     setExpenseCategoryId("");
     setAdminStockGroupIds([]);
     setGroupStockMap({});
@@ -388,7 +386,6 @@ export function SupplyCatalogTab() {
     setStep(p.quantity_step ?? 50);
     setOptions((optsByProduct[p.id] ?? []).map(o => ({ id: o.id, name: o.name, admin_stock_subgroup_id: o.admin_stock_subgroup_id ?? null })));
     setNewOpt("");
-    setStockGroupId(p.stock_group_id ?? "");
     setExpenseCategoryId(p.expense_category_id ?? "");
     setAdminStockGroupIds(
       (p.admin_stock_group_ids && p.admin_stock_group_ids.length > 0)
@@ -432,7 +429,6 @@ export function SupplyCatalogTab() {
       variant_group_name: hasVariants ? (groupName.trim() || null) : null,
       total_quantity: hasVariants && totalQty !== "" ? Number(totalQty) : null,
       quantity_step: hasVariants ? Math.max(1, Number(step) || 50) : 50,
-      stock_group_id: stockGroupId || null,
       expense_category_id: expenseCategoryId || null,
       admin_stock_group_id: adminStockGroupIds[0] || null,
       admin_stock_group_ids: adminStockGroupIds,
@@ -601,23 +597,6 @@ export function SupplyCatalogTab() {
                   <p className="text-xs text-muted-foreground mt-1">Ex.: caixa com 2400 = 1000 coxinha de frango + 1400 churros de doce de leite → entram 1000 no grupo Coxinhas e 1400 no grupo Churros da loja, e saem dos subgrupos correspondentes da fábrica.</p>
                 </div>
               )}
-
-              <div>
-                <Label>Grupo de estoque da loja (padrão)</Label>
-                <Select value={stockGroupId || "none"} onValueChange={(v) => setStockGroupId(v === "none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="Não vincular ao estoque" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Não vincular ao estoque</SelectItem>
-                    {stockGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">Usado apenas para o que não estiver vinculado acima (insumos sem sabores ou quantidade restante).</p>
-              </div>
-
-
-
-
-
               <div>
                 <Label>Vincular à categoria de despesa</Label>
                 <Select value={expenseCategoryId || "none"} onValueChange={(v) => setExpenseCategoryId(v === "none" ? "" : v)}>
