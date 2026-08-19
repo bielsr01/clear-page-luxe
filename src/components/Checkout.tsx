@@ -646,12 +646,9 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
       });
     } catch (_) { /* não bloqueia o pedido */ }
 
-    // Incrementa uses_count do cupom (best-effort)
-    if (coupon?.id) {
-      try {
-        await supabase.from("coupons" as any).update({ uses_count: Number(coupon.uses_count ?? 0) + 1 }).eq("id", coupon.id);
-      } catch (_) {}
-    }
+    // uses_count do cupom é contabilizado no banco (trigger) quando o pedido é aceito,
+    // e revertido automaticamente se o pedido for cancelado.
+
 
     // Programa de fidelidade — cria/atualiza membro e cria transação pendente via RPC (SECURITY DEFINER)
     let earnedPoints = 0;
