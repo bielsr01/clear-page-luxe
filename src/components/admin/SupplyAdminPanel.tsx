@@ -627,7 +627,9 @@ export function SupplyCatalogTab() {
                       {options.length > 0 && (
                         <div className="space-y-2 mt-2">
                           {options.map((o, i) => {
-                            const availSubs = adminSubgroups.filter(s => !adminStockGroupId || s.group_id === adminStockGroupId);
+                            const hasGroups = adminStockGroupIds.length > 0;
+                            const availSubs = adminSubgroups.filter(s => adminStockGroupIds.includes(s.group_id));
+                            const groupNameById = new Map(adminGroups.map(g => [g.id, g.name]));
                             return (
                               <div key={i} className="flex items-center gap-2 rounded-md border bg-background p-2">
                                 <span className="font-medium text-sm flex-1 truncate">{o.name}</span>
@@ -638,14 +640,20 @@ export function SupplyCatalogTab() {
                                       const v = val === "none" ? null : val;
                                       setOptions(arr => arr.map((x, idx) => idx === i ? { ...x, admin_stock_subgroup_id: v } : x));
                                     }}
-                                    disabled={!adminStockGroupId}
+                                    disabled={!hasGroups}
                                   >
                                     <SelectTrigger className="h-8 text-xs">
-                                      <SelectValue placeholder={adminStockGroupId ? "Sem vínculo" : "Selecione o grupo admin"} />
+                                      <SelectValue placeholder={hasGroups ? "Sem vínculo" : "Selecione o(s) grupo(s) admin"} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="none">{adminStockGroupId ? "Sem vínculo" : "Selecione o grupo admin"}</SelectItem>
-                                      {availSubs.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                                      <SelectItem value="none">{hasGroups ? "Sem vínculo" : "Selecione o(s) grupo(s) admin"}</SelectItem>
+                                      {availSubs.map(s => (
+                                        <SelectItem key={s.id} value={s.id}>
+                                          {adminStockGroupIds.length > 1 ? `${groupNameById.get(s.group_id) ?? ""} — ${s.name}` : s.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+
                                     </SelectContent>
                                   </Select>
                                 </div>
