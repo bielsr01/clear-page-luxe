@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, BarChart3, Users, DollarSign, TrendingUp, UserPlus, Repeat } from "lucide-react";
+import { ArrowLeft, BarChart3, Users, DollarSign, TrendingUp, UserPlus, Repeat, Eye } from "lucide-react";
 import { brl } from "@/lib/format";
+import { CouponUsageDetailsDialog } from "./CouponUsageDetailsDialog";
 
 type Coupon = { id: string; code: string; name: string; uses_count: number; restaurant_id: string };
 type Order = {
@@ -127,6 +128,7 @@ export function CouponMetrics({
   const ids = (restaurantIds && restaurantIds.length > 0 ? restaurantIds : restaurantId ? [restaurantId] : []);
   const idsKey = ids.slice().sort().join(",");
   const [selected, setSelected] = useState<string>("__all__");
+  const [showUsageDetails, setShowUsageDetails] = useState(false);
   const multi = ids.length > 1;
 
   const { data: restaurants } = useQuery({
@@ -167,7 +169,7 @@ export function CouponMetrics({
       for (;;) {
         const { data, error } = await supabase
           .from("orders")
-          .select("id,restaurant_id,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at")
+          .select("id,restaurant_id,customer_name,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at,order_number")
           .in("restaurant_id", ids)
           .neq("status", "cancelled")
           .order("created_at", { ascending: true })
@@ -274,7 +276,12 @@ export function CouponMetrics({
         <>
           <Section title="Uso básico" icon={Users}>
             <Metric label="Total de usos" value={stats.totalUses.toString()} breakdown={breakdownFor((s) => s.totalUses, (n) => n.toString())} />
-            <Metric label="Usuários únicos" value={stats.uniqueUsers.toString()} breakdown={breakdownFor((s) => s.uniqueUsers, (n) => n.toString())} />
+            <Metric 
+              label="Usuários únicos" 
+              value={stats.uniqueUsers.toString()} 
+              breakdown={breakdownFor((s) => s.uniqueUsers, (n) => n.toString())}
+              onViewDetails={() => setShowUsageDetails(true)}
+            />
           </Section>
 
           <Section title="Receita gerada" icon={DollarSign}>
@@ -345,6 +352,14 @@ export function CouponMetrics({
           </Card>
         </>
       )}
+
+      <CouponUsageDetailsDialog
+        open={showUsageDetails}
+        onOpenChange={setShowUsageDetails}
+        orders={allOrders ?? []}
+        filterCode={filterCode}
+        couponCodes={codes}
+      />
     </div>
   );
 }
@@ -367,16 +382,30 @@ function Metric({
   value,
   tone,
   breakdown,
+  onViewDetails,
 }: {
   label: string;
   value: string;
   tone?: "success" | "destructive";
   breakdown?: { name: string; value: string }[];
+  onViewDetails?: () => void;
 }) {
   const color = tone === "success" ? "text-success" : tone === "destructive" ? "text-destructive" : "text-foreground";
   return (
     <div className="rounded-lg border bg-card p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        {onViewDetails && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6 text-muted-foreground hover:text-primary"
+            onClick={onViewDetails}
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </Button>
+        )}
+      </div>
       <div className={`text-2xl font-bold mt-1 ${color}`}>{value}</div>
       {breakdown && breakdown.length > 0 && (
         <div className="mt-3 pt-3 border-t space-y-1">
