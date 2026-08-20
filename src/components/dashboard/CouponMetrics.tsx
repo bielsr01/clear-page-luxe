@@ -160,15 +160,28 @@ export function CouponMetrics({
     queryKey: ["coupon-metrics-orders", idsKey],
     enabled: ids.length > 0,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id,restaurant_id,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at")
-        .in("restaurant_id", ids)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: true });
-      return (data ?? []) as Order[];
+      const page = 1000;
+      let from = 0;
+      const acc: Order[] = [];
+      // paginação: Supabase limita a 1000 linhas por consulta
+      for (;;) {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("id,restaurant_id,customer_phone,subtotal,total,delivery_fee,coupon_code,created_at")
+          .in("restaurant_id", ids)
+          .neq("status", "cancelled")
+          .order("created_at", { ascending: true })
+          .range(from, from + page - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as Order[];
+        acc.push(...rows);
+        if (rows.length < page) break;
+        from += page;
+      }
+      return acc;
     },
   });
+
 
   const codes = useMemo(() => new Set((coupons ?? []).map((c) => c.code.toUpperCase())), [coupons]);
   const filterCode = selected === "__all__" ? null : selected.toUpperCase();
