@@ -356,34 +356,42 @@ export function CrmTasksView({
     withTicket?: boolean;
     taskKey?: string;
   }): Promise<CustomerRow[]> => {
-    const CUTOFF_ISO = "2026-08-05T00:00:00.000Z";
+    const today = brToday();
+    const TICKET_FROM_ISO = new Date(today.getTime() - 365 * 86400000).toISOString();
     if (opts.restaurantIds.length === 0) return [];
 
     const hasSelection = (opts.selectedCustomerIds ?? []).length > 0;
 
-    let q = supabase
-      .from("customers")
-      .select("id,restaurant_id,name,phone,orders_count,last_order_at")
-      .in("restaurant_id", opts.restaurantIds)
-      .limit(2000);
+    const buildCustomers = () => {
+      let q = supabase
+        .from("customers")
+        .select("id,restaurant_id,name,phone,orders_count,last_order_at")
+        .in("restaurant_id", opts.restaurantIds)
+        .order("last_order_at", { ascending: false, nullsFirst: false });
 
-    if (hasSelection) {
-      q = q.in("id", opts.selectedCustomerIds as string[]);
-    } else {
-      q = q.not("last_order_at", "is", null).gte("last_order_at", CUTOFF_ISO);
-      if (opts.minOrders && opts.minOrders > 0) q = q.gte("orders_count", opts.minOrders);
-      if (opts.clientType) {
-        const opt = CLIENT_TYPE_OPTIONS.find((o) => o.value === opts.clientType);
-        if (opt) {
-          q = q.gte("orders_count", opt.min);
-          if (opt.max !== null) q = q.lte("orders_count", opt.max);
+      if (hasSelection) {
+        q = q.in("id", opts.selectedCustomerIds as string[]);
+      } else {
+        q = q.not("last_order_at", "is", null);
+        if (opts.minOrders && opts.minOrders > 0) q = q.gte("orders_count", opts.minOrders);
+        if (opts.clientType) {
+          const opt = CLIENT_TYPE_OPTIONS.find((o) => o.value === opts.clientType);
+          if (opt) {
+            q = q.gte("orders_count", opt.min);
+            if (opt.max !== null) q = q.lte("orders_count", opt.max);
+          }
         }
       }
-    }
+      return q;
+    };
 
-    const { data, error } = await q;
-    if (error) { toast.error(error.message); return []; }
-    let customers = (data ?? []) as any[];
+    let customers: any[] = [];
+    try {
+      customers = await fetchAllRows<any>(buildCustomers);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao carregar clientes");
+      return [];
+    }
 
     // In-memory client_statuses filter (only when not using explicit selection)
     if (!hasSelection && (opts.clientStatuses ?? []).length > 0) {
@@ -399,18 +407,16 @@ export function CrmTasksView({
     // Ticket médio (optional)
     const agg = new Map<string, { sum: number; count: number }>();
     if (opts.withTicket && restIds.length > 0) {
-      const PAGE = 1000;
-      for (let from = 0; ; from += PAGE) {
-        const { data: batch, error: oErr } = await supabase
-          .from("orders")
-          .select("customer_phone,total,restaurant_id")
-          .neq("status", "cancelled")
-          .gte("created_at", CUTOFF_ISO)
-          .in("restaurant_id", restIds)
-          .range(from, from + PAGE - 1);
-        if (oErr) break;
-        const arr = batch ?? [];
-        arr.forEach((o: any) => {
+      try {
+        const orders = await fetchAllRows<any>(() =>
+          supabase
+            .from("orders")
+            .select("customer_phone,total,restaurant_id")
+            .neq("status", "cancelled")
+            .gte("created_at", TICKET_FROM_ISO)
+            .in("restaurant_id", restIds),
+        );
+        orders.forEach((o: any) => {
           const digits = onlyDigits(o.customer_phone);
           if (!digits) return;
           const key = `${o.restaurant_id}|${digits}`;
@@ -419,24 +425,38 @@ export function CrmTasksView({
           cur.count += 1;
           agg.set(key, cur);
         });
-        if (arr.length < PAGE) break;
+      } catch {
+        /* opcional */
       }
     }
 
     // Sends map (only if a taskKey given)
     const sendMap = new Map<string, { status: string; sent_at: string | null }>();
     if (opts.taskKey && restIds.length > 0) {
-      const { data: sends } = await supabase
-        .from("crm_task_sends")
-        .select("customer_id,reference_date,status,sent_at")
-        .eq("task_key", opts.taskKey)
-        .in("restaurant_id", restIds);
-      (sends ?? []).forEach((s: any) => {
-        sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
-      });
+      try {
+        const sends = await fetchAllRows<any>(() =>
+          supabase
+            .from("crm_task_sends")
+            .select("customer_id,reference_date,status,sent_at")
+            .eq("task_key", opts.taskKey!)
+            .in("restaurant_id", restIds),
+        );
+        sends.forEach((s: any) => {
+          sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
+        });
+      } catch {
+        /* sem histórico */
+      }
     }
 
-    const refDate = new Date().toISOString().slice(0, 10);
+    // Data de referência = hoje no fuso de Brasília
+    const refDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
     return customers.map((c) => {
       const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
       const a = agg.get(key);
