@@ -101,12 +101,38 @@ function onlyDigits(s: string | null | undefined): string {
   return (s ?? "").replace(/\D/g, "");
 }
 
+/** Instante UTC correspondente à meia-noite de hoje no fuso de Brasília (GMT-3). */
+function brToday(): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  // parts = "YYYY-MM-DD" no fuso de Brasília; meia-noite BRT = 03:00 UTC
+  return new Date(`${parts}T03:00:00.000Z`);
+}
+
+/** Busca todos os registros de uma query paginando (Supabase limita a 1000 linhas). */
+async function fetchAllRows<T = any>(build: () => any, page = 1000): Promise<T[]> {
+  const acc: T[] = [];
+  for (let from = 0; ; from += page) {
+    const { data, error } = await build().range(from, from + page - 1);
+    if (error) throw error;
+    const arr = (data ?? []) as T[];
+    acc.push(...arr);
+    if (arr.length < page) break;
+  }
+  return acc;
+}
+
 function buildWhatsAppLink(phone: string | null, message: string): string | null {
   const d = onlyDigits(phone);
   if (d.length < 10) return null;
   const withCountry = d.startsWith("55") ? d : `55${d}`;
   return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
 }
+
 
 function personalize(template: string, name: string): string {
   return (template || "").replace(/\{nome\}/gi, name || "");
@@ -185,89 +211,104 @@ export function CrmTasksView({
   };
 
   const loadTask = async (task: TaskDef): Promise<CustomerRow[]> => {
-    const CUTOFF_ISO = "2026-08-05T00:00:00.000Z";
-    // Get today at 00:00 in Brasilia time (GMT-3)
-    const now = new Date();
-    // Brasilia is UTC-3. To get the start of the day in Brasilia:
-    const brDate = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const today = new Date(brDate.getFullYear(), brDate.getMonth(), brDate.getDate());
-    
-    // For review_next_day, we only look at orders from yesterday onwards
-    // BUT we also apply the 5-day expiration rule for pending items
+    // Meia-noite de hoje no fuso de Brasília (GMT-3)
+    const today = brToday();
+    // Janela usada para o ticket médio (12 meses)
+    const TICKET_FROM_ISO = new Date(today.getTime() - 365 * 86400000).toISOString();
+    // Avaliação: buscamos até 7 dias para manter visíveis os já enviados; pendentes expiram em 5 dias
     const REVIEW_START_ISO = new Date(today.getTime() - 7 * 86400000).toISOString();
 
-    let q = supabase
-      .from("customers")
-      .select("id,restaurant_id,name,phone,orders_count,last_order_at")
-      .not("last_order_at", "is", null)
-      .gte("last_order_at", task.isReview ? REVIEW_START_ISO : CUTOFF_ISO)
-      .limit(500);
-    if (restaurantId) q = q.eq("restaurant_id", restaurantId);
+    const buildCustomers = () => {
+      let q = supabase
+        .from("customers")
+        .select("id,restaurant_id,name,phone,orders_count,last_order_at")
+        .not("last_order_at", "is", null)
+        .order("last_order_at", { ascending: false });
+      if (restaurantId) q = q.eq("restaurant_id", restaurantId);
 
-    if (task.isReview) {
-      // Pedidos que ocorreram ANTES de hoje (ontem ou antes até 5 dias atrás)
-      q = q.lt("last_order_at", today.toISOString());
-    } else if (task.range) {
-      const [minD, maxD] = task.range;
-      const maxDate = new Date(today.getTime() - minD * 86400000).toISOString();
-      q = q.lte("last_order_at", maxDate);
-      if (maxD !== null) {
-        const minDate = new Date(today.getTime() - (maxD + 1) * 86400000).toISOString();
-        q = q.gt("last_order_at", minDate);
+      if (task.isReview) {
+        q = q.gte("last_order_at", REVIEW_START_ISO).lt("last_order_at", today.toISOString());
+      } else if (task.range) {
+        const [minD, maxD] = task.range;
+        // sem compra há >= minD dias
+        q = q.lt("last_order_at", new Date(today.getTime() - minD * 86400000).toISOString());
+        if (maxD !== null) {
+          // e há <= maxD dias
+          q = q.gte("last_order_at", new Date(today.getTime() - (maxD + 1) * 86400000).toISOString());
+        }
       }
+      return q;
+    };
+
+    let customers: any[] = [];
+    try {
+      customers = await fetchAllRows<any>(buildCustomers);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao carregar clientes");
+      return [];
     }
-    const { data: cust, error } = await q;
-    if (error) { toast.error(error.message); return []; }
-    const customers = (cust ?? []) as any[];
     if (customers.length === 0) return [];
 
     const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id))) as string[];
-    const orders: any[] = [];
+
+    // Ticket médio por cliente (todos os restaurantes envolvidos, com paginação)
+    const agg = new Map<string, { sum: number; count: number }>();
     if (restIds.length > 0) {
-      const PAGE = 1000;
-      for (let from = 0; ; from += PAGE) {
-        const { data: batch, error: oErr } = await supabase
-          .from("orders")
-          .select("customer_phone,total,restaurant_id")
-          .neq("status", "cancelled")
-          .gte("created_at", CUTOFF_ISO)
-          .in("restaurant_id", restIds)
-          .range(from, from + PAGE - 1);
-        if (oErr) break;
-        const arr = batch ?? [];
-        orders.push(...arr);
-        if (arr.length < PAGE) break;
+      try {
+        const orders = await fetchAllRows<any>(() =>
+          supabase
+            .from("orders")
+            .select("customer_phone,total,restaurant_id")
+            .neq("status", "cancelled")
+            .gte("created_at", TICKET_FROM_ISO)
+            .in("restaurant_id", restIds),
+        );
+        orders.forEach((o: any) => {
+          const digits = onlyDigits(o.customer_phone);
+          if (!digits) return;
+          const key = `${o.restaurant_id}|${digits}`;
+          const cur = agg.get(key) ?? { sum: 0, count: 0 };
+          cur.sum += Number(o.total ?? 0);
+          cur.count += 1;
+          agg.set(key, cur);
+        });
+      } catch {
+        /* ticket médio é opcional — segue sem ele */
       }
     }
 
-    const agg = new Map<string, { sum: number; count: number }>();
-    (orders ?? []).forEach((o: any) => {
-      const digits = onlyDigits(o.customer_phone);
-      if (!digits) return;
-      const key = `${o.restaurant_id}|${digits}`;
-      const cur = agg.get(key) ?? { sum: 0, count: 0 };
-      cur.sum += Number(o.total ?? 0);
-      cur.count += 1;
-      agg.set(key, cur);
-    });
-
-    const { data: sends } = await supabase
-      .from("crm_task_sends")
-      .select("customer_id,reference_date,status,sent_at")
-      .eq("task_key", task.key)
-      .in("restaurant_id", restIds);
     const sendMap = new Map<string, { status: string; sent_at: string | null }>();
-    (sends ?? []).forEach((s: any) => {
-      sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
-    });
+    try {
+      const sends = await fetchAllRows<any>(() =>
+        supabase
+          .from("crm_task_sends")
+          .select("customer_id,reference_date,status,sent_at")
+          .eq("task_key", task.key)
+          .in("restaurant_id", restIds),
+      );
+      sends.forEach((s: any) => {
+        sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
+      });
+    } catch {
+      /* sem histórico de envio => tudo pendente */
+    }
+
+    const brDay = (iso: string) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date(iso));
 
     return customers
       .map((c) => {
         const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
         const a = agg.get(key);
-        const refDate = (c.last_order_at ?? "").slice(0, 10);
+        // data de referência no fuso de Brasília (evita virar o dia por causa do UTC)
+        const refDate = c.last_order_at ? brDay(c.last_order_at) : "";
         const s = sendMap.get(`${c.id}|${refDate}`);
-        
+
         return {
           id: c.id,
           restaurant_id: c.restaurant_id,
@@ -282,16 +323,16 @@ export function CrmTasksView({
         };
       })
       .filter((row) => {
-        // Regra de 5 dias para Avaliação (dia seguinte)
+        // Regra de 5 dias para Avaliação (dia seguinte): pendentes somem após 5 dias
         if (task.isReview && row.status === "pending") {
-          const orderDate = new Date(row.last_order_at!);
-          const orderDay = new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate());
+          const orderDay = new Date(`${row.reference_date}T03:00:00.000Z`);
           const diffDays = Math.floor((today.getTime() - orderDay.getTime()) / 86400000);
-          return diffDays <= 5;
+          return diffDays >= 1 && diffDays <= 5;
         }
         return true;
       });
   };
+
 
   const loadAll = async () => {
     setLoading(true);
@@ -315,34 +356,42 @@ export function CrmTasksView({
     withTicket?: boolean;
     taskKey?: string;
   }): Promise<CustomerRow[]> => {
-    const CUTOFF_ISO = "2026-08-05T00:00:00.000Z";
+    const today = brToday();
+    const TICKET_FROM_ISO = new Date(today.getTime() - 365 * 86400000).toISOString();
     if (opts.restaurantIds.length === 0) return [];
 
     const hasSelection = (opts.selectedCustomerIds ?? []).length > 0;
 
-    let q = supabase
-      .from("customers")
-      .select("id,restaurant_id,name,phone,orders_count,last_order_at")
-      .in("restaurant_id", opts.restaurantIds)
-      .limit(2000);
+    const buildCustomers = () => {
+      let q = supabase
+        .from("customers")
+        .select("id,restaurant_id,name,phone,orders_count,last_order_at")
+        .in("restaurant_id", opts.restaurantIds)
+        .order("last_order_at", { ascending: false, nullsFirst: false });
 
-    if (hasSelection) {
-      q = q.in("id", opts.selectedCustomerIds as string[]);
-    } else {
-      q = q.not("last_order_at", "is", null).gte("last_order_at", CUTOFF_ISO);
-      if (opts.minOrders && opts.minOrders > 0) q = q.gte("orders_count", opts.minOrders);
-      if (opts.clientType) {
-        const opt = CLIENT_TYPE_OPTIONS.find((o) => o.value === opts.clientType);
-        if (opt) {
-          q = q.gte("orders_count", opt.min);
-          if (opt.max !== null) q = q.lte("orders_count", opt.max);
+      if (hasSelection) {
+        q = q.in("id", opts.selectedCustomerIds as string[]);
+      } else {
+        q = q.not("last_order_at", "is", null);
+        if (opts.minOrders && opts.minOrders > 0) q = q.gte("orders_count", opts.minOrders);
+        if (opts.clientType) {
+          const opt = CLIENT_TYPE_OPTIONS.find((o) => o.value === opts.clientType);
+          if (opt) {
+            q = q.gte("orders_count", opt.min);
+            if (opt.max !== null) q = q.lte("orders_count", opt.max);
+          }
         }
       }
-    }
+      return q;
+    };
 
-    const { data, error } = await q;
-    if (error) { toast.error(error.message); return []; }
-    let customers = (data ?? []) as any[];
+    let customers: any[] = [];
+    try {
+      customers = await fetchAllRows<any>(buildCustomers);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao carregar clientes");
+      return [];
+    }
 
     // In-memory client_statuses filter (only when not using explicit selection)
     if (!hasSelection && (opts.clientStatuses ?? []).length > 0) {
@@ -358,18 +407,16 @@ export function CrmTasksView({
     // Ticket médio (optional)
     const agg = new Map<string, { sum: number; count: number }>();
     if (opts.withTicket && restIds.length > 0) {
-      const PAGE = 1000;
-      for (let from = 0; ; from += PAGE) {
-        const { data: batch, error: oErr } = await supabase
-          .from("orders")
-          .select("customer_phone,total,restaurant_id")
-          .neq("status", "cancelled")
-          .gte("created_at", CUTOFF_ISO)
-          .in("restaurant_id", restIds)
-          .range(from, from + PAGE - 1);
-        if (oErr) break;
-        const arr = batch ?? [];
-        arr.forEach((o: any) => {
+      try {
+        const orders = await fetchAllRows<any>(() =>
+          supabase
+            .from("orders")
+            .select("customer_phone,total,restaurant_id")
+            .neq("status", "cancelled")
+            .gte("created_at", TICKET_FROM_ISO)
+            .in("restaurant_id", restIds),
+        );
+        orders.forEach((o: any) => {
           const digits = onlyDigits(o.customer_phone);
           if (!digits) return;
           const key = `${o.restaurant_id}|${digits}`;
@@ -378,24 +425,38 @@ export function CrmTasksView({
           cur.count += 1;
           agg.set(key, cur);
         });
-        if (arr.length < PAGE) break;
+      } catch {
+        /* opcional */
       }
     }
 
     // Sends map (only if a taskKey given)
     const sendMap = new Map<string, { status: string; sent_at: string | null }>();
     if (opts.taskKey && restIds.length > 0) {
-      const { data: sends } = await supabase
-        .from("crm_task_sends")
-        .select("customer_id,reference_date,status,sent_at")
-        .eq("task_key", opts.taskKey)
-        .in("restaurant_id", restIds);
-      (sends ?? []).forEach((s: any) => {
-        sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
-      });
+      try {
+        const sends = await fetchAllRows<any>(() =>
+          supabase
+            .from("crm_task_sends")
+            .select("customer_id,reference_date,status,sent_at")
+            .eq("task_key", opts.taskKey!)
+            .in("restaurant_id", restIds),
+        );
+        sends.forEach((s: any) => {
+          sendMap.set(`${s.customer_id}|${s.reference_date}`, { status: s.status, sent_at: s.sent_at });
+        });
+      } catch {
+        /* sem histórico */
+      }
     }
 
-    const refDate = new Date().toISOString().slice(0, 10);
+    // Data de referência = hoje no fuso de Brasília
+    const refDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+
     return customers.map((c) => {
       const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
       const a = agg.get(key);
