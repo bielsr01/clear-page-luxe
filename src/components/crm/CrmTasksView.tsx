@@ -101,12 +101,38 @@ function onlyDigits(s: string | null | undefined): string {
   return (s ?? "").replace(/\D/g, "");
 }
 
+/** Instante UTC correspondente à meia-noite de hoje no fuso de Brasília (GMT-3). */
+function brToday(): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  // parts = "YYYY-MM-DD" no fuso de Brasília; meia-noite BRT = 03:00 UTC
+  return new Date(`${parts}T03:00:00.000Z`);
+}
+
+/** Busca todos os registros de uma query paginando (Supabase limita a 1000 linhas). */
+async function fetchAllRows<T = any>(build: () => any, page = 1000): Promise<T[]> {
+  const acc: T[] = [];
+  for (let from = 0; ; from += page) {
+    const { data, error } = await build().range(from, from + page - 1);
+    if (error) throw error;
+    const arr = (data ?? []) as T[];
+    acc.push(...arr);
+    if (arr.length < page) break;
+  }
+  return acc;
+}
+
 function buildWhatsAppLink(phone: string | null, message: string): string | null {
   const d = onlyDigits(phone);
   if (d.length < 10) return null;
   const withCountry = d.startsWith("55") ? d : `55${d}`;
   return `https://wa.me/${withCountry}?text=${encodeURIComponent(message)}`;
 }
+
 
 function personalize(template: string, name: string): string {
   return (template || "").replace(/\{nome\}/gi, name || "");
