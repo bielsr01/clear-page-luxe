@@ -47,6 +47,25 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Não é possível alterar o dono do restaurante" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Target MUST be a member of this restaurant (prevents cross-tenant takeover)
+    const { data: targetMember } = await admin
+      .from("restaurant_members")
+      .select("user_id")
+      .eq("restaurant_id", restaurant_id)
+      .eq("user_id", target_user_id)
+      .maybeSingle();
+    if (!targetMember) {
+      return new Response(JSON.stringify({ error: "Usuário não pertence a este restaurante" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    // Target must not own another restaurant
+    const { count: targetOwns } = await admin
+      .from("restaurants")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", target_user_id);
+    if ((targetOwns ?? 0) > 0) {
+      return new Response(JSON.stringify({ error: "Não é possível alterar o dono de um restaurante" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "delete") {
       await admin.from("restaurant_members").delete().eq("restaurant_id", restaurant_id).eq("user_id", target_user_id);
       // Delete auth user only if no other memberships and not owner of any restaurant
