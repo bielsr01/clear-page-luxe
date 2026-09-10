@@ -306,7 +306,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
   function openUserEdit(m: MemberRow) {
     setUserDialog({ open: true, editing: m });
     setUName(m.full_name ?? "");
-    setUEmail("");
+    setUEmail(m.email ?? "");
     setUPassword("");
     setUGroupId(m.access_group_id ?? "");
   }
