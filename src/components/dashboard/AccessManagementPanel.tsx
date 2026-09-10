@@ -221,6 +221,10 @@ export function AccessManagementPanel({ restaurantId }: Props) {
       if (list.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id,full_name").in("id", list);
         (profs ?? []).forEach((p: any) => { profilesMap[p.id] = { full_name: p.full_name, email: null }; });
+        const { data: emails } = await supabase.rpc("get_restaurant_member_emails", { _restaurant_id: restaurantId });
+        (emails ?? []).forEach((e: any) => {
+          profilesMap[e.user_id] = { full_name: profilesMap[e.user_id]?.full_name ?? null, email: e.email ?? null };
+        });
       }
       const rows: MemberRow[] = list.map((id) => {
         const mem = (mems ?? []).find((m: any) => m.user_id === id);
