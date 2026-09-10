@@ -3714,6 +3714,13 @@ export type Database = {
         Args: { _order_id?: string; _token?: string }
         Returns: Json
       }
+      get_restaurant_member_emails: {
+        Args: { _restaurant_id: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       get_restaurant_popup_config: {
         Args: { _restaurant_id: string }
         Returns: {
