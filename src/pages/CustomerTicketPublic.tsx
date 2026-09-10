@@ -14,6 +14,7 @@ export default function CustomerTicketPublic() {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
   const [restaurant, setRestaurant] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,9 +30,10 @@ export default function CustomerTicketPublic() {
           .from("restaurants")
           .select("name,logo_url,address_street,address_number,address_neighborhood,address_city,address_state,address_cep,print_settings")
           .eq("id", (o as any).restaurant_id)
-          .maybeSingle(),
-      ]);
-      setItems(its ?? []);
+          .maybeSingle()
+      );
+      setItems(bundle?.items ?? []);
+      setOptions(bundle?.options ?? []);
       setRestaurant(r);
       setLoading(false);
     })();
@@ -130,7 +132,7 @@ export default function CustomerTicketPublic() {
         {ps.products && (
           <>
             <div className="sep" />
-            <TicketItemsBlock items={items} showPrices={!!ps.prices} />
+            <TicketItemsBlock items={items} showPrices={!!ps.prices} options={options} />
           </>
         )}
 

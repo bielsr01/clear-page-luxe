@@ -56,6 +56,7 @@ export default function OrderTicket() {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [items, setItems] = useState<ItemRow[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
   const [restaurant, setRestaurant] = useState<RestaurantRow | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,9 +72,10 @@ export default function OrderTicket() {
           .from("restaurants")
           .select("name,logo_url,address_street,address_number,address_neighborhood,address_city,address_state,address_cep,print_settings")
           .eq("id", (o as OrderRow).restaurant_id)
-          .maybeSingle(),
-      ]);
-      setItems((its ?? []) as ItemRow[]);
+          .maybeSingle()
+      );
+      setItems((bundle?.items ?? []) as ItemRow[]);
+      setOptions(bundle?.options ?? []);
       setRestaurant(r as unknown as RestaurantRow);
       setLoading(false);
     })();
@@ -181,7 +183,7 @@ export default function OrderTicket() {
         {ps.products && (
           <>
             <div className="sep" />
-            <TicketItemsBlock items={items} showPrices={!!ps.prices} />
+            <TicketItemsBlock items={items} showPrices={!!ps.prices} options={options} />
           </>
         )}
         {ps.prices && (
