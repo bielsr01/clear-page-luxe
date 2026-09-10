@@ -221,6 +221,10 @@ export function AccessManagementPanel({ restaurantId }: Props) {
       if (list.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id,full_name").in("id", list);
         (profs ?? []).forEach((p: any) => { profilesMap[p.id] = { full_name: p.full_name, email: null }; });
+        const { data: emails } = await supabase.rpc("get_restaurant_member_emails", { _restaurant_id: restaurantId });
+        (emails ?? []).forEach((e: any) => {
+          profilesMap[e.user_id] = { full_name: profilesMap[e.user_id]?.full_name ?? null, email: e.email ?? null };
+        });
       }
       const rows: MemberRow[] = list.map((id) => {
         const mem = (mems ?? []).find((m: any) => m.user_id === id);
@@ -302,7 +306,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
   function openUserEdit(m: MemberRow) {
     setUserDialog({ open: true, editing: m });
     setUName(m.full_name ?? "");
-    setUEmail("");
+    setUEmail(m.email ?? "");
     setUPassword("");
     setUGroupId(m.access_group_id ?? "");
   }
@@ -316,7 +320,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
           access_group_id: uGroupId || null,
         };
         if (uName) body.name = uName;
-        if (uEmail) body.email = uEmail;
+        if (uEmail && uEmail !== (userDialog.editing.email ?? "")) body.email = uEmail;
         if (uPassword) body.password = uPassword;
         const { error } = await supabase.functions.invoke("admin-update-sub-user", { body });
         if (error) throw error;
@@ -386,6 +390,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
               <div key={m.user_id} className="flex items-center justify-between border rounded p-3 gap-3">
                 <div className="min-w-0">
                   <div className="font-medium truncate">{m.full_name ?? "(sem nome)"}{m.user_id === user?.id && <span className="ml-2 text-xs text-muted-foreground">(você)</span>}</div>
+                  {m.email && <div className="text-xs text-muted-foreground truncate">{m.email}</div>}
                   <div className="text-xs text-muted-foreground truncate">ID: {m.user_id}</div>
                 </div>
                 <div className="flex items-center gap-2">
