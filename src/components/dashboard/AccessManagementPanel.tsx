@@ -320,7 +320,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
           access_group_id: uGroupId || null,
         };
         if (uName) body.name = uName;
-        if (uEmail) body.email = uEmail;
+        if (uEmail && uEmail !== (userDialog.editing.email ?? "")) body.email = uEmail;
         if (uPassword) body.password = uPassword;
         const { error } = await supabase.functions.invoke("admin-update-sub-user", { body });
         if (error) throw error;
