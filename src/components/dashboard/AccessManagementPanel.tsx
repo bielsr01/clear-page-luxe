@@ -390,6 +390,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
               <div key={m.user_id} className="flex items-center justify-between border rounded p-3 gap-3">
                 <div className="min-w-0">
                   <div className="font-medium truncate">{m.full_name ?? "(sem nome)"}{m.user_id === user?.id && <span className="ml-2 text-xs text-muted-foreground">(você)</span>}</div>
+                  {m.email && <div className="text-xs text-muted-foreground truncate">{m.email}</div>}
                   <div className="text-xs text-muted-foreground truncate">ID: {m.user_id}</div>
                 </div>
                 <div className="flex items-center gap-2">
