@@ -106,6 +106,32 @@ export default function RestaurantPublic() {
     return () => { cancelled = true; };
   }, [slug]);
 
+  // Título/prévia da página conforme a loja aberta
+  useEffect(() => {
+    const OG_IMAGE = `${window.location.origin}/og-faca-seu-pedido.jpg`;
+    const name = restaurant?.name;
+    if (!name) return;
+    const desc = `Faça seu pedido online na ${name}. Cardápio completo, entrega e retirada.`;
+    document.title = name;
+    const setMeta = (attr: "property" | "name", key: string, value: string) => {
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", value);
+    };
+    setMeta("name", "description", desc);
+    setMeta("property", "og:title", name);
+    setMeta("property", "og:description", desc);
+    setMeta("property", "og:image", OG_IMAGE);
+    setMeta("property", "og:url", window.location.href);
+    setMeta("name", "twitter:title", name);
+    setMeta("name", "twitter:description", desc);
+    setMeta("name", "twitter:image", OG_IMAGE);
+  }, [restaurant?.name]);
+
   useEffect(() => {
     if (!restaurant?.id) return;
     const rid = restaurant.id;
