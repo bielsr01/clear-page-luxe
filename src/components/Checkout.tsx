@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicOrder } from "@/lib/publicOrder";
 import { useCart } from "@/hooks/useCart";
 import { setActiveOrder } from "@/components/ActiveOrderBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -138,17 +139,10 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
     const t = setTimeout(async () => {
       const phoneFmt = formatPhone(phone);
       const variants = Array.from(new Set([phoneFmt, digits].filter(Boolean)));
-      const { data } = await supabase
-        .from("orders")
-        .select(
-          "address_cep,address_street,address_number,address_complement,address_neighborhood,address_city,address_state,address_notes,delivery_latitude,delivery_longitude,created_at",
-        )
-        .eq("restaurant_id", restaurant.id)
-        .in("customer_phone", variants)
-        .eq("order_type", "delivery")
-        .not("address_street", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(15);
+      const { data } = await (supabase.rpc as any)("get_prev_delivery_addresses", {
+        _restaurant_id: restaurant.id,
+        _phones: variants,
+      });
       if (cancelled) return;
       const seen = new Set<string>();
       const out: PrevAddress[] = [];
@@ -376,22 +370,18 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
       // Verifica se já é cliente (apenas novos clientes)
       // Considera "cliente antigo" se já existe na aba Contatos OU já fez algum pedido na loja
       if (c.customer_type === "new") {
-        const [{ data: existingCustomers }, { count: prevOrdersCount }] = await Promise.all([
-          supabase
-            .from("customers" as any)
-            .select("id")
-            .eq("restaurant_id", restaurant.id)
-            .in("phone", phoneVariants)
-            .limit(1),
-          supabase
-            .from("orders")
-            .select("id", { count: "exact", head: true })
-            .eq("restaurant_id", restaurant.id)
-            .in("customer_phone", phoneVariants),
+        const [{ data: hasCustomer }, { data: prevOrdersCount }] = await Promise.all([
+          (supabase.rpc as any)("customer_exists_by_phone", {
+            _restaurant_id: restaurant.id,
+            _phones: phoneVariants,
+          }),
+          (supabase.rpc as any)("count_orders_by_phone", {
+            _restaurant_id: restaurant.id,
+            _phones: phoneVariants,
+            _coupon_code: null,
+          }),
         ]);
-        const isExistingCustomer =
-          (Array.isArray(existingCustomers) && existingCustomers.length > 0) ||
-          (prevOrdersCount ?? 0) > 0;
+        const isExistingCustomer = !!hasCustomer || Number(prevOrdersCount ?? 0) > 0;
         if (isExistingCustomer) {
           setCoupon(null);
           setCouponError("Cupom válido apenas para novos clientes — você já é nosso cliente");
@@ -401,13 +391,12 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
 
       // Verifica se este cupom já foi usado por este telefone (1 por cliente)
       if (Number(c.usage_limit_per_customer ?? 0) >= 1) {
-        const { count: prevUses } = await supabase
-          .from("orders")
-          .select("id", { count: "exact", head: true })
-          .eq("restaurant_id", restaurant.id)
-          .eq("coupon_code", c.code)
-          .in("customer_phone", phoneVariants);
-        if ((prevUses ?? 0) >= Number(c.usage_limit_per_customer)) {
+        const { data: prevUses } = await (supabase.rpc as any)("count_orders_by_phone", {
+          _restaurant_id: restaurant.id,
+          _phones: phoneVariants,
+          _coupon_code: c.code,
+        });
+        if (Number(prevUses ?? 0) >= Number(c.usage_limit_per_customer)) {
           setCoupon(null);
           setCouponError("Você já utilizou este cupom — limite por cliente atingido");
           return;
@@ -479,17 +468,10 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
         const digits = unmaskPhone(phone);
         const phoneFmt = formatPhone(phone);
         const variants = Array.from(new Set([phoneFmt, digits].filter(Boolean)));
-        const { data } = await supabase
-          .from("orders")
-          .select(
-            "address_cep,address_street,address_number,address_complement,address_neighborhood,address_city,address_state,address_notes,delivery_latitude,delivery_longitude,created_at",
-          )
-          .eq("restaurant_id", restaurant.id)
-          .in("customer_phone", variants)
-          .eq("order_type", "delivery")
-          .not("address_street", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(15);
+        const { data } = await (supabase.rpc as any)("get_prev_delivery_addresses", {
+          _restaurant_id: restaurant.id,
+          _phones: variants,
+        });
         const seen = new Set<string>();
         const out: PrevAddress[] = [];
         for (const o of (data ?? []) as any[]) {
@@ -576,14 +558,28 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
     }
 
     // Remove customer_cpf se a coluna não existir (failsafe)
-    let { data: order, error } = await supabase.from("orders").insert(payload).select("id, public_token, order_number").single();
+    const newOrderId = crypto.randomUUID();
+    const newPublicToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    payload.id = newOrderId;
+    payload.public_token = newPublicToken;
+
+    let { error } = await supabase.from("orders").insert(payload);
     if (error && /customer_cpf/i.test(error.message)) {
       delete payload.customer_cpf;
-      const retry = await supabase.from("orders").insert(payload).select("id, public_token, order_number").single();
-      order = retry.data; error = retry.error;
+      const retry = await supabase.from("orders").insert(payload);
+      error = retry.error;
     }
+    if (error) { setBusy(false); return toast.error(error.message || "Erro"); }
 
-    if (error || !order) { setBusy(false); return toast.error(error?.message || "Erro"); }
+    // Lê o pedido criado pela função segura (a tabela não é legível publicamente)
+    const created = await fetchPublicOrder({ orderId: newOrderId });
+    const order = {
+      id: newOrderId,
+      public_token: newPublicToken,
+      order_number: created?.order?.order_number ?? null,
+    };
 
     const items = cart.items.map((i) => {
       // Group options by groupName: "Sabores: Pizza, Frango (R$ 5,00)"
@@ -599,6 +595,7 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
       const fullNotes = [...optsLines, obsLine].filter(Boolean).join("\n").trim() || null;
       const unit = i.price + (i.options?.reduce((s, o) => s + (Number(o.extraPrice) || 0), 0) ?? 0);
       return {
+        id: crypto.randomUUID(),
         order_id: order.id,
         product_id: i.productId,
         product_name: i.name,
@@ -607,8 +604,9 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
         notes: fullNotes,
       };
     });
-    const { data: insertedItems, error: ie } = await supabase.from("order_items").insert(items).select("id");
+    const { error: ie } = await supabase.from("order_items").insert(items);
     if (ie) { setBusy(false); return toast.error(ie.message); }
+    const insertedItems = items.map((i) => ({ id: i.id }));
 
     // Persist selected option items so the stock trigger can deduct option-linked stock
     const optionRows: any[] = [];

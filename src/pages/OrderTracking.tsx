@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicOrder } from "@/lib/publicOrder";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { brl, orderStatusLabel, paymentLabel, orderTypeLabel, displayOrderNumber } from "@/lib/format";
@@ -30,35 +31,24 @@ export default function OrderTracking() {
   const [restaurant, setRestaurant] = useState<any | null>(null);
 
   const load = async () => {
-    const { data: o } = await supabase.from("orders").select("*").eq("public_token", token!).maybeSingle();
-    if (!o) return setOrder(null);
+    const bundle = await fetchPublicOrder({ token });
+    if (!bundle) return setOrder(null);
+    const o = bundle.order;
     setOrder(o);
-    const [{ data: its }, { data: r }] = await Promise.all([
-      supabase.from("order_items").select("*").eq("order_id", o.id),
-      supabase.from("restaurants").select("name,slug,logo_url,address_street,address_number,address_complement,address_neighborhood,address_city,address_state,address_cep,phone").eq("id", o.restaurant_id).maybeSingle(),
-    ]);
-    const itemList = its ?? [];
-    setItems(itemList);
+    setItems(bundle.items);
+    setOptions(bundle.options);
+    const { data: r } = await supabase
+      .from("restaurants")
+      .select("name,slug,logo_url,address_street,address_number,address_complement,address_neighborhood,address_city,address_state,address_cep,phone")
+      .eq("id", o.restaurant_id)
+      .maybeSingle();
     setRestaurant(r);
-    if (itemList.length) {
-      const { data: opts } = await supabase
-        .from("order_item_options")
-        .select("order_item_id,group_name,item_name,extra_price")
-        .in("order_item_id", itemList.map((i: any) => i.id));
-      setOptions(opts ?? []);
-    } else {
-      setOptions([]);
-    }
   };
 
   useEffect(() => {
     load();
-    const ch = supabase.channel(`order-${token}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
-        if ((payload.new as any)?.public_token === token || (payload.old as any)?.public_token === token) load();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const iv = setInterval(load, 15000);
+    return () => { clearInterval(iv); };
   }, [token]);
 
   if (order === null) return <div className="min-h-screen grid place-items-center text-muted-foreground">Carregando pedido...</div>;

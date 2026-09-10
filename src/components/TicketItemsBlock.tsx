@@ -29,9 +29,12 @@ interface OptRow {
 export function TicketItemsBlock({
   items,
   showPrices,
+  options,
 }: {
   items: ItemRow[];
   showPrices: boolean;
+  /** Opções já carregadas (vindas da função segura `get_public_order`). */
+  options?: OptRow[];
 }) {
   const [opts, setOpts] = useState<Record<string, OptRow[]>>({});
 
@@ -40,19 +43,23 @@ export function TicketItemsBlock({
     (async () => {
       const ids = items.map((i) => i.id).filter(Boolean);
       if (!ids.length) { setOpts({}); return; }
-      const { data } = await supabase
-        .from("order_item_options")
-        .select("order_item_id,group_name,item_name,extra_price")
-        .in("order_item_id", ids);
+      let rows: any[] = options ?? [];
+      if (!options) {
+        const { data } = await supabase
+          .from("order_item_options")
+          .select("order_item_id,group_name,item_name,extra_price")
+          .in("order_item_id", ids);
+        rows = data ?? [];
+      }
       if (cancel) return;
       const m: Record<string, OptRow[]> = {};
-      (data ?? []).forEach((r: any) => {
+      rows.forEach((r: any) => {
         (m[r.order_item_id] ||= []).push(r);
       });
       setOpts(m);
     })();
     return () => { cancel = true; };
-  }, [items]);
+  }, [items, options]);
 
   return (
     <>

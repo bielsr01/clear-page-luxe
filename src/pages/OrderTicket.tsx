@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicOrder } from "@/lib/publicOrder";
 import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel, displayOrderNumber } from "@/lib/format";
 import { DEFAULT_PRINT_SETTINGS, PrintSettings, normalizePrintSettings } from "@/components/dashboard/PrintSettings";
 import { TicketItemsBlock } from "@/components/TicketItemsBlock";
@@ -55,24 +56,26 @@ export default function OrderTicket() {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [items, setItems] = useState<ItemRow[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
   const [restaurant, setRestaurant] = useState<RestaurantRow | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       if (!orderId) return;
-      const { data: o } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+      const bundle = await fetchPublicOrder({ orderId });
+      const o = bundle?.order;
       if (!o) { setLoading(false); return; }
       setOrder(o as OrderRow);
-      const [{ data: its }, { data: r }] = await Promise.all([
-        supabase.from("order_items").select("*").eq("order_id", orderId),
+      const { data: r } = await (
         supabase
           .from("restaurants")
           .select("name,logo_url,address_street,address_number,address_neighborhood,address_city,address_state,address_cep,print_settings")
           .eq("id", (o as OrderRow).restaurant_id)
-          .maybeSingle(),
-      ]);
-      setItems((its ?? []) as ItemRow[]);
+          .maybeSingle()
+      );
+      setItems((bundle?.items ?? []) as ItemRow[]);
+      setOptions(bundle?.options ?? []);
       setRestaurant(r as unknown as RestaurantRow);
       setLoading(false);
     })();
@@ -180,7 +183,7 @@ export default function OrderTicket() {
         {ps.products && (
           <>
             <div className="sep" />
-            <TicketItemsBlock items={items} showPrices={!!ps.prices} />
+            <TicketItemsBlock items={items} showPrices={!!ps.prices} options={options} />
           </>
         )}
         {ps.prices && (

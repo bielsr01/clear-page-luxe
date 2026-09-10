@@ -75,12 +75,9 @@ export function ActiveOrderBanner({ restaurantId }: { restaurantId: string }) {
     if (tokens.length === 0) { setOrders([]); return; }
     let active = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("orders")
-        .select("id,status,total,public_token,created_at,order_number")
-        .in("public_token", tokens);
+      const { data } = await (supabase.rpc as any)("get_orders_by_tokens", { _tokens: tokens });
       if (!active) return;
-      const found = (data ?? []) as OrderRow[];
+      const found = (Array.isArray(data) ? data : []) as OrderRow[];
       // remove tokens não encontrados (ex: pedido apagado)
       const foundTokens = new Set(found.map((o) => o.public_token));
       const cleaned = tokens.filter((t) => foundTokens.has(t));
@@ -88,14 +85,8 @@ export function ActiveOrderBanner({ restaurantId }: { restaurantId: string }) {
       setOrders(found.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)));
     };
     load();
-    const ch = supabase.channel(`active-orders-${restaurantId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, (payload) => {
-        const row: any = payload.new;
-        if (!row?.public_token || !tokens.includes(row.public_token)) return;
-        setOrders((prev) => prev.map((o) => (o.public_token === row.public_token ? { ...o, ...row } : o)));
-      })
-      .subscribe();
-    return () => { active = false; supabase.removeChannel(ch); };
+    const iv = setInterval(load, 20000);
+    return () => { active = false; clearInterval(iv); };
   }, [tokens, restaurantId]);
 
   if (orders.length === 0) return null;
