@@ -3672,6 +3672,14 @@ export type Database = {
         }
         Returns: Json
       }
+      count_orders_by_phone: {
+        Args: {
+          _coupon_code?: string
+          _phones: string[]
+          _restaurant_id: string
+        }
+        Returns: number
+      }
       create_loyalty_consultation_code: {
         Args: { _phone: string; _restaurant_id: string }
         Returns: string
@@ -3685,6 +3693,10 @@ export type Database = {
         }[]
       }
       credit_loyalty_points: { Args: { _tx_id: string }; Returns: undefined }
+      customer_exists_by_phone: {
+        Args: { _phones: string[]; _restaurant_id: string }
+        Returns: boolean
+      }
       debit_external_order_stock: {
         Args: { _order_id: string }
         Returns: undefined
@@ -3692,6 +3704,15 @@ export type Database = {
       find_or_create_loyalty_member: {
         Args: { _name: string; _phone: string; _restaurant_id: string }
         Returns: string
+      }
+      get_orders_by_tokens: { Args: { _tokens: string[] }; Returns: Json }
+      get_prev_delivery_addresses: {
+        Args: { _phones: string[]; _restaurant_id: string }
+        Returns: Json
+      }
+      get_public_order: {
+        Args: { _order_id?: string; _token?: string }
+        Returns: Json
       }
       get_restaurant_popup_config: {
         Args: { _restaurant_id: string }
