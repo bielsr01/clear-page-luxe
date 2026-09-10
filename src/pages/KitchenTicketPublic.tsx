@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicOrder } from "@/lib/publicOrder";
 import { brl, formatPhone, formatIfoodPhone, orderTypeLabel, paymentLabel, displayOrderNumber } from "@/lib/format";
 import {
   DEFAULT_KITCHEN_PRINT_SETTINGS,
@@ -19,11 +20,11 @@ export default function KitchenTicketPublic() {
   useEffect(() => {
     (async () => {
       if (!orderId) return;
-      const { data: o } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+      const bundle = await fetchPublicOrder({ orderId });
+      const o = bundle?.order;
       if (!o) { setLoading(false); return; }
       setOrder(o);
-      const [{ data: its }, { data: r }] = await Promise.all([
-        supabase.from("order_items").select("*").eq("order_id", orderId),
+      const { data: r } = await (
         supabase
           .from("restaurants")
           .select("name,logo_url,address_street,address_number,address_neighborhood,address_city,address_state,address_cep,kitchen_print_settings")
