@@ -51,7 +51,12 @@ Deno.serve(async (req) => {
     const contentLength = Number(req.headers.get("content-length") ?? "0");
     if (contentLength > MAX_FILE_SIZE + 100_000) return response({ error: "O currículo deve ter no máximo 10 MB" }, 413);
 
-    const form = await req.formData();
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return response({ error: "Envio inválido" }, 400);
+    }
     const parsed = ApplicationSchema.safeParse({
       full_name: form.get("full_name"),
       birth_date: form.get("birth_date"),
