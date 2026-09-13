@@ -58,11 +58,11 @@ Deno.serve(async (req) => {
       return response({ error: "Envio inválido" }, 400);
     }
     const parsed = ApplicationSchema.safeParse({
-      full_name: form.get("full_name"),
-      birth_date: form.get("birth_date"),
-      sex: form.get("sex"),
-      phone: form.get("phone"),
-      city: form.get("city"),
+      full_name: String(form.get("full_name") ?? ""),
+      birth_date: String(form.get("birth_date") ?? ""),
+      sex: String(form.get("sex") ?? ""),
+      phone: String(form.get("phone") ?? ""),
+      city: String(form.get("city") ?? ""),
     });
     if (!parsed.success) return response({ error: "Revise os dados informados" }, 400);
 
