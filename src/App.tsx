@@ -19,6 +19,7 @@ import LoyaltyLanding from "./pages/LoyaltyLanding";
 import MysteryShopperForm from "./pages/MysteryShopperForm";
 import MysteryShopperResult from "./pages/MysteryShopperResult";
 import AuditExternal from "./pages/AuditExternal";
+import BioPublic from "./pages/BioPublic";
 
 
 const queryClient = new QueryClient({
@@ -43,6 +44,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<RequireRole role="master_admin"><MasterAdmin /></RequireRole>} />
+            <Route path="/links" element={<RequireRole role="master_admin"><MasterAdmin /></RequireRole>} />
+            <Route path="/curriculos" element={<RequireRole role="master_admin"><MasterAdmin /></RequireRole>} />
             <Route path="/dashboard" element={<RequireRole role="manager"><ManagerDashboard /></RequireRole>} />
             <Route path="/r/:slug" element={<RestaurantPublic />} />
             <Route path="/pedido/:token" element={<OrderTracking />} />
@@ -53,6 +56,7 @@ const App = () => (
             <Route path="/cliente-oculto/:token" element={<MysteryShopperForm />} />
             <Route path="/cliente-oculto/respostas/:token" element={<MysteryShopperResult />} />
             <Route path="/auditoria/:token" element={<AuditExternal />} />
+            <Route path="/bio" element={<BioPublic />} />
             <Route path="*" element={<NotFound />} />
 
           </Routes>

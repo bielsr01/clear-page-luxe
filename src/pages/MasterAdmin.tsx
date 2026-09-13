@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +50,8 @@ import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
 import { AdminPromoCalendarPanel } from "@/components/admin/AdminPromoCalendarPanel";
 import AdminMysteryShopperPanel from "@/components/admin/AdminMysteryShopperPanel";
+import { AdminBioLinksPanel } from "@/components/admin/AdminBioLinksPanel";
+import { AdminJobApplicationsPanel } from "@/components/admin/AdminJobApplicationsPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -81,10 +84,12 @@ const editSchema = z.object({
 
 export default function MasterAdmin() {
   const { signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const isMobile = useIsMobile();
-  const [view, setView] = useState<AdminView>("restaurants");
+  const [view, setView] = useState<AdminView>(() => location.pathname === "/links" ? "links" : location.pathname === "/curriculos" ? "job-applications" : "restaurants");
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [stats, setStats] = useState({ orders: 0, revenue: 0 });
   const [createOpen, setCreateOpen] = useState(false);
@@ -136,6 +141,18 @@ export default function MasterAdmin() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  useEffect(() => {
+    if (location.pathname === "/links") setView("links");
+    else if (location.pathname === "/curriculos") setView("job-applications");
+    else if (location.pathname === "/admin" && (view === "links" || view === "job-applications")) setView("restaurants");
+  }, [location.pathname]);
+
+  const changeView = (nextView: AdminView) => {
+    setView(nextView);
+    const nextPath = nextView === "links" ? "/links" : nextView === "job-applications" ? "/curriculos" : "/admin";
+    if (location.pathname !== nextPath) navigate(nextPath);
+  };
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -224,6 +241,8 @@ export default function MasterAdmin() {
     "crm:art-library": "CRM / Biblioteca de Artes",
     "crm:promo-calendar": "CRM / Calendário Promocional",
     "crm:mystery-shopper": "CRM / Cliente Oculto",
+    "links": "Links",
+    "job-applications": "Banco de Currículos",
   };
 
 
@@ -237,7 +256,7 @@ export default function MasterAdmin() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
-        <AdminSidebar active={view} onChange={setView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} promoCalendarBadge={promoCalendarPendingCount} />
+        <AdminSidebar active={view} onChange={changeView} supplyBadge={supplyPendingCount} supportBadge={openSupportCount} promoCalendarBadge={promoCalendarPendingCount} />
         <SidebarInset className="flex-1 flex flex-col">
           <header className="bg-background border-b sticky top-0 z-30">
             <div className="h-16 px-2 sm:px-4 flex items-center justify-between gap-2">
@@ -431,6 +450,8 @@ export default function MasterAdmin() {
             {view === "crm:art-library" && <ArtLibraryPanel isAdmin={true} />}
             {view === "crm:promo-calendar" && <AdminPromoCalendarPanel />}
             {view === "crm:mystery-shopper" && <AdminMysteryShopperPanel />}
+            {view === "links" && <AdminBioLinksPanel />}
+            {view === "job-applications" && <AdminJobApplicationsPanel />}
           </main>
         </SidebarInset>
 

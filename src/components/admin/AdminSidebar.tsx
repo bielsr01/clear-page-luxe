@@ -1,4 +1,4 @@
-import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map, FileText, Rocket } from "lucide-react";
+import { ChefHat, Store, Package, ShoppingBag, ChevronDown, BarChart3, Users, Megaphone, Ticket, BookOpen, Send, Plug, Boxes, Receipt, LineChart, Bike, Award, ShieldCheck, ClipboardCheck, LifeBuoy, UserPlus, Map, FileText, Rocket, Link2, FileUser } from "lucide-react";
 import logoIcon from "@/assets/logo-icon.png";
 import { useState } from "react";
 import {
@@ -52,7 +52,9 @@ export type AdminView =
   | "crm:tasks"
   | "crm:art-library"
   | "crm:promo-calendar"
-  | "crm:mystery-shopper";
+  | "crm:mystery-shopper"
+  | "links"
+  | "job-applications";
 
 export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge = 0, promoCalendarBadge = 0 }: { active: AdminView; onChange: (v: AdminView) => void; supplyBadge?: number; supportBadge?: number; promoCalendarBadge?: number }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -551,6 +553,20 @@ export function AdminSidebar({ active, onChange, supplyBadge = 0, supportBadge =
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={active === "links"} onClick={() => handleChange("links")} tooltip="Links">
+                  <Link2 className="h-4 w-4" />
+                  <span>Links</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton isActive={active === "job-applications"} onClick={() => handleChange("job-applications")} tooltip="Banco de Currículos">
+                  <FileUser className="h-4 w-4" />
+                  <span>Banco de Currículos</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -28,8 +28,12 @@ function response(body: unknown, status: number) {
 }
 
 function hasValidSignature(bytes: Uint8Array, extension: string) {
-  if (extension === "pdf") return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
-  if (extension === "png") return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  if (extension === "pdf") {
+    const header = new TextDecoder().decode(bytes.slice(0, 8));
+    const trailer = new TextDecoder().decode(bytes.slice(Math.max(0, bytes.length - 1024)));
+    return bytes.length >= 100 && header.startsWith("%PDF-") && trailer.includes("%%EOF");
+  }
+  if (extension === "png") return bytes.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((byte, index) => bytes[index] === byte);
   if (extension === "jpg" || extension === "jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
   if (extension === "webp") return String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
   if (extension === "docx") return bytes[0] === 0x50 && bytes[1] === 0x4b;
@@ -51,13 +55,18 @@ Deno.serve(async (req) => {
     const contentLength = Number(req.headers.get("content-length") ?? "0");
     if (contentLength > MAX_FILE_SIZE + 100_000) return response({ error: "O currículo deve ter no máximo 10 MB" }, 413);
 
-    const form = await req.formData();
+    let form: FormData;
+    try {
+      form = await req.formData();
+    } catch {
+      return response({ error: "Envio inválido" }, 400);
+    }
     const parsed = ApplicationSchema.safeParse({
-      full_name: form.get("full_name"),
-      birth_date: form.get("birth_date"),
-      sex: form.get("sex"),
-      phone: form.get("phone"),
-      city: form.get("city"),
+      full_name: String(form.get("full_name") ?? ""),
+      birth_date: String(form.get("birth_date") ?? ""),
+      sex: String(form.get("sex") ?? ""),
+      phone: String(form.get("phone") ?? ""),
+      city: String(form.get("city") ?? ""),
     });
     if (!parsed.success) return response({ error: "Revise os dados informados" }, 400);
 
