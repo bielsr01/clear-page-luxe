@@ -1,66 +1,56 @@
+# Links públicos e Banco de Currículos
 
-## Mapa de Expansão (Admin)
+## O que será criado
 
-Novo menu no painel admin com integração Google Maps + IBGE para prospecção de cidades.
+- Um novo menu **Links**, logo abaixo de CRM de relacionamento, para administrar a página pública.
+- Uma página pública e móvel em **`/bio`**, sem login, com a identidade Coxinha Surprise e três ações:
+  - **Faça seu Pedido**: abre a lista de restaurantes ativos configurados e leva ao cardápio de cada unidade.
+  - **Seja um franqueado**: abre o endereço institucional definido pelo administrador.
+  - **Trabalhe conosco**: abre o formulário de candidatura.
+- Um novo menu administrativo **Banco de Currículos**, com lista dos candidatos e acesso seguro ao currículo anexado.
 
-### Fluxo do usuário
-1. Digita o nome da cidade em um autocomplete (Places API New via gateway já conectado).
-2. Mapa Google centraliza na cidade. Ao arrastar o mapa, reverse geocoding atualiza automaticamente o nome da cidade exibida (label acima do mapa).
-3. Ao confirmar a cidade, o sistema busca no IBGE e pré-preenche automaticamente: **Habitantes**, **Renda per capita**, **PIB**.
-4. Usuário preenche manualmente: **Qtd. restaurantes**, **Qtd. fast-foods**, **Qtd. concorrentes diretos** + observações.
-5. Salva → aparece como card no grid. Clique no card abre modal com todos os detalhes (auto + manual), com opção editar/excluir.
+## Configuração em Links
 
-### APIs IBGE (todas públicas, sem chave)
-- **Localidades** — resolver `city_name + UF` → `municipio_id` (código IBGE 7 dígitos):
-  `GET https://servicodados.ibge.gov.br/api/v1/localidades/municipios`
-- **População** (estimativa mais recente, agregado 6579, variável 9324):
-  `GET https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N6[{ibgeId}]`
-- **PIB municipal** (agregado 5938, variável 37 = PIB a preços correntes, mil R$):
-  `GET https://servicodados.ibge.gov.br/api/v3/agregados/5938/periodos/-1/variaveis/37?localidades=N6[{ibgeId}]`
-- **Renda per capita** — não existe atualizada por município na API; usar PIB per capita como proxy (variável 39 do agregado 5938) OU renda média domiciliar do Censo 2022 (agregado 793x). Vou usar **PIB per capita (variável 39)** por ser confiável e anual.
+- Ativar ou desativar cada ação pública.
+- Informar manualmente o endereço de **Seja um franqueado**.
+- Para cada restaurante:
+  - ativar ou desativar sua exibição;
+  - usar automaticamente o endereço público sugerido (`/r/slug`);
+  - ou informar outro endereço manualmente.
+- Mostrar uma prévia e um atalho para abrir `/bio`.
 
-Fallback: se algum endpoint falhar, o campo fica editável em branco com aviso.
+## Formulário Trabalhe conosco
 
-### Chamada IBGE — onde executar
-Chamar direto do frontend (CORS liberado pelo IBGE, sem chave). Sem edge function necessária.
+Campos obrigatórios:
+- Nome completo
+- Data de nascimento
+- Sexo
+- Telefone
+- Cidade
+- Currículo em PDF, Word ou imagem
 
-### Google Maps
-Reusar o conector já configurado:
-- `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` para carregar o Maps JS + `PlaceAutocompleteElement`.
-- Reverse geocoding server-side: já existe edge function `geocode` — estender com modo `reverse` (lat/lng → cidade/UF) chamando `maps/api/geocode/json?latlng=...` via gateway.
+O envio terá validação de formato e tamanho. O currículo ficará privado no Cloudflare R2 e somente administradores poderão abrir ou baixar o arquivo pelo painel.
 
-### Banco de dados
-Nova tabela `public.expansion_cities`:
+## Dados e segurança
 
-```text
-id, city_name, state_uf, ibge_id, lat, lng,
-population, income_per_capita, gdp,
-restaurants_count, fastfoods_count, competitors_count,
-notes, created_by, created_at, updated_at
-```
+- Criar configurações únicas da página de links.
+- Criar vínculos configuráveis para os restaurantes exibidos.
+- Criar cadastro de candidatos com os dados informados e referência privada do currículo.
+- A página pública poderá apenas ler os links habilitados e enviar candidaturas válidas.
+- Alterações de configuração, listagem de candidatos e acesso aos arquivos serão exclusivos de `master_admin`.
+- O envio público do currículo passará por uma função protegida com validação no servidor, limite de arquivo e nomes aleatórios para impedir acesso indevido.
 
-- RLS: só `master_admin` (via `has_role`).
-- GRANTs padrão authenticated + service_role.
-- Índice em `ibge_id` (único).
+## Interface
 
-### Arquivos
+- Layout mobile-first na paleta atual do sistema, com logo, título **Coxinha Surprise** e botões grandes.
+- Lista de restaurantes em uma tela/modal simples e pesquisável.
+- Formulário acessível, com confirmação após o envio.
+- Banco de Currículos organizado por data mais recente, com nome, telefone, cidade, idade/data de nascimento, sexo e ações para visualizar ou baixar.
 
-**Criar:**
-- `src/components/admin/AdminExpansionMapPanel.tsx` — painel principal (busca + mapa + form + grid de cards + modal detalhes)
-- `src/components/admin/ExpansionCityMap.tsx` — wrapper do Google Map com autocomplete e drag → reverse geocode
-- `src/lib/ibge.ts` — funções `fetchIbgeMunicipio(nome, uf)`, `fetchPopulation`, `fetchGdp`, `fetchIncomePerCapita`
+## Verificação
 
-**Editar:**
-- `src/components/admin/AdminSidebar.tsx` — item "Mapa de expansão" (ícone `MapPin`), tipo `"expansion"` no `AdminView`
-- `src/pages/MasterAdmin.tsx` — rota `expansion` renderiza `<AdminExpansionMapPanel />`
-- `supabase/functions/geocode/index.ts` — adicionar modo reverse (lat/lng)
-
-**Migração:** tabela + RLS + GRANTs + trigger `touch_updated_at`.
-
-### Detalhes técnicos
-- Autocomplete restrito a `country: BR`.
-- Ao arrastar mapa: debounce 400ms → `page.evaluate` reverse → atualiza label da cidade.
-- Cards em grid responsivo mostrando nome, UF, população e nº restaurantes cadastrados.
-- Modal com todos os campos + botões Editar / Excluir.
-
-Confirmo? Após aprovação: migração → edge function reverse → frontend.
+- Testar `/bio` sem autenticação.
+- Testar todos os botões, links automáticos e manuais, ativações e desativações.
+- Testar envio dos formatos permitidos e rejeição dos inválidos.
+- Confirmar que candidatos e arquivos não podem ser consultados publicamente.
+- Conferir a experiência em celular e computador.
