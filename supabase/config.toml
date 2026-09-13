@@ -27,4 +27,10 @@ verify_jwt = false
 [functions.r2-signed-download]
 verify_jwt = false
 
+[functions.job-application-submit]
+verify_jwt = false
+
+[functions.job-application-download]
+verify_jwt = false
+
 
