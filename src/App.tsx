@@ -44,6 +44,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<RequireRole role="master_admin"><MasterAdmin /></RequireRole>} />
+            <Route path="/links" element={<RequireRole role="master_admin"><MasterAdmin /></RequireRole>} />
+            <Route path="/curriculos" element={<RequireRole role="master_admin"><MasterAdmin /></RequireRole>} />
             <Route path="/dashboard" element={<RequireRole role="manager"><ManagerDashboard /></RequireRole>} />
             <Route path="/r/:slug" element={<RestaurantPublic />} />
             <Route path="/pedido/:token" element={<OrderTracking />} />
