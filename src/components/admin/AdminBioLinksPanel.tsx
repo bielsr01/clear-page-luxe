@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Link2, Save, Store } from "lucide-react";
+import { ExternalLink, Link2, Pencil, RotateCcw, Save, Store } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BioRestaurantLink, BioSettings, defaultBioSettings, normalizeExternalUrl } from "@/lib/bio";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +18,8 @@ export function AdminBioLinksPanel() {
   const [links, setLinks] = useState<Record<string, BioRestaurantLink>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingRestaurantId, setEditingRestaurantId] = useState<string | null>(null);
+  const [linkDraft, setLinkDraft] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,6 +55,43 @@ export function AdminBioLinksPanel() {
     });
   };
 
+  const editingRestaurant = restaurants.find((restaurant) => restaurant.id === editingRestaurantId);
+  const defaultRestaurantUrl = editingRestaurant ? `/r/${editingRestaurant.slug}` : "";
+
+  const openLinkEditor = (restaurant: Restaurant, link: BioRestaurantLink) => {
+    setEditingRestaurantId(restaurant.id);
+    setLinkDraft(link.custom_url ?? `/r/${restaurant.slug}`);
+  };
+
+  const closeLinkEditor = () => {
+    setEditingRestaurantId(null);
+    setLinkDraft("");
+  };
+
+  const saveLinkDraft = () => {
+    if (!editingRestaurant) return;
+    try {
+      const trimmed = linkDraft.trim();
+      const customUrl = !trimmed || trimmed === defaultRestaurantUrl
+        ? null
+        : trimmed.startsWith("/")
+          ? trimmed
+          : normalizeExternalUrl(trimmed);
+      updateLink(editingRestaurant.id, { custom_url: customUrl });
+      closeLinkEditor();
+      toast.success("Link atualizado. Clique em Salvar para confirmar.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Informe um endereço válido");
+    }
+  };
+
+  const resetLinkToDefault = () => {
+    if (!editingRestaurant) return;
+    updateLink(editingRestaurant.id, { custom_url: null });
+    closeLinkEditor();
+    toast.success("Link padrão restaurado. Clique em Salvar para confirmar.");
+  };
+
   const save = async () => {
     setSaving(true);
     try {
@@ -62,7 +102,11 @@ export function AdminBioLinksPanel() {
       const restaurantPayload = rows.map(({ restaurant, link }) => ({
         restaurant_id: restaurant.id,
         enabled: link.enabled,
-        custom_url: link.custom_url ? normalizeExternalUrl(link.custom_url) : null,
+        custom_url: link.custom_url
+          ? link.custom_url.startsWith("/")
+            ? link.custom_url
+            : normalizeExternalUrl(link.custom_url)
+          : null,
       }));
       const { data: userData } = await supabase.auth.getUser();
       const [settingsResult, linksResult] = await Promise.all([
@@ -112,13 +156,48 @@ export function AdminBioLinksPanel() {
             {rows.map(({ restaurant, link }) => (
               <div key={restaurant.id} className="space-y-2 border-b pb-3 last:border-b-0 last:pb-0">
                 <div className="flex items-center justify-between gap-3"><Label>{restaurant.name}</Label><Switch checked={link.enabled} onCheckedChange={(value) => updateLink(restaurant.id, { enabled: value })} /></div>
-                <Input value={link.custom_url ?? ""} onChange={(event) => updateLink(restaurant.id, { custom_url: event.target.value || null })} placeholder={`${window.location.origin}/r/${restaurant.slug}`} maxLength={500} />
-                <p className="text-xs text-muted-foreground">Deixe vazio para usar /r/{restaurant.slug}</p>
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="min-w-0 flex-1 rounded-md border bg-muted/40 px-3 py-2 text-sm text-foreground">
+                    <span className="block truncate" title={link.custom_url ?? `/r/${restaurant.slug}`}>{link.custom_url ?? `/r/${restaurant.slug}`}</span>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => openLinkEditor(restaurant, link)}>
+                    <Pencil className="mr-2 h-4 w-4" />Editar
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={Boolean(editingRestaurantId)} onOpenChange={(open) => { if (!open) closeLinkEditor(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar link de {editingRestaurant?.name}</DialogTitle>
+            <DialogDescription>Informe o endereço que será aberto ao escolher este restaurante.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="restaurant-link">Link do restaurante</Label>
+            <Input
+              id="restaurant-link"
+              value={linkDraft}
+              onChange={(event) => setLinkDraft(event.target.value)}
+              placeholder={defaultRestaurantUrl}
+              maxLength={500}
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
+            <Button type="button" variant="outline" onClick={resetLinkToDefault}>
+              <RotateCcw className="mr-2 h-4 w-4" />Restaurar padrão
+            </Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button type="button" variant="ghost" onClick={closeLinkEditor}>Cancelar</Button>
+              <Button type="button" onClick={saveLinkDraft}><Save className="mr-2 h-4 w-4" />Salvar link</Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
