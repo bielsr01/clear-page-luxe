@@ -1,0 +1,1 @@
+CREATE POLICY "Rate limits are service only" ON public.job_application_rate_limits FOR ALL TO authenticated USING (false) WITH CHECK (false);
