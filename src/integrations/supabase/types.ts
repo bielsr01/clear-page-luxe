@@ -437,6 +437,71 @@ export type Database = {
           },
         ]
       }
+      bio_restaurant_links: {
+        Row: {
+          created_at: string
+          custom_url: string | null
+          enabled: boolean
+          id: string
+          restaurant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_url?: string | null
+          enabled?: boolean
+          id?: string
+          restaurant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_url?: string | null
+          enabled?: boolean
+          id?: string
+          restaurant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bio_restaurant_links_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: true
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bio_settings: {
+        Row: {
+          careers_enabled: boolean
+          franchise_enabled: boolean
+          franchise_url: string | null
+          id: boolean
+          order_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          careers_enabled?: boolean
+          franchise_enabled?: boolean
+          franchise_url?: string | null
+          id?: boolean
+          order_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          careers_enabled?: boolean
+          franchise_enabled?: boolean
+          franchise_url?: string | null
+          id?: boolean
+          order_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       bulk_campaign_recipients: {
         Row: {
           campaign_id: string
@@ -1791,6 +1856,66 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      job_application_rate_limits: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          ip_hash?: string
+        }
+        Relationships: []
+      }
+      job_applications: {
+        Row: {
+          birth_date: string
+          city: string
+          created_at: string
+          full_name: string
+          id: string
+          phone: string
+          resume_filename: string
+          resume_key: string
+          resume_mime_type: string
+          resume_size_bytes: number
+          sex: string
+        }
+        Insert: {
+          birth_date: string
+          city: string
+          created_at?: string
+          full_name: string
+          id?: string
+          phone: string
+          resume_filename: string
+          resume_key: string
+          resume_mime_type: string
+          resume_size_bytes: number
+          sex: string
+        }
+        Update: {
+          birth_date?: string
+          city?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          resume_filename?: string
+          resume_key?: string
+          resume_mime_type?: string
+          resume_size_bytes?: number
+          sex?: string
         }
         Relationships: []
       }
