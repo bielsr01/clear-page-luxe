@@ -101,6 +101,20 @@ function onlyDigits(s: string | null | undefined): string {
   return (s ?? "").replace(/\D/g, "");
 }
 
+function isValidWhatsAppPhone(phone: string | null | undefined): boolean {
+  const digits = onlyDigits(phone);
+  const local = digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
+    ? digits.slice(2)
+    : digits;
+
+  return (
+    (local.length === 10 || local.length === 11) &&
+    !local.startsWith("0800") &&
+    !/^(\d)\1+$/.test(local) &&
+    /^[1-9]{2}/.test(local)
+  );
+}
+
 /** Instante UTC correspondente à meia-noite de hoje no fuso de Brasília (GMT-3). */
 function brToday(): Date {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -251,6 +265,37 @@ export function CrmTasksView({
 
     const restIds = Array.from(new Set(customers.map((c) => c.restaurant_id))) as string[];
 
+    // Avaliação do dia seguinte considera somente canais em que existe um WhatsApp real:
+    // delivery próprio e PDV identificado. iFood, Quero, retirada e PDV sem telefone não entram.
+    const reviewOrderByCustomer = new Map<string, { created_at: string }>();
+    if (task.isReview && restIds.length > 0) {
+      try {
+        const eligibleOrders = await fetchAllRows<any>(() =>
+          supabase
+            .from("orders")
+            .select("restaurant_id,customer_phone,created_at")
+            .in("restaurant_id", restIds)
+            .is("external_source", null)
+            .in("order_type", ["delivery", "pdv"])
+            .neq("status", "cancelled")
+            .gte("created_at", REVIEW_START_ISO)
+            .lt("created_at", today.toISOString())
+            .order("created_at", { ascending: false }),
+        );
+
+        eligibleOrders.forEach((order: any) => {
+          if (!isValidWhatsAppPhone(order.customer_phone)) return;
+          const key = `${order.restaurant_id}|${onlyDigits(order.customer_phone)}`;
+          if (!reviewOrderByCustomer.has(key)) {
+            reviewOrderByCustomer.set(key, { created_at: order.created_at });
+          }
+        });
+      } catch (e: any) {
+        toast.error(e?.message ?? "Erro ao validar os pedidos das avaliações");
+        return [];
+      }
+    }
+
     // Ticket médio por cliente (todos os restaurantes envolvidos, com paginação)
     const agg = new Map<string, { sum: number; count: number }>();
     if (restIds.length > 0) {
@@ -304,9 +349,11 @@ export function CrmTasksView({
     return customers
       .map((c) => {
         const key = `${c.restaurant_id}|${onlyDigits(c.phone)}`;
+        const reviewOrder = task.isReview ? reviewOrderByCustomer.get(key) : null;
         const a = agg.get(key);
         // data de referência no fuso de Brasília (evita virar o dia por causa do UTC)
-        const refDate = c.last_order_at ? brDay(c.last_order_at) : "";
+        const effectiveLastOrderAt = reviewOrder?.created_at ?? c.last_order_at;
+        const refDate = effectiveLastOrderAt ? brDay(effectiveLastOrderAt) : "";
         const s = sendMap.get(`${c.id}|${refDate}`);
 
         return {
@@ -315,7 +362,7 @@ export function CrmTasksView({
           name: c.name,
           phone: c.phone,
           orders_count: c.orders_count,
-          last_order_at: c.last_order_at,
+          last_order_at: effectiveLastOrderAt,
           ticket_medio: a && a.count > 0 ? a.sum / a.count : 0,
           reference_date: refDate,
           status: (s?.status === "sent" ? "sent" : "pending") as "pending" | "sent",
@@ -323,6 +370,10 @@ export function CrmTasksView({
         };
       })
       .filter((row) => {
+        if (task.isReview) {
+          const key = `${row.restaurant_id}|${onlyDigits(row.phone)}`;
+          if (!reviewOrderByCustomer.has(key)) return false;
+        }
         // Regra de 5 dias para Avaliação (dia seguinte): pendentes somem após 5 dias
         if (task.isReview && row.status === "pending") {
           const orderDay = new Date(`${row.reference_date}T03:00:00.000Z`);
