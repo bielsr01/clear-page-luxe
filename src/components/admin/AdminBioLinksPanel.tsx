@@ -102,7 +102,11 @@ export function AdminBioLinksPanel() {
       const restaurantPayload = rows.map(({ restaurant, link }) => ({
         restaurant_id: restaurant.id,
         enabled: link.enabled,
-        custom_url: link.custom_url ? normalizeExternalUrl(link.custom_url) : null,
+        custom_url: link.custom_url
+          ? link.custom_url.startsWith("/")
+            ? link.custom_url
+            : normalizeExternalUrl(link.custom_url)
+          : null,
       }));
       const { data: userData } = await supabase.auth.getUser();
       const [settingsResult, linksResult] = await Promise.all([
