@@ -41,10 +41,15 @@ export function AdminBioLinksPanel() {
   })), [restaurants, links]);
 
   const updateLink = (restaurantId: string, patch: Partial<BioRestaurantLink>) => {
-    setLinks((current) => ({
-      ...current,
-      [restaurantId]: { id: "", restaurant_id: restaurantId, enabled: true, custom_url: null, ...current[restaurantId], ...patch },
-    }));
+    setLinks((current) => {
+      const existing = current[restaurantId];
+      return {
+        ...current,
+        [restaurantId]: existing
+          ? { ...existing, ...patch }
+          : { id: "", restaurant_id: restaurantId, enabled: patch.enabled ?? true, custom_url: patch.custom_url ?? null },
+      };
+    });
   };
 
   const save = async () => {
