@@ -17,7 +17,7 @@ import { Plus, ChefHat, ExternalLink, LogOut, Store, ShoppingBag, DollarSign, Pe
 import logoIcon from "@/assets/logo-icon.png";
 import { toast } from "sonner";
 import { z } from "zod";
-import { brl, slugify } from "@/lib/format";
+import { brasiliaStartOfDayUTC, brl, slugify } from "@/lib/format";
 import { SupplyOrdersTab, SupplyCatalogTab } from "@/components/admin/SupplyAdminPanel";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar, type AdminView } from "@/components/admin/AdminSidebar";
@@ -64,6 +64,38 @@ interface Restaurant {
   slug: string;
   is_open: boolean;
   owner_id: string | null;
+}
+
+const ORDERS_PAGE_SIZE = 1000;
+
+async function loadTodayOrderStats() {
+  const start = brasiliaStartOfDayUTC();
+  const end = new Date(start.getTime() + 86_400_000);
+  const orders: { subtotal: number | null; delivery_fee: number | null }[] = [];
+
+  for (let from = 0; ; from += ORDERS_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("subtotal,delivery_fee")
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString())
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: true })
+      .range(from, from + ORDERS_PAGE_SIZE - 1);
+
+    if (error) throw error;
+    const page = data ?? [];
+    orders.push(...page);
+    if (page.length < ORDERS_PAGE_SIZE) break;
+  }
+
+  return {
+    orders: orders.length,
+    revenue: orders.reduce(
+      (sum, order) => sum + Number(order.subtotal ?? 0) + Number(order.delivery_fee ?? 0),
+      0,
+    ),
+  };
 }
 
 const createSchema = z.object({
@@ -119,18 +151,12 @@ export default function MasterAdmin() {
   };
 
   const load = async () => {
-    const { data } = await supabase.from("restaurants").select("id,name,slug,is_open,owner_id").order("created_at", { ascending: false });
+    const [{ data }, todayStats] = await Promise.all([
+      supabase.from("restaurants").select("id,name,slug,is_open,owner_id").order("created_at", { ascending: false }),
+      loadTodayOrderStats(),
+    ]);
     setRestaurants(data ?? []);
-
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const { data: orders } = await supabase
-      .from("orders")
-      .select("total")
-      .gte("created_at", today.toISOString());
-    setStats({
-      orders: orders?.length ?? 0,
-      revenue: orders?.reduce((s, o) => s + Number(o.total), 0) ?? 0,
-    });
+    setStats(todayStats);
   };
 
   useEffect(() => {
