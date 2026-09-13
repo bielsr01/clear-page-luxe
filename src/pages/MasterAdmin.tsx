@@ -49,6 +49,8 @@ import { AdminCrmTasksPanel } from "@/components/admin/AdminCrmTasksPanel";
 import { ArtLibraryPanel } from "@/components/crm/ArtLibraryPanel";
 import { AdminPromoCalendarPanel } from "@/components/admin/AdminPromoCalendarPanel";
 import AdminMysteryShopperPanel from "@/components/admin/AdminMysteryShopperPanel";
+import { AdminBioLinksPanel } from "@/components/admin/AdminBioLinksPanel";
+import { AdminJobApplicationsPanel } from "@/components/admin/AdminJobApplicationsPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingSupplyOrdersCount } from "@/hooks/usePendingCounts";
 import { useOpenSupportTicketsCount } from "@/hooks/useOpenSupportTicketsCount";
@@ -224,6 +226,8 @@ export default function MasterAdmin() {
     "crm:art-library": "CRM / Biblioteca de Artes",
     "crm:promo-calendar": "CRM / Calendário Promocional",
     "crm:mystery-shopper": "CRM / Cliente Oculto",
+    "links": "Links",
+    "job-applications": "Banco de Currículos",
   };
 
 
@@ -431,6 +435,8 @@ export default function MasterAdmin() {
             {view === "crm:art-library" && <ArtLibraryPanel isAdmin={true} />}
             {view === "crm:promo-calendar" && <AdminPromoCalendarPanel />}
             {view === "crm:mystery-shopper" && <AdminMysteryShopperPanel />}
+            {view === "links" && <AdminBioLinksPanel />}
+            {view === "job-applications" && <AdminJobApplicationsPanel />}
           </main>
         </SidebarInset>
 
