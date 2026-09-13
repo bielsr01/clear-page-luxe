@@ -121,7 +121,6 @@ export default function BioPublic() {
         ) : (
           <section className="text-center"><div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-success text-success-foreground"><BriefcaseBusiness className="h-8 w-8" /></div><h2 className="text-2xl font-bold">Currículo enviado!</h2><p className="mt-2 text-muted-foreground">Recebemos seus dados. Boa sorte!</p><Button className="mt-6" onClick={() => setScreen("home")}>Voltar aos links</Button></section>
         )}
-        <footer className="mt-12 text-center text-xs text-muted-foreground">Coxinha Surprise</footer>
       </div>
     </main>
   );
