@@ -33,4 +33,7 @@ verify_jwt = false
 [functions.job-application-download]
 verify_jwt = false
 
+[functions.job-application-delete]
+verify_jwt = false
+
 

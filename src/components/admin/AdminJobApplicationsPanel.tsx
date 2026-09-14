@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, Eye, FileUser, Search } from "lucide-react";
+import { Download, Eye, FileUser, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getResumeUrl } from "@/lib/bio";
+import { deleteJobApplication, getResumeUrl } from "@/lib/bio";
 import { formatPhone } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 type Application = {
   id: string;
@@ -29,6 +30,7 @@ export function AdminJobApplicationsPanel() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [opening, setOpening] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +60,19 @@ export function AdminJobApplicationsPanel() {
     }
   };
 
+  const removeApplication = async (application: Application) => {
+    setDeleting(application.id);
+    try {
+      await deleteJobApplication(application.id);
+      setApplications((current) => current.filter((item) => item.id !== application.id));
+      toast.success("Currículo excluído");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível excluir o currículo");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="relative max-w-md"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, telefone ou cidade" className="pl-9" /></div>
@@ -75,7 +90,7 @@ export function AdminJobApplicationsPanel() {
               <TableCell className="whitespace-nowrap">{formatPhone(item.phone)}</TableCell>
               <TableCell>{item.city}</TableCell>
               <TableCell><div className="max-w-48 truncate" title={item.resume_filename}>{item.resume_filename}</div><div className="text-xs text-muted-foreground">{fileSize(item.resume_size_bytes)}</div></TableCell>
-              <TableCell><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" title="Visualizar" disabled={!!opening} onClick={() => void openResume(item, "view")}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" title="Baixar" disabled={!!opening} onClick={() => void openResume(item, "download")}><Download className="h-4 w-4" /></Button></div></TableCell>
+              <TableCell><div className="flex justify-end gap-1"><Button variant="ghost" size="icon" title="Visualizar" disabled={!!opening || deleting === item.id} onClick={() => void openResume(item, "view")}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" title="Baixar" disabled={!!opening || deleting === item.id} onClick={() => void openResume(item, "download")}><Download className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" title="Excluir" disabled={deleting === item.id} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Excluir currículo de {item.full_name}?</AlertDialogTitle><AlertDialogDescription>Esta ação é definitiva e também excluirá o arquivo anexado.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => void removeApplication(item)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir currículo</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></TableCell>
             </TableRow>)}</TableBody>
           </Table></div>
         )}
