@@ -46,3 +46,16 @@ export async function getResumeUrl(applicationId: string, mode: "view" | "downlo
   if (!response.ok || !body?.url) throw new Error(body?.error ?? "Não foi possível abrir o currículo");
   return body.url as string;
 }
+
+export async function deleteJobApplication(applicationId: string) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sessão expirada");
+
+  const { data, error } = await supabase.functions.invoke("job-application-delete", {
+    body: { application_id: applicationId },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (error) throw new Error(data?.error ?? "Não foi possível excluir o currículo");
+  if (!data?.success) throw new Error(data?.error ?? "Não foi possível excluir o currículo");
+}
