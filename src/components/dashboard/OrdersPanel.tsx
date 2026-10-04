@@ -398,6 +398,13 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           return { ...prev, orders: prev.orders.filter((o) => o.id !== id) };
         });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, (payload) => {
+        const row = (payload.new ?? payload.old) as Partial<Item>;
+        const cached = qc.getQueryData<{ orders: Order[]; items: Record<string, Item[]> }>(ordersKey(restaurantId));
+        if (row?.order_id && cached?.orders.some((o) => o.id === row.order_id)) {
+          qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
+        }
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [restaurantId, qc]);
