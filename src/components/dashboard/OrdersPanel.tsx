@@ -89,18 +89,24 @@ interface ProductOptionGroupRow { product_id: string; group_id: string; sort_ord
 
 export const ordersKey = (rid: string) => ["orders", rid] as const;
 
+// Realtime keeps the board immediate; polling reconciles events lost on suspended
+// tabs, unstable connections, or an interrupted Realtime subscription.
+const ORDER_REFRESH_MS = 15_000;
+
 export async function fetchOrders(restaurantId: string): Promise<{ orders: Order[]; items: Record<string, Item[]> }> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("orders")
     .select("*")
     .eq("restaurant_id", restaurantId)
     .order("created_at", { ascending: false })
     .limit(500);
+  if (error) throw error;
   const orders = (data ?? []) as Order[];
   const ids = orders.map((o) => o.id);
   const grouped: Record<string, Item[]> = {};
   if (ids.length) {
-    const { data: its } = await supabase.from("order_items").select("*").in("order_id", ids);
+    const { data: its, error: itemsError } = await supabase.from("order_items").select("*").in("order_id", ids);
+    if (itemsError) throw itemsError;
     (its ?? []).forEach((it) => { (grouped[it.order_id] ||= []).push(it as Item); });
   }
   return { orders, items: grouped };
@@ -256,6 +262,10 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
     queryKey: ordersKey(restaurantId),
     queryFn: () => fetchOrders(restaurantId),
     staleTime: 10_000,
+    refetchInterval: ORDER_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: "always",
+    refetchOnReconnect: "always",
   });
 
   const { data: restaurantInfo } = useQuery({
@@ -388,8 +398,12 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
           return { ...prev, orders: prev.orders.filter((o) => o.id !== id) };
         });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => {
-        qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, (payload) => {
+        const row = (payload.new ?? payload.old) as Partial<Item>;
+        const cached = qc.getQueryData<{ orders: Order[]; items: Record<string, Item[]> }>(ordersKey(restaurantId));
+        if (row?.order_id && cached?.orders.some((o) => o.id === row.order_id)) {
+          qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };

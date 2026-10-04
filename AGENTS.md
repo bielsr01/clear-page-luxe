@@ -1,0 +1,1 @@
+Order dashboards use restaurant-scoped Realtime for immediate updates and a 15-second query reconciliation while open, because network interruptions can silently lose events.

@@ -18,6 +18,7 @@ export function usePendingOrdersCount(restaurantId: string | undefined) {
       if (!cancelled) setCount(c ?? 0);
     };
     refresh();
+    const interval = window.setInterval(refresh, 15_000);
     const ch = supabase
       .channel(`pending-orders-${restaurantId}`)
       .on(
@@ -28,6 +29,7 @@ export function usePendingOrdersCount(restaurantId: string | undefined) {
       .subscribe();
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
       supabase.removeChannel(ch);
     };
   }, [restaurantId]);
