@@ -42,7 +42,7 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
   useEffect(() => {
     if (!restaurantId) return;
     let cancelled = false;
-    (async () => {
+    const refresh = async () => {
       const { data } = await supabase
         .from("orders")
         .select("id")
@@ -51,9 +51,12 @@ export function useNewOrderNotifications(restaurantId: string | undefined, isOnO
         .neq("order_type", "pdv");
       if (cancelled || !data) return;
       setPendingIds(new Set(data.map((r: any) => r.id)));
-    })();
+    };
+    refresh();
+    const interval = window.setInterval(refresh, 15_000);
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
     };
   }, [restaurantId]);
 
