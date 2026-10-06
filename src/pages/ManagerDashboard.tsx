@@ -180,9 +180,11 @@ export default function ManagerDashboard() {
     if (view === "support") markSupportSeen();
   }, [view, markSupportSeen]);
 
-  // Redirect view if user lacks permission for the current view
+  // Redirect view if user lacks permission for the current view.
+  // Wait for the restaurant: before it loads, usePermissions reports empty
+  // permissions without loading, which would kick the initial "orders" view away.
   useEffect(() => {
-    if (permissionsLoading || isFullAccess) return;
+    if (!restaurant?.id || permissionsLoading || isFullAccess) return;
     const allowed: Record<DashboardView, boolean> = {
       overview: !!permissions.overview.view,
       orders: !!permissions.orders.view,
@@ -210,7 +212,7 @@ export default function ManagerDashboard() {
       const fallback = (Object.keys(allowed) as DashboardView[]).find((k) => allowed[k]);
       if (fallback) setView(fallback);
     }
-  }, [isFullAccess, permissions, permissionsLoading, view]);
+  }, [restaurant?.id, isFullAccess, permissions, permissionsLoading, view]);
 
   const refetchRestaurant = () => qc.invalidateQueries({ queryKey: ["managerRestaurant", user?.id] });
 
