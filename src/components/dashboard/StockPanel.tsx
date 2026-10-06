@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Package, History, Settings2, Utensils, ShoppingBag } from "lucide-react";
+import { AlertTriangle, Package, History, Settings2, Utensils, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 type ExternalSource = "ifood" | "quero";
@@ -52,6 +52,9 @@ type Movement = {
   notes: string | null; created_at: string; reference_id: string | null;
 };
 
+const HISTORY_PAGE_SIZE = 50;
+const HISTORY_DAYS = 60;
+
 const movementLabel: Record<string, string> = {
   supply_delivery: "Entrega de insumo",
   order_consumption: "Pedido aceito",
@@ -80,14 +83,42 @@ export function StockPanel({ restaurantId }: { restaurantId: string }) {
     },
   });
 
-  const { data: movements = [] } = useQuery({
-    queryKey: ["stock_movements", restaurantId],
+  const [historyFilter, setHistoryFilter] = useState<"all" | "in" | "out">("all");
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyTopRef = useRef<HTMLDivElement>(null);
+
+  // Histórico paginado no servidor: só os últimos HISTORY_DAYS dias, HISTORY_PAGE_SIZE por página.
+  const { data: movementsPage } = useQuery({
+    queryKey: ["stock_movements", restaurantId, historyFilter, historyPage],
+    placeholderData: keepPreviousData,
     queryFn: async () => {
-      const { data } = await supabase.from("stock_movements").select("*")
-        .eq("restaurant_id", restaurantId).order("created_at", { ascending: false }).limit(200);
-      return (data ?? []) as Movement[];
+      const since = new Date(Date.now() - HISTORY_DAYS * 24 * 60 * 60 * 1000).toISOString();
+      const from = (historyPage - 1) * HISTORY_PAGE_SIZE;
+      let q = supabase.from("stock_movements").select("*", { count: "exact" })
+        .eq("restaurant_id", restaurantId).gte("created_at", since);
+      if (historyFilter === "in") q = q.gt("quantity", 0);
+      if (historyFilter === "out") q = q.lt("quantity", 0);
+      const { data, count } = await q.order("created_at", { ascending: false }).range(from, from + HISTORY_PAGE_SIZE - 1);
+      return { rows: (data ?? []) as Movement[], total: count ?? 0 };
     },
   });
+  const movements = movementsPage?.rows ?? [];
+  const totalMovements = movementsPage?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalMovements / HISTORY_PAGE_SIZE));
+
+  // Se o total diminuir (filtro, tempo real), volta para a última página existente.
+  useEffect(() => {
+    if (movementsPage && historyPage > totalPages) setHistoryPage(totalPages);
+  }, [movementsPage, historyPage, totalPages]);
+
+  const changeHistoryFilter = (f: "all" | "in" | "out") => {
+    setHistoryFilter(f);
+    setHistoryPage(1);
+  };
+  const goToHistoryPage = (p: number) => {
+    setHistoryPage(p);
+    historyTopRef.current?.scrollIntoView({ block: "start" });
+  };
 
   const orderRefIds = Array.from(new Set(
     movements.filter(m => (m.type === "order_consumption" || m.type === "order_revert") && m.reference_id).map(m => m.reference_id as string)
@@ -145,11 +176,8 @@ export function StockPanel({ restaurantId }: { restaurantId: string }) {
     return { title: movementLabel[m.type] ?? m.type, subtitle: m.notes ?? undefined };
   };
 
-  const [historyFilter, setHistoryFilter] = useState<"all" | "in" | "out">("all");
-  const filteredMovements =
-    historyFilter === "in" ? movements.filter(m => m.quantity > 0)
-    : historyFilter === "out" ? movements.filter(m => m.quantity < 0)
-    : movements;
+  const rangeStart = totalMovements === 0 ? 0 : (historyPage - 1) * HISTORY_PAGE_SIZE + 1;
+  const rangeEnd = Math.min(historyPage * HISTORY_PAGE_SIZE, totalMovements);
 
   return (
     <Tabs defaultValue="balance" className="space-y-4">
@@ -197,18 +225,35 @@ export function StockPanel({ restaurantId }: { restaurantId: string }) {
       </TabsContent>
 
       <TabsContent value="history" className="space-y-3">
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-          <Button size="sm" variant={historyFilter === "all" ? "default" : "outline"} onClick={() => setHistoryFilter("all")}>Todos</Button>
-          <Button size="sm" variant={historyFilter === "in" ? "default" : "outline"} onClick={() => setHistoryFilter("in")}>Entradas</Button>
-          <Button size="sm" variant={historyFilter === "out" ? "default" : "outline"} onClick={() => setHistoryFilter("out")}>Saídas</Button>
+        <div ref={historyTopRef} className="grid grid-cols-3 gap-2 scroll-mt-20 sm:flex sm:flex-wrap">
+          <Button size="sm" variant={historyFilter === "all" ? "default" : "outline"} onClick={() => changeHistoryFilter("all")}>Todos</Button>
+          <Button size="sm" variant={historyFilter === "in" ? "default" : "outline"} onClick={() => changeHistoryFilter("in")}>Entradas</Button>
+          <Button size="sm" variant={historyFilter === "out" ? "default" : "outline"} onClick={() => changeHistoryFilter("out")}>Saídas</Button>
         </div>
         <MovementList
           title={historyFilter === "in" ? "Entradas no estoque" : historyFilter === "out" ? "Saídas / consumo" : "Movimentações"}
-          empty="Sem movimentações."
-          movements={filteredMovements}
+          description={`Últimos ${HISTORY_DAYS} dias`}
+          empty={movementsPage ? `Sem movimentações nos últimos ${HISTORY_DAYS} dias.` : "Carregando…"}
+          movements={movements}
           groupMap={groupMap}
           describe={describeMovement}
         />
+        {totalMovements > 0 && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="text-xs text-muted-foreground">
+              Mostrando {rangeStart}–{rangeEnd} de {totalMovements} movimentação(ões)
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => goToHistoryPage(historyPage - 1)} disabled={historyPage <= 1}>
+                <ChevronLeft className="w-4 h-4" /> Anterior
+              </Button>
+              <span className="text-sm tabular-nums">Página {historyPage} de {totalPages}</span>
+              <Button variant="outline" size="sm" onClick={() => goToHistoryPage(historyPage + 1)} disabled={historyPage >= totalPages}>
+                Próxima <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </TabsContent>
 
       <TabsContent value="ifood" className="space-y-3">
@@ -328,9 +373,10 @@ function ExternalStockTab({
 }
 
 function MovementList({
-  title, empty, movements, groupMap, describe,
+  title, description, empty, movements, groupMap, describe,
 }: {
   title: string;
+  description?: string;
   empty: string;
   movements: Movement[];
   groupMap: Record<string, StockGroup>;
@@ -338,7 +384,10 @@ function MovementList({
 }) {
   return (
     <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-base">{title}</CardTitle></CardHeader>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">{title}</CardTitle>
+        {description && <div className="text-xs text-muted-foreground">{description}</div>}
+      </CardHeader>
       <CardContent className="p-0">
         {movements.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground text-sm">{empty}</div>
