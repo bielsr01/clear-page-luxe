@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ShoppingCart, Plus, Minus, Image as ImageIcon, Trash2, Info, MapPin, Clock, Bike, Store, Share2, MessageCircle, Instagram, Facebook, CheckCircle2 } from "lucide-react";
 import { useCart, CartItemOption } from "@/hooks/useCart";
 import { brl } from "@/lib/format";
+import { ProductPrice, hasDiscount } from "@/components/ProductPrice";
 import { Checkout } from "@/components/Checkout";
 import { ActiveOrderBanner } from "@/components/ActiveOrderBanner";
 import { CouponsBanner } from "@/components/CouponsBanner";
@@ -22,7 +23,7 @@ import { CoverCarousel } from "@/components/CoverCarousel";
 
 interface Restaurant { id: string; name: string; slug: string; description: string | null; logo_url: string | null; cover_url: string | null; cover_urls: string[] | null; is_open: boolean; phone: string | null; opening_hours: any; latitude: number | null; longitude: number | null; delivery_zones: any; manual_override: ManualOverride; address_cep: string | null; address_street: string | null; address_number: string | null; address_complement: string | null; address_neighborhood: string | null; address_city: string | null; address_state: string | null; delivery_time_min: number | null; delivery_time_max: number | null; whatsapp_url: string | null; instagram_url: string | null; facebook_url: string | null; service_delivery: boolean | null; service_pickup: boolean | null; }
 interface Category { id: string; name: string; sort_order: number; }
-interface Product { id: string; name: string; description: string | null; price: number; image_url: string | null; category_id: string | null; }
+interface Product { id: string; name: string; description: string | null; price: number; original_price?: number | null; image_url: string | null; category_id: string | null; }
 interface OptionGroup { id: string; name: string; min_select: number; max_select: number; sort_order: number; allow_repeat?: boolean; items: { id: string; name: string; extra_price: number; image_url?: string | null }[]; }
 
 export default function RestaurantPublic() {
@@ -482,7 +483,7 @@ export default function RestaurantPublic() {
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold">{p.name}</div>
                         {p.description && <div className="text-sm text-muted-foreground line-clamp-2">{p.description}</div>}
-                        <div className="font-bold text-primary mt-1">{brl(p.price)}</div>
+                        <ProductPrice product={p} className="mt-1" priceClassName="font-bold text-primary" />
                       </div>
                     </CardContent>
                   </Card>
@@ -568,7 +569,7 @@ export default function RestaurantPublic() {
                         </div>
                         <div className="p-2 flex flex-col gap-1 flex-1">
                           <div className="font-medium text-sm line-clamp-2 leading-tight">{p.name}</div>
-                          <div className="text-xs font-semibold text-primary">{brl(Number(p.price))}</div>
+                          <ProductPrice product={p} className="text-xs" priceClassName="font-semibold text-primary" />
                           <Button size="sm" variant="outline" className="mt-1 w-full" onClick={handleAdd}>
                             <Plus className="w-3.5 h-3.5 mr-1" />Adicionar
                           </Button>
@@ -603,6 +604,7 @@ export default function RestaurantPublic() {
                 <DialogHeader><DialogTitle>{selected.name}</DialogTitle></DialogHeader>
                 {selected.image_url && <img src={selected.image_url} alt={selected.name} loading="eager" decoding="async" className="w-full aspect-[4/3] object-cover rounded-lg" />}
                 {selected.description && <p className="text-sm text-muted-foreground">{selected.description}</p>}
+                {hasDiscount(selected) && <ProductPrice product={selected} className="text-lg" priceClassName="font-bold" />}
 
 
                 {productGroups.map((g) => {

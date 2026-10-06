@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Image as ImageIcon, GripVertical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { brl } from "@/lib/format";
+import { ProductPrice } from "@/components/ProductPrice";
 import { OptionGroupsManager, fetchGroups, optionKeys, OptionGroup } from "./OptionGroupsManager";
 import { OrderSuggestionsPanel } from "./OrderSuggestionsPanel";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -21,7 +21,15 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from "@dnd-kit/utilities";
 
 interface Category { id: string; name: string; sort_order: number; is_active: boolean; }
-interface Product { id: string; category_id: string | null; name: string; description: string | null; price: number; image_url: string | null; is_active: boolean; sort_order: number; }
+// `price` é o valor cobrado; em promoção, `original_price` guarda o preço "de" (maior que `price`).
+interface Product { id: string; category_id: string | null; name: string; description: string | null; price: number; original_price?: number | null; image_url: string | null; is_active: boolean; sort_order: number; }
+
+// Enquanto a migração de `original_price` não rodou, o Supabase recusa a coluna desconhecida.
+function productErrorMessage(message: string) {
+  return message.includes("original_price")
+    ? "O banco ainda não tem o campo de preço com desconto. Rode a migração de original_price no Supabase."
+    : message;
+}
 
 export const menuKeys = {
   categories: (rid: string) => ["menu", rid, "categories"] as const,
@@ -181,11 +189,23 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
     const fd = new FormData(e.currentTarget);
     const name = String(fd.get("name") || "").trim();
     const description = String(fd.get("description") || "").trim() || null;
-    const price = Number(fd.get("price") || 0);
+    const fullPrice = Number(fd.get("price") || 0);
+    const discountRaw = String(fd.get("discount_price") || "").trim();
+    const discountPrice = discountRaw === "" ? null : Number(discountRaw);
     const category_id = String(fd.get("category_id") || "") || null;
     const file = fd.get("image") as File | null;
 
-    if (!name || price < 0) return toast.error("Verifique nome e preço");
+    if (!name || fullPrice < 0) return toast.error("Verifique nome e preço");
+    if (discountPrice != null && (isNaN(discountPrice) || discountPrice < 0 || discountPrice >= fullPrice)) {
+      return toast.error("O preço com desconto deve ser menor que o preço normal");
+    }
+    // Com desconto, cobra-se o preço com desconto e o normal vira o preço "de" (riscado no cardápio).
+    const price = discountPrice ?? fullPrice;
+    const original_price = discountPrice != null ? fullPrice : null;
+    // Só envia a coluna quando há desconto ou o produto já a tinha (evita erro antes da migração).
+    const priceFields = original_price != null || editingProd?.original_price !== undefined
+      ? { price, original_price }
+      : { price };
 
     setSavingProduct(true);
     try {
@@ -201,12 +221,12 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
 
       let productId: string;
       if (editingProd) {
-        const { error } = await supabase.from("products").update({ name, description, price, category_id, image_url }).eq("id", editingProd.id);
-        if (error) return toast.error(error.message);
+        const { error } = await supabase.from("products").update({ name, description, ...priceFields, category_id, image_url }).eq("id", editingProd.id);
+        if (error) return toast.error(productErrorMessage(error.message));
         productId = editingProd.id;
       } else {
-        const { data, error } = await supabase.from("products").insert({ name, description, price, category_id, image_url, restaurant_id: restaurantId }).select("id").single();
-        if (error || !data) return toast.error(error?.message || "Erro");
+        const { data, error } = await supabase.from("products").insert({ name, description, ...priceFields, category_id, image_url, restaurant_id: restaurantId }).select("id").single();
+        if (error || !data) return toast.error(productErrorMessage(error?.message || "Erro"));
         productId = data.id;
       }
 
@@ -298,9 +318,14 @@ export function MenuManager({ restaurantId }: { restaurantId: string }) {
               <form onSubmit={saveProduct} className="space-y-4">
                 <div className="space-y-2"><Label>Nome</Label><Input name="name" defaultValue={editingProd?.name} required /></div>
                 <div className="space-y-2"><Label>Descrição</Label><Textarea name="description" defaultValue={editingProd?.description ?? ""} rows={2} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2"><Label>Preço (R$)</Label><Input name="price" type="number" step="0.01" min="0" defaultValue={editingProd?.price} required /></div>
+                <div className="grid grid-cols-2 items-end gap-3">
+                  <div className="space-y-2"><Label>Preço (R$)</Label><Input name="price" type="number" step="0.01" min="0" defaultValue={editingProd ? (editingProd.original_price ?? editingProd.price) : undefined} required /></div>
                   <div className="space-y-2">
+                    <Label>Preço com desconto (R$)</Label>
+                    <Input name="discount_price" type="number" step="0.01" min="0" placeholder="Opcional" defaultValue={editingProd?.original_price != null ? editingProd.price : undefined} />
+                  </div>
+                  <p className="col-span-2 -mt-1 text-xs text-muted-foreground">Com desconto, o cardápio mostra o preço normal riscado e cobra o preço com desconto.</p>
+                  <div className="space-y-2 col-span-2">
                     <Label>Categoria</Label>
                     <select name="category_id" defaultValue={editingProd?.category_id ?? defaultCat ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
                       <option value="">Sem categoria</option>
@@ -571,7 +596,7 @@ function SortableProductCard({
         <div className="flex-1 min-w-0">
           <div className="font-medium truncate">{p.name}</div>
           {p.description && <div className="text-xs text-muted-foreground line-clamp-1">{p.description}</div>}
-          <div className="text-sm font-semibold text-primary mt-0.5">{brl(p.price)}</div>
+          <ProductPrice product={p} className="text-sm mt-0.5" priceClassName="font-semibold text-primary" />
         </div>
         {canEdit && (
           <div className="flex items-center gap-1 ml-auto w-full sm:w-auto justify-end border-t sm:border-0 pt-2 sm:pt-0">

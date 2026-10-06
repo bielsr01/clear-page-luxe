@@ -2854,6 +2854,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          original_price: number | null
           price: number
           restaurant_id: string
           sort_order: number
@@ -2867,6 +2868,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          original_price?: number | null
           price: number
           restaurant_id: string
           sort_order?: number
@@ -2880,6 +2882,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          original_price?: number | null
           price?: number
           restaurant_id?: string
           sort_order?: number

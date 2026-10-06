@@ -19,7 +19,7 @@ const sb = supabase as any;
 type Mode = "all" | "items";
 
 interface Cat { id: string; name: string; sort_order: number; is_active: boolean }
-interface Prod { id: string; category_id: string | null; name: string; description: string | null; price: number; image_url: string | null; is_active: boolean; sort_order: number }
+interface Prod { id: string; category_id: string | null; name: string; description: string | null; price: number; original_price?: number | null; image_url: string | null; is_active: boolean; sort_order: number }
 interface Grp { id: string; name: string; min_select: number; max_select: number; sort_order: number; is_active: boolean; image_url: string | null; allow_repeat: boolean }
 interface Item { id: string; group_id: string; name: string; extra_price: number; sort_order: number; is_active: boolean; image_url: string | null; stock_group_id: string | null; stock_quantity_per_unit: number | null }
 interface POG { product_id: string; group_id: string; sort_order: number; min_select_override: number | null; max_select_override: number | null }
@@ -210,6 +210,7 @@ export function AdminMenuClonerDialog({ destRestaurantId, open, onOpenChange }: 
           name: p.name,
           description: p.description,
           price: p.price,
+          ...(p.original_price != null ? { original_price: p.original_price } : {}),
           image_url: p.image_url,
           is_active: p.is_active,
           sort_order: p.sort_order,
