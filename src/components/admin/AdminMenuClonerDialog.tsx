@@ -255,7 +255,7 @@ export function AdminMenuClonerDialog({ destRestaurantId, open, onOpenChange }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Copy className="w-5 h-5" /> Clonar cardápio</DialogTitle>
           <DialogDescription>

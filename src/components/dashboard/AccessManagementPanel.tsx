@@ -410,7 +410,7 @@ export function AccessManagementPanel({ restaurantId }: Props) {
 
       {/* Group dialog */}
       <Dialog open={groupDialog.open} onOpenChange={(o) => setGroupDialog({ open: o })}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>{groupDialog.editing ? "Editar grupo" : "Novo grupo"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>

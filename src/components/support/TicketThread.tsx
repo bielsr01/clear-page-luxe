@@ -76,7 +76,7 @@ export function TicketThread({
     <div className="border rounded-md bg-muted/30">
       <div
         ref={scrollRef}
-        className="max-h-64 overflow-y-auto p-3 space-y-2"
+        className="md:max-h-64 md:overflow-y-auto p-3 space-y-2"
       >
         {messages.length === 0 ? (
           <div className="text-xs text-muted-foreground text-center py-4">

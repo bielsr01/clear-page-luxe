@@ -469,7 +469,7 @@ function AllCitiesMapDialog({
             Arraste o mapa e use os controles de zoom. Clique em um pino para ver os dados.
           </DialogDescription>
         </DialogHeader>
-        <div className="relative w-full h-[70vh] rounded-md overflow-hidden border">
+        <div className="relative w-full h-[70dvh] rounded-md overflow-hidden border">
           <div ref={containerRef} className="absolute inset-0" />
           {loading && (
             <div className="absolute inset-0 grid place-items-center bg-background/60">
@@ -629,7 +629,7 @@ function CityFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? "Editar cidade" : "Nova cidade"}</DialogTitle>
           <DialogDescription>

@@ -255,7 +255,7 @@ export function CouponMetrics({
           <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
           <SelectContent
             position="popper"
-            className="max-h-[60vh]"
+            className="max-h-[60dvh]"
             ref={(el) => {
               if (el) el.ontouchstart = (e) => e.stopPropagation();
             }}
@@ -319,7 +319,26 @@ export function CouponMetrics({
               <CardDescription>Comparação entre todos os cupons cadastrados.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border overflow-x-auto">
+              <div className="md:hidden space-y-2">
+                {perCoupon.length === 0 && (
+                  <div className="text-center text-sm text-muted-foreground py-8">Nenhum dado</div>
+                )}
+                {perCoupon.map((r) => (
+                  <div key={r.code} className="border rounded-lg p-3 space-y-2 bg-card">
+                    <div className="min-w-0">
+                      <div className="font-mono font-semibold break-all">{r.code}</div>
+                      {r.name && <div className="text-xs text-muted-foreground break-words">{r.name}</div>}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 border-t pt-2 text-xs">
+                      <div><span className="text-muted-foreground">Usos:</span> <strong>{r.uses}</strong></div>
+                      <div><span className="text-muted-foreground">Únicos:</span> <strong>{r.unique.size}</strong></div>
+                      <div><span className="text-muted-foreground">Faturamento:</span> <strong>{brl(r.revenue)}</strong></div>
+                      <div><span className="text-muted-foreground">Desconto:</span> <strong>{brl(r.discount)}</strong></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

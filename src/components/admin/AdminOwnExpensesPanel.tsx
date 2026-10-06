@@ -353,7 +353,7 @@ export function AdminOwnExpensesPanel() {
           <DialogHeader><DialogTitle>Comprovante</DialogTitle></DialogHeader>
           {previewUrl && (
             <div className="space-y-3">
-              <img src={previewUrl} alt="Comprovante" className="w-full max-h-[70vh] object-contain rounded" />
+              <img src={previewUrl} alt="Comprovante" className="w-full max-h-[70dvh] object-contain rounded" />
               <DialogFooter>
                 <Button asChild variant="outline"><a href={previewUrl} download target="_blank" rel="noreferrer"><Download className="w-4 h-4 mr-1" />Baixar</a></Button>
               </DialogFooter>

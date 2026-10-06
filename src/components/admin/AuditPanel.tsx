@@ -384,7 +384,7 @@ function GroupsConfigDialog({ open, onOpenChange }: { open: boolean; onOpenChang
             <Input placeholder="Ex.: Fachada da loja" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
             <Button onClick={add} disabled={busy || !newName.trim()}><Plus className="w-4 h-4" /></Button>
           </div>
-          <div className="space-y-1 max-h-[50vh] overflow-y-auto">
+          <div className="space-y-1 max-h-[50dvh] overflow-y-auto">
             {(groups ?? []).length === 0 && (
               <div className="text-sm text-muted-foreground text-center py-4">Nenhum grupo cadastrado.</div>
             )}
@@ -600,7 +600,7 @@ function AuditDetailsDialog({ auditId, onClose }: { auditId: string; onClose: ()
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>Detalhes da auditoria</DialogTitle></DialogHeader>
-        <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+        <div className="space-y-3 max-h-[70dvh] overflow-y-auto">
           {(data ?? []).map((s) => (
             <Card key={s.id}>
               <CardHeader className="pb-2">

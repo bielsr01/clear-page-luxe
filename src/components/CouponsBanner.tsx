@@ -56,7 +56,7 @@ export function CouponsBanner({ restaurantId }: { restaurantId: string }) {
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Ticket className="w-4 h-4 text-primary" /> Descontos disponíveis

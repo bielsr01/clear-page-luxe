@@ -78,7 +78,7 @@ export function AddressSearchDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 gap-0 flex flex-col overflow-hidden max-w-full w-screen h-[100dvh] sm:max-w-lg sm:h-auto sm:max-h-[80vh] sm:rounded-lg rounded-none">
+      <DialogContent className="p-0 gap-0 flex flex-col overflow-hidden max-w-full w-screen h-[100dvh] sm:max-w-lg sm:h-auto sm:max-h-[80dvh] sm:rounded-lg rounded-none">
         <DialogHeader className="shrink-0 px-6 py-4 border-b">
           <DialogTitle className="flex items-center gap-2"><MapPin className="w-5 h-5" /> Cadastre seu endereço</DialogTitle>
           <DialogDescription>

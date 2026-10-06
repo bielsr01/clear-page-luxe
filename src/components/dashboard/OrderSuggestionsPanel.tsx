@@ -80,7 +80,7 @@ export function OrderSuggestionsPanel({ restaurantId, canEdit = true }: { restau
             <DialogTrigger asChild>
               <Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-1" /> Adicionar item</Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-h-[80dvh] overflow-hidden flex flex-col">
               <DialogHeader><DialogTitle>Selecionar item do cardápio</DialogTitle></DialogHeader>
               <Input placeholder="Buscar produto..." value={search} onChange={(e) => setSearch(e.target.value)} />
               <div className="overflow-y-auto space-y-2 pr-1">

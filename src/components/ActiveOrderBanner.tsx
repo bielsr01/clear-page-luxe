@@ -123,7 +123,7 @@ export function ActiveOrderBanner({ restaurantId }: { restaurantId: string }) {
               <DialogTitle>Seus pedidos ativos</DialogTitle>
               <DialogDescription>Selecione um pedido para ver os detalhes.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-2 max-h-[60dvh] overflow-y-auto">
               {orders.map((o) => {
                 const Icon = ICONS[o.status] ?? Clock;
                 const finished = o.status === "delivered" || o.status === "cancelled";

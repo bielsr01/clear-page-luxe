@@ -188,7 +188,7 @@ export function IfoodEventsTab({ restaurantId }: Props) {
                     <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
                       Ver payload
                     </summary>
-                    <pre className="mt-2 p-2 bg-muted rounded overflow-auto max-h-64 text-[10px]">
+                    <pre className="mt-2 p-2 bg-muted rounded text-[10px] whitespace-pre-wrap break-all md:whitespace-pre md:break-normal md:overflow-auto md:max-h-64">
                       {JSON.stringify(ev.payload, null, 2)}
                     </pre>
                   </details>

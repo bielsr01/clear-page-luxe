@@ -1,1 +1,3 @@
 Order dashboards use restaurant-scoped Realtime for immediate updates and a 15-second query reconciliation while open, because network interruptions can silently lose events.
+
+On iPhone/iPad the iFood widget's full-screen transparent iframe (restaurant dashboard) steals scroll gestures from every nested scroll container, so only page scroll works: in-page mobile layouts must grow with the page (no fixed heights or inner `overflow-*` below `md:`, cards instead of horizontal tables), while dialogs, sheets and popovers rely on the `html.ios` rule in `src/index.css` that hides the widget while they are open.

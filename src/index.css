@@ -147,6 +147,20 @@
   }
 }
 
+/* iOS: o widget iFood cria um iframe transparente do tamanho da tela (pointer-events: none)
+   por cima de tudo. No Safari do iPhone/iPad esse iframe ainda captura o gesto de rolagem,
+   então nenhuma área com rolagem interna (popup, menu, lista suspensa) consegue rolar —
+   só a página inteira. Enquanto alguma dessas camadas estiver aberta, escondemos o widget
+   (só display:none, o iframe continua carregado e com a sessão). */
+html.ios body:has(
+  [role="dialog"][data-state="open"],
+  [role="alertdialog"][data-state="open"],
+  [role="dialog"][aria-modal="true"],
+  [data-radix-popper-content-wrapper]
+) :is(.embeddables-iframe, .embeddables-focus-wrapper, [data-embdd-hit-region-id]) {
+  display: none !important;
+}
+
 /* Sonner toasts must always render above dialogs/modals (incl. iFood code modal at z-[10050]) */
 [data-sonner-toaster] {
   z-index: 2147483600 !important;

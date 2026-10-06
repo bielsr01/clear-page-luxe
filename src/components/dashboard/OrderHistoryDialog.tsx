@@ -158,7 +158,7 @@ function OrderHistorySurface({ open, onClose, children }: { open: boolean; onClo
         className="h-[100dvh] w-full overflow-y-auto overflow-x-hidden overscroll-contain bg-background sm:bg-transparent pointer-events-auto"
         style={{ WebkitOverflowScrolling: "touch", pointerEvents: "auto", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <article role="dialog" aria-modal="true" aria-labelledby="order-history-title" className="mx-auto min-h-[100dvh] w-full max-w-5xl bg-background sm:my-6 sm:min-h-0 sm:max-h-[90vh] sm:overflow-y-auto sm:rounded-lg sm:border sm:shadow-lg">
+        <article role="dialog" aria-modal="true" aria-labelledby="order-history-title" className="mx-auto min-h-[100dvh] w-full max-w-5xl bg-background sm:my-6 sm:min-h-0 sm:max-h-[90dvh] sm:overflow-y-auto sm:rounded-lg sm:border sm:shadow-lg">
           <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur sm:rounded-t-lg sm:px-6">
             <div className="min-w-0 space-y-1">
               <h2 id="order-history-title" className="text-lg font-semibold leading-snug">Histórico de pedidos</h2>

@@ -494,8 +494,8 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
             <DialogTitle className="break-words pr-6">{previewItem?.title}</DialogTitle>
           </DialogHeader>
           {previewItem && (
-            <div className="flex items-center justify-center bg-muted rounded-md overflow-auto max-h-[70vh]">
-              <img src={previewItem.file_url} alt={previewItem.title} className="max-w-full max-h-[70vh] object-contain" />
+            <div className="flex items-center justify-center bg-muted rounded-md overflow-auto max-h-[70dvh]">
+              <img src={previewItem.file_url} alt={previewItem.title} className="max-w-full max-h-[70dvh] object-contain" />
             </div>
           )}
           <DialogFooter>
@@ -525,7 +525,7 @@ export function ArtLibraryPanel({ isAdmin }: { isAdmin: boolean }) {
                 {savingCat ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}
               </Button>
             </div>
-            <div className="space-y-2 max-h-[50vh] overflow-auto">
+            <div className="space-y-2 max-h-[50dvh] overflow-auto">
               {categories.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">Nenhuma categoria cadastrada.</p>
               ) : categories.map((cat) => (

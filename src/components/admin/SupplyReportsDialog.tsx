@@ -190,7 +190,7 @@ export function SupplyReportsDialog() {
           <BarChart3 className="w-5 h-5" /> Relatórios
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-5xl max-h-[92dvh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" /> Relatórios de pedidos

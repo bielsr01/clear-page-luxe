@@ -118,7 +118,7 @@ function Column({ title, count, accent, children, className }: { title: string; 
         <span className="text-sm font-semibold">{title}</span>
         <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">{count}</Badge>
       </div>
-      <div className="p-2 space-y-2 flex-1 min-h-0 overflow-y-auto">
+      <div className="p-2 space-y-2 md:flex-1 md:min-h-0 md:overflow-y-auto">
         {count === 0 ? (
           <div className="text-xs text-muted-foreground text-center py-6">—</div>
         ) : children}
@@ -872,7 +872,7 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
 
 
   return (
-    <div className="flex flex-col gap-4 h-[calc(100vh-7rem)] pb-4">
+    <div className="flex flex-col gap-4 md:h-[calc(100vh-7rem)] pb-4">
       <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
         <Tabs value={channel} onValueChange={(v) => {
           const nv = v as Channel;

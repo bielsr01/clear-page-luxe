@@ -171,7 +171,7 @@ export function IhubIntegrationCard({ restaurantId }: { restaurantId: string }) 
       </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Integração iHub (iFood)</DialogTitle>
             <DialogDescription>
@@ -331,7 +331,7 @@ function IhubEventsViewer({ restaurantId }: { restaurantId: string }) {
       {!events || events.length === 0 ? (
         <p className="text-xs text-muted-foreground italic py-2">Nenhum evento recebido ainda.</p>
       ) : (
-        <div className="space-y-1 max-h-[320px] overflow-y-auto">
+        <div className="space-y-1 md:max-h-[320px] md:overflow-y-auto">
           {events.map((ev: any) => {
             const isOpen = expandedId === ev.id;
             return (
@@ -362,7 +362,7 @@ function IhubEventsViewer({ restaurantId }: { restaurantId: string }) {
                     {ev.error && (
                       <div className="text-destructive text-[10px]"><strong>erro:</strong> {ev.error}</div>
                     )}
-                    <pre className="bg-background border rounded p-2 overflow-x-auto text-[10px] max-h-64">
+                    <pre className="bg-background border rounded p-2 text-[10px] whitespace-pre-wrap break-all md:whitespace-pre md:break-normal md:overflow-x-auto md:max-h-64">
 {JSON.stringify(ev.payload, null, 2)}
                     </pre>
                   </div>

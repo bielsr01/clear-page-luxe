@@ -115,10 +115,10 @@ export function SupportPanel({ restaurantId }: { restaurantId: string }) {
       </Card>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Status)}>
-        <TabsList>
-          <TabsTrigger value="open">Aberto ({counts.open})</TabsTrigger>
-          <TabsTrigger value="in_progress">Em atendimento ({counts.in_progress})</TabsTrigger>
-          <TabsTrigger value="completed">Concluído ({counts.completed})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 h-auto sm:inline-flex sm:w-auto sm:h-10">
+          <TabsTrigger value="open" className="px-1.5 text-xs whitespace-normal sm:px-3 sm:text-sm sm:whitespace-nowrap">Aberto ({counts.open})</TabsTrigger>
+          <TabsTrigger value="in_progress" className="px-1.5 text-xs whitespace-normal sm:px-3 sm:text-sm sm:whitespace-nowrap">Em atendimento ({counts.in_progress})</TabsTrigger>
+          <TabsTrigger value="completed" className="px-1.5 text-xs whitespace-normal sm:px-3 sm:text-sm sm:whitespace-nowrap">Concluído ({counts.completed})</TabsTrigger>
         </TabsList>
         <TabsContent value={tab} className="mt-4">
           {loading ? (

@@ -719,7 +719,7 @@ function CampaignDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar campanha" : "Nova campanha"}</DialogTitle>
           <DialogDescription>
@@ -875,7 +875,7 @@ function CampaignDialog({
                   <Filter className="w-4 h-4 mr-1" /> Filtros
                   {(() => { const n = typeFilters.size + statusFilters.size + restaurantFilters.size + letterRanges.length + dateRanges.length; return n > 0 && <Badge variant="secondary" className="ml-2">{n}</Badge>; })()}
                 </Button>
-                <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto overscroll-contain">
+                <DialogContent className="max-w-md max-h-[85dvh] overflow-y-auto overscroll-contain">
                   <DialogHeader>
                     <DialogTitle>Filtros</DialogTitle>
                   </DialogHeader>
@@ -1034,7 +1034,7 @@ function CampaignDetailsDialog({
   );
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalhes da campanha</DialogTitle>
           <DialogDescription>Configurações utilizadas no envio em massa</DialogDescription>

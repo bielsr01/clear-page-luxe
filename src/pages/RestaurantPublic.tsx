@@ -594,7 +594,7 @@ export default function RestaurantPublic() {
       {/* Product modal */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent
-          className="p-0 gap-0 max-w-lg w-full max-h-[100dvh] sm:max-h-[90vh] h-[100dvh] sm:h-auto sm:rounded-lg flex flex-col overflow-hidden"
+          className="p-0 gap-0 max-w-lg w-full max-h-[100dvh] sm:max-h-[90dvh] h-[100dvh] sm:h-auto sm:rounded-lg flex flex-col overflow-hidden"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           {selected && (

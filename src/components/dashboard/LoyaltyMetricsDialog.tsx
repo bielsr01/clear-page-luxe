@@ -99,7 +99,7 @@ export function LoyaltyMetricsDialog({ open, onOpenChange, restaurantId }: { ope
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-4xl max-h-[90dvh] overflow-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Award className="w-5 h-5" />Métricas do programa de fidelidade</DialogTitle>
         </DialogHeader>

@@ -1079,7 +1079,7 @@ export function CrmTasksView({
 
       {/* Custom task editor */}
       <Dialog open={customEditor !== null} onOpenChange={(o) => { if (!o) { setCustomEditor(null); setEditorCandidates(null); } }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{customEditor?.id ? "Editar tarefa personalizada" : "Nova tarefa personalizada"}</DialogTitle>
           </DialogHeader>
@@ -1230,7 +1230,7 @@ export function CrmTasksView({
 
       {/* Sub-dialog: restaurant selection */}
       <Dialog open={restSelectOpen} onOpenChange={setRestSelectOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[80dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Selecionar restaurantes</DialogTitle>
           </DialogHeader>

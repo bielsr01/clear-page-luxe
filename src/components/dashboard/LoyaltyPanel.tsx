@@ -620,7 +620,7 @@ function MemberHistoryDialog({
         <DialogHeader>
           <DialogTitle>Histórico — {member?.name}</DialogTitle>
         </DialogHeader>
-        <div className="border rounded-lg max-h-[60vh] overflow-auto">
+        <div className="border rounded-lg max-h-[60dvh] overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>

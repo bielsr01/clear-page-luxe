@@ -229,7 +229,7 @@ function LinkProductsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90dvh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Vincular "{group?.name}" a produtos</DialogTitle>
         </DialogHeader>
@@ -393,7 +393,7 @@ function GroupDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing ? "Editar" : "Novo"} grupo de opções</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">

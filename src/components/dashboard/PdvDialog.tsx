@@ -577,7 +577,7 @@ export function PdvDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[1280px] w-[97vw] h-[92vh] p-0 flex flex-col gap-0">
+        <DialogContent className="max-w-[1280px] w-[97vw] h-[92dvh] p-0 flex flex-col gap-0">
           <DialogHeader className="px-4 py-3 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" /> Novo pedido — PDV (Balcão)
@@ -877,7 +877,7 @@ export function PdvDialog({
 
       {/* Product option picker */}
       <Dialog open={!!pickProduct} onOpenChange={(o) => !o && setPickProduct(null)}>
-        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-lg max-h-[85dvh] flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>{pickProduct?.name}</DialogTitle>
             <DialogDescription>Selecione as opções para adicionar ao pedido.</DialogDescription>

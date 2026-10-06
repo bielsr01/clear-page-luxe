@@ -388,7 +388,7 @@ export function LoyaltyRewardsTab({ restaurantId, isAdmin = false }: { restauran
       />
 
       <Dialog open={cloneOpen} onOpenChange={setCloneOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Copy className="w-5 h-5" />Clonar recompensas</DialogTitle>
             <DialogDescription>
@@ -804,7 +804,7 @@ function RedeemWizard({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Gift className="w-5 h-5" />Resgatar: {reward.name}</DialogTitle>
           <DialogDescription>
@@ -1107,7 +1107,7 @@ function RedeemHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><History className="w-5 h-5" />Histórico de resgates</DialogTitle>
           <DialogDescription>{list.length} resgate(s) — {totalPoints} pontos resgatados no total</DialogDescription>
