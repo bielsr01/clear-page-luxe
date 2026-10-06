@@ -92,13 +92,13 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Fechar caixa</DialogTitle>
           <DialogDescription>Confira os valores contados em cada forma de pagamento.</DialogDescription>
         </DialogHeader>
 
-        <div className="grid sm:grid-cols-2 gap-4 py-2 text-sm">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 py-2 text-sm">
           <div className="space-y-1">
             <div className="text-muted-foreground">Valor inicial</div>
             <div className="font-semibold">{brl(summary?.opening_amount ?? 0)}</div>
@@ -125,7 +125,7 @@ export function CloseSessionDialog({ open, onOpenChange, sessionId, summary, onC
 
         <div>
           <Label>Observação</Label>
-          <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Textarea className="text-base md:text-sm" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
         <DialogFooter>

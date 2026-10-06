@@ -208,7 +208,7 @@ export function SessionDetailsDialog({ open, onOpenChange, sessionId, openingAmo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalhes do caixa</DialogTitle>
         </DialogHeader>
@@ -243,7 +243,7 @@ export function SessionDetailsDialog({ open, onOpenChange, sessionId, openingAmo
           ) : !recon.data?.length ? (
             <div className="text-sm text-muted-foreground">Sem dados de fechamento.</div>
           ) : (
-            <Table>
+            <Table className="text-xs sm:text-sm [&_th]:h-10 [&_th]:px-2 [&_td]:px-2 [&_td]:py-2 sm:[&_th]:px-4 sm:[&_td]:p-4">
               <TableHeader>
                 <TableRow>
                   <TableHead>Método</TableHead>

@@ -112,7 +112,7 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Abrir caixa</DialogTitle>
           <DialogDescription>
@@ -131,6 +131,7 @@ export function OpenSessionDialog({ open, onOpenChange, restaurantId, onOpened }
               Observação {isDifferent ? <span className="text-destructive">(obrigatória — valor difere do fechamento anterior)</span> : "(opcional)"}
             </Label>
             <Textarea
+              className="text-base md:text-sm"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

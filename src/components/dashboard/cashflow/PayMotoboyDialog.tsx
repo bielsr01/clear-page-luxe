@@ -103,7 +103,7 @@ export function PayMotoboyDialog({ open, onOpenChange, restaurantId, sessionId, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Bike className="w-5 h-5" /> Pagar motoboy</DialogTitle>
           <DialogDescription>
@@ -111,7 +111,7 @@ export function PayMotoboyDialog({ open, onOpenChange, restaurantId, sessionId, 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <FeeCard label="Delivery próprio" value={feesQ.data?.own ?? 0} />
           <FeeCard label="iFood" value={feesQ.data?.ifood ?? 0} />
           <FeeCard label="Quero Delivery" value={feesQ.data?.quero ?? 0} />
@@ -143,6 +143,7 @@ export function PayMotoboyDialog({ open, onOpenChange, restaurantId, sessionId, 
           <div>
             <Label>Observação {differs && <span className="text-destructive">*</span>}</Label>
             <Textarea
+              className="text-base md:text-sm"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

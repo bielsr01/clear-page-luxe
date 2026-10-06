@@ -72,7 +72,7 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -98,6 +98,7 @@ export function CashMovementDialog({ open, onOpenChange, restaurantId, sessionId
           <div>
             <Label>Motivo</Label>
             <Textarea
+              className="text-base md:text-sm"
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { brl } from "@/lib/format";
-import { ArrowDownCircle, ArrowUpCircle, LockOpen, Lock, RefreshCw, Bike } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, LockOpen, Lock, RefreshCw, Bike, X } from "lucide-react";
 import { useCashSession } from "@/hooks/useCashSession";
 import { OpenSessionDialog } from "./OpenSessionDialog";
 import { CashMovementDialog } from "./CashMovementDialog";
@@ -80,7 +80,7 @@ export function CurrentSessionCard({ restaurantId }: Props) {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-2">
+        <CardHeader className="flex flex-col sm:flex-row items-start justify-between gap-3 space-y-0 p-4 sm:p-6">
           <div>
             <CardTitle className="flex items-center gap-2">
               Caixa aberto <Badge className="bg-success text-success-foreground">Ativo</Badge>
@@ -113,8 +113,8 @@ export function CurrentSessionCard({ restaurantId }: Props) {
             )}
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             <Stat label="Valor inicial" value={brl(summary?.opening_amount ?? session!.opening_amount)} />
             <Stat label="Vendas em dinheiro" value={brl(summary?.cash_sales ?? 0)} />
             <Stat label="Vendas em Pix" value={brl(summary?.pix_sales ?? 0)} />
@@ -137,6 +137,14 @@ export function CurrentSessionCard({ restaurantId }: Props) {
 
       <AlertDialog open={closeWarn} onOpenChange={setCloseWarn}>
         <AlertDialogContent>
+          <button
+            type="button"
+            onClick={() => setCloseWarn(false)}
+            className="absolute right-3 top-3 rounded-md p-2 opacity-80 ring-offset-background transition-opacity hover:opacity-100 hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            aria-label="Fechar"
+          >
+            <X className="h-6 w-6" />
+          </button>
           <AlertDialogHeader>
             <AlertDialogTitle>Antes de fechar o caixa</AlertDialogTitle>
             <AlertDialogDescription>
@@ -167,9 +175,9 @@ export function CurrentSessionCard({ restaurantId }: Props) {
 
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg border p-3 ${highlight ? "bg-accent" : "bg-background"}`}>
+    <div className={`min-w-0 rounded-lg border p-2.5 sm:p-3 ${highlight ? "bg-accent" : "bg-background"}`}>
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="font-bold text-lg">{value}</div>
+      <div className="font-bold text-base sm:text-lg break-words">{value}</div>
     </div>
   );
 }
