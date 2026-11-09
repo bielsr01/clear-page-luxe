@@ -25,6 +25,29 @@ import { OpenSessionDialog } from "@/components/dashboard/cashflow/OpenSessionDi
 
 type PaymentMethod = "cash" | "pix" | "card_on_delivery";
 
+const SALE_TIMEOUT_MS = 15_000;
+const SALE_MAX_ATTEMPTS = 3;
+
+// Grava pedido, itens e opções numa transação só. Falha de rede é repetida com a mesma chave:
+// se a venda já tiver entrado, a função devolve o pedido existente em vez de duplicar.
+async function createPdvOrder(requestId: string, restaurantId: string, order: unknown, items: unknown): Promise<any> {
+  for (let attempt = 1; ; attempt++) {
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), SALE_TIMEOUT_MS);
+    const { data, error } = await supabase
+      .rpc("create_pdv_order" as any, { _request_id: requestId, _restaurant_id: restaurantId, _order: order, _items: items } as any)
+      .abortSignal(timeout.signal);
+    clearTimeout(timer);
+    if (!error) return data;
+    const isConnectionFailure = timeout.signal.aborted || !error.code || error.code.startsWith("PGRST00");
+    if (!isConnectionFailure) throw error;
+    if (attempt >= SALE_MAX_ATTEMPTS) {
+      throw new Error("A venda não foi confirmada. Verifique a internet e clique de novo: não vai duplicar.");
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+  }
+}
+
 interface OptionItem { id: string; name: string; extra_price: number; }
 interface OptGroup { id: string; name: string; min_select: number; max_select: number; allow_repeat?: boolean; items: OptionItem[]; }
 
@@ -146,6 +169,9 @@ export function PdvDialog({
   const [paymentShake, setPaymentShake] = useState(false);
   const [changeForInput, setChangeForInput] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const savingSale = useRef(false);
+  // Chave da venda em andamento: tentar de novo com o mesmo carrinho reutiliza a chave.
+  const saleRequest = useRef<{ fingerprint: string; id: string } | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const productsScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -290,6 +316,7 @@ export function PdvDialog({
     setCart([]); setCustomerName(""); setCustomerPhone(""); setLoyaltyOptIn(false);
     setDiscountValue(0); setPayment(null); setChangeForInput("");
     setSearch("");
+    saleRequest.current = null;
     try { localStorage.removeItem(STORAGE_KEY(restaurantId)); } catch { /* noop */ }
   };
 
@@ -386,6 +413,8 @@ export function PdvDialog({
         changeForValue = parsed;
       }
     }
+    if (savingSale.current) return;
+    savingSale.current = true;
     setSubmitting(true);
     const effName = override?.name ?? customerName;
     const effPhone = override?.phone ?? customerPhone;
@@ -409,28 +438,37 @@ export function PdvDialog({
       cash_session_id: cashSession?.id ?? null,
       created_by: user?.id ?? null,
     };
+    const itemsPayload = cart.map((l) => ({
+      product_id: l.product_id,
+      product_name: l.name,
+      unit_price: l.unit_price,
+      quantity: l.quantity,
+      notes: [
+        ...(l.options?.map((o) => `+ ${o.itemName}`) ?? []),
+        ...(l.notes ? [`Obs: ${l.notes}`] : []),
+      ].join("\n") || null,
+    }));
+    const saleItems = itemsPayload.map((it, ix) => ({
+      ...it,
+      options: (cart[ix].options ?? []).map((o) => ({
+        option_item_id: o.optionItemId ?? null,
+        group_name: o.groupName,
+        item_name: o.itemName,
+        extra_price: Number(o.extraPrice) || 0,
+      })),
+    }));
     try {
-      const { data: order, error } = await supabase
-        .from("orders").insert(orderPayload)
-        .select("id, order_number, customer_name, customer_phone, payment_method, change_for, subtotal, total, created_at, status, order_type")
-        .single();
-      if (error || !order) throw error || new Error("Falha ao criar pedido");
-
-      const itemsPayload = cart.map((l) => ({
-        order_id: order.id,
-        product_id: l.product_id,
-        product_name: l.name,
-        unit_price: l.unit_price,
-        quantity: l.quantity,
-        notes: [
-          ...(l.options?.map((o) => `+ ${o.itemName}`) ?? []),
-          ...(l.notes ? [`Obs: ${l.notes}`] : []),
-        ].join("\n") || null,
-      }));
+      const fingerprint = JSON.stringify([orderPayload, saleItems]);
+      const request = saleRequest.current?.fingerprint === fingerprint
+        ? saleRequest.current
+        : { fingerprint, id: crypto.randomUUID() };
+      saleRequest.current = request;
+      const order = await createPdvOrder(request.id, restaurantId, orderPayload, saleItems);
 
       // Optimistic cache update — UI shows the order instantly
       const optimisticItems = itemsPayload.map((it, ix) => ({
         ...it,
+        order_id: order.id,
         id: `tmp-${order.id}-${ix}`,
         created_at: new Date().toISOString(),
       }));
@@ -442,42 +480,20 @@ export function PdvDialog({
         };
       });
 
-      // Close immediately — feedback rápido
+      // A venda já está salva: um erro na impressão não pode afetar mais nada.
       toast.success(`Pedido #${order.order_number} finalizado`);
-      if (alsoPrint) printTicket(order, itemsPayload);
+      if (alsoPrint) {
+        try {
+          printTicket(order, itemsPayload);
+        } catch {
+          toast.error("Venda salva, mas não foi possível abrir a impressão");
+        }
+      }
       reset();
       onOpenChange(false);
-      setSubmitting(false);
 
-      // Background: persist items + loyalty + customer; sem bloquear o usuário
+      // Background: loyalty + customer; sem bloquear o usuário
       (async () => {
-        const { data: insertedItems, error: itErr } = await supabase
-          .from("order_items").insert(itemsPayload).select("id");
-        if (itErr) {
-          toast.error("Erro ao salvar itens do pedido");
-          qc.invalidateQueries({ queryKey: ordersKey(restaurantId) });
-          return;
-        }
-
-        // Persist option selections so stock trigger can deduct option-linked stock
-        const optionRows: any[] = [];
-        cart.forEach((l, ix) => {
-          const orderItemId = insertedItems?.[ix]?.id;
-          if (!orderItemId) return;
-          (l.options ?? []).forEach((o) => {
-            optionRows.push({
-              order_item_id: orderItemId,
-              option_item_id: o.optionItemId ?? null,
-              group_name: o.groupName,
-              item_name: o.itemName,
-              extra_price: Number(o.extraPrice) || 0,
-            });
-          });
-        });
-        if (optionRows.length) {
-          await supabase.from("order_item_options" as any).insert(optionRows);
-        }
-
         if (effOptIn && loyaltySettings?.enabled && phoneDigits.length >= 10) {
           try {
             const sb = supabase as any;
@@ -520,6 +536,8 @@ export function PdvDialog({
       })();
     } catch (e: any) {
       toast.error(e.message || "Erro ao finalizar venda");
+    } finally {
+      savingSale.current = false;
       setSubmitting(false);
     }
   };

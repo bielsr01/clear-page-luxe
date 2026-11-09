@@ -2580,6 +2580,7 @@ export type Database = {
           address_street: string | null
           cash_session_id: string | null
           change_for: number | null
+          client_request_id: string | null
           coupon_code: string | null
           coupon_counted: boolean
           created_at: string
@@ -2620,6 +2621,7 @@ export type Database = {
           address_street?: string | null
           cash_session_id?: string | null
           change_for?: number | null
+          client_request_id?: string | null
           coupon_code?: string | null
           coupon_counted?: boolean
           created_at?: string
@@ -2660,6 +2662,7 @@ export type Database = {
           address_street?: string | null
           cash_session_id?: string | null
           change_for?: number | null
+          client_request_id?: string | null
           coupon_code?: string | null
           coupon_counted?: boolean
           created_at?: string
