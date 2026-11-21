@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { confirmedQuery } from "../_shared/confirmed-query.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,20 +59,21 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Usuário não pertence a este restaurante" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // Target must not own another restaurant
-    const { count: targetOwns } = await admin
+    const { count: targetOwns, error: targetOwnsError } = await admin
       .from("restaurants")
       .select("id", { count: "exact", head: true })
       .eq("owner_id", target_user_id);
-    if ((targetOwns ?? 0) > 0) {
+    if (confirmedQuery(targetOwns, targetOwnsError) > 0) {
       return new Response(JSON.stringify({ error: "Não é possível alterar o dono de um restaurante" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "delete") {
-      await admin.from("restaurant_members").delete().eq("restaurant_id", restaurant_id).eq("user_id", target_user_id);
+      const { error: deleteError } = await admin.from("restaurant_members").delete().eq("restaurant_id", restaurant_id).eq("user_id", target_user_id);
+      if (deleteError) throw deleteError;
       // Delete auth user only if no other memberships and not owner of any restaurant
-      const { count: otherMems } = await admin.from("restaurant_members").select("user_id", { count: "exact", head: true }).eq("user_id", target_user_id);
-      const { count: ownerCount } = await admin.from("restaurants").select("id", { count: "exact", head: true }).eq("owner_id", target_user_id);
-      if ((otherMems ?? 0) === 0 && (ownerCount ?? 0) === 0) {
+      const { count: otherMems, error: otherMemsError } = await admin.from("restaurant_members").select("user_id", { count: "exact", head: true }).eq("user_id", target_user_id);
+      const { count: ownerCount, error: ownerCountError } = await admin.from("restaurants").select("id", { count: "exact", head: true }).eq("owner_id", target_user_id);
+      if (confirmedQuery(otherMems, otherMemsError) === 0 && confirmedQuery(ownerCount, ownerCountError) === 0) {
         await admin.auth.admin.deleteUser(target_user_id);
       }
       return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });

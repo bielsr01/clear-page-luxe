@@ -17,7 +17,8 @@ export function usePermissions(restaurantId?: string): {
     staleTime: 60_000,
     queryFn: async () => {
       if (!restaurantId || !user?.id) return { perms: FULL_PERMISSIONS, full: true };
-      const { data: rest } = await supabase.from("restaurants").select("owner_id").eq("id", restaurantId).maybeSingle();
+      const { data: rest, error: restError } = await supabase.from("restaurants").select("owner_id").eq("id", restaurantId).maybeSingle();
+      if (restError) throw restError;
       if (rest?.owner_id === user.id) return { perms: FULL_PERMISSIONS, full: true };
       const { data: mem, error: memError } = await supabase
         .from("restaurant_members")
@@ -29,11 +30,12 @@ export function usePermissions(restaurantId?: string): {
       if (!mem) return { perms: EMPTY_PERMISSIONS, full: false };
       const groupId = (mem as any).access_group_id as string | null;
       if (!groupId) return { perms: FULL_PERMISSIONS, full: true };
-      const { data: group } = await supabase
+      const { data: group, error: groupError } = await supabase
         .from("access_groups")
         .select("permissions")
         .eq("id", groupId)
         .maybeSingle();
+      if (groupError) throw groupError;
       return { perms: mergePermissions(group?.permissions ?? {}), full: false };
     },
   });

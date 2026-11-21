@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { confirmedQuery } from "../_shared/confirmed-query.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,8 +68,8 @@ Deno.serve(async (req) => {
 
     if (delete_owner && rest.owner_id) {
       // Only delete owner if they own no other restaurants
-      const { data: others } = await admin.from("restaurants").select("id").eq("owner_id", rest.owner_id).limit(1);
-      if (!others?.length) {
+      const { data: others, error: othersError } = await admin.from("restaurants").select("id").eq("owner_id", rest.owner_id).limit(1);
+      if (confirmedQuery(others, othersError).length === 0) {
         await admin.auth.admin.deleteUser(rest.owner_id);
       }
     }
