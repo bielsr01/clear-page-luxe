@@ -3823,6 +3823,15 @@ export type Database = {
           phone: string
         }[]
       }
+      create_pdv_order: {
+        Args: {
+          _items: Json
+          _order: Json
+          _request_id: string
+          _restaurant_id: string
+        }
+        Returns: Json
+      }
       credit_loyalty_points: { Args: { _tx_id: string }; Returns: undefined }
       customer_exists_by_phone: {
         Args: { _phones: string[]; _restaurant_id: string }
