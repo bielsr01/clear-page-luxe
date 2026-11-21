@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type AppRole = "master_admin" | "manager" | "customer";
 
@@ -104,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       stopped = true;
       mountedRef.current = false;
+      identityRef.current = null;
       ++roleRequestRef.current;
       clearTimeout(sessionRetry);
       if (rolesRetryRef.current) clearTimeout(rolesRetryRef.current);
@@ -114,11 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch {
+      toast.error("Não foi possível sair. Verifique sua conexão e tente novamente.");
+      return;
+    }
+    try {
       const { cleanupIfoodWidgetDom } = await import("@/components/dashboard/IfoodWidgetMount");
       cleanupIfoodWidgetDom();
     } catch {}
-    await supabase.auth.signOut();
-    setRoles([]);
+    // The authoritative SIGNED_OUT event clears the account and roles.
   };
 
   const refreshRoles = async () => {
