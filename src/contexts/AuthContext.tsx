@@ -116,7 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      // Stores share one account across the PC and phones; the default global
+      // scope would sign every one of them out when anyone taps "Sair".
+      const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) throw error;
     } catch {
       toast.error("Não foi possível sair. Verifique sua conexão e tente novamente.");

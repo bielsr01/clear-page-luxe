@@ -7,3 +7,7 @@ PDV sales must be created through the `create_pdv_order` database function, whic
 Auth initialization must defer to newer auth events, ignore stale role responses across identities, and retry failed role lookups instead of treating connection errors as missing access; this prevents spurious redirects without overriding genuine sign-out or server-side RLS.
 
 Account deletion prerequisites use the shared confirmed-query guard; failed or unknown relationship queries must never authorize deletion, because a network error is not proof that an account has no remaining relationships.
+
+Login must not depend on the device clock: `src/integrations/supabase/client.ts` passes `clockSafeFetch`, which drops the server-clock `expires_at` from auth responses so auth-js times refreshes from `expires_in`. Without it, a store PC whose clock runs an hour ahead refreshes on every request until the rate limit signs it out. Keep it when regenerating the client. "Sair" signs out only the current device (`scope: "local"`) because each store shares one account across its PC and phones.
+
+Database triggers and pg_cron jobs must call this project's Edge Functions (`yltsrnmzlsxfdgnrsbio.supabase.co`). The old Lovable Cloud project (`kcjrrnxsqdcgjqplgiku`) no longer exists; WhatsApp dispatch kept calling it until November 2026 and no message was sent.
