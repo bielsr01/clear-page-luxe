@@ -27,7 +27,7 @@ export async function r2Put(key: string, body: ArrayBuffer | Uint8Array | Blob, 
   const url = `${R2_ENDPOINT}/${R2_BUCKET}/${encodeKey(key)}`;
   const res = await r2Client.fetch(url, {
     method: "PUT",
-    body,
+    body: body as BodyInit,
     headers: contentType ? { "Content-Type": contentType } : {},
   });
   if (!res.ok) {
