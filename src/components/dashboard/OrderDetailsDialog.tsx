@@ -534,11 +534,24 @@ export function OrderDetailsDialog({
                   <span className="tabular-nums">{brl(Number(sp.amount))}</span>
                 </div>
               ))}
-              {canEditOrders && canEditPayment(order) && order.status !== "cancelled" && (
+              {(canEditOrders || canChangeStatus) && canEditPayment(order) && order.status !== "cancelled" && !payEditOpen && (
                 <Button variant="outline" size="sm" className="w-full" onClick={() => setPayEditOpen(true)}>
                   Alterar forma de pagamento
                 </Button>
               )}
+              <EditPaymentDialog
+                open={payEditOpen}
+                onOpenChange={setPayEditOpen}
+                orderId={order.id}
+                total={Number(order.total)}
+                currentMethod={payMethod}
+                currentSplits={paySplits}
+                onSaved={(r) => {
+                  setPayOverride({ id: order.id, ...r });
+                  qc.invalidateQueries();
+                }}
+              />
+
               <div className="flex justify-between"><span>Subtotal:</span><span className="tabular-nums">{brl(order.subtotal)}</span></div>
               {Number(order.delivery_fee) > 0 && (
                 <div className="flex justify-between"><span>Taxa de entrega:</span><span className="tabular-nums">{brl(Number(order.delivery_fee))}</span></div>
@@ -566,18 +579,6 @@ export function OrderDetailsDialog({
                 </div>
               )}
             </section>
-            <EditPaymentDialog
-              open={payEditOpen}
-              onOpenChange={setPayEditOpen}
-              orderId={order.id}
-              total={Number(order.total)}
-              currentMethod={payMethod}
-              currentSplits={paySplits}
-              onSaved={(r) => {
-                setPayOverride({ id: order.id, ...r });
-                qc.invalidateQueries();
-              }}
-            />
           </div>
 
           {/* Detalhamento financeiro iFood */}

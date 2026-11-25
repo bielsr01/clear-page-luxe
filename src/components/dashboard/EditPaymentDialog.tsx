@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,9 +53,9 @@ export function EditPaymentDialog({ open, onOpenChange, orderId, total, currentM
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Alterar forma de pagamento</DialogTitle></DialogHeader>
+    !open ? null : (
+      <div className="rounded-md border bg-muted/30 p-3 space-y-3 mt-2">
+        <div className="font-semibold text-sm">Alterar forma de pagamento</div>
         <div className="space-y-3">
           <div className="text-sm text-muted-foreground">Total do pedido: <span className="font-bold text-foreground">{brl(total)}</span></div>
           {rows.map((r, i) => (
@@ -82,11 +81,11 @@ export function EditPaymentDialog({ open, onOpenChange, orderId, total, currentM
             {rest === 0 ? "Valores conferem com o total." : rest > 0 ? `Faltam ${brl(rest)}` : `Passou ${brl(-rest)} do total`}
           </div>
         </div>
-        <DialogFooter>
+        <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={save} disabled={!!error || saving}>{saving ? "Salvando..." : "Salvar"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    )
   );
 }
