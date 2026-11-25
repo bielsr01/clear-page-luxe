@@ -40,6 +40,9 @@ const PAYMENT_LABEL: Record<string, string> = {
   card: "Cartão",
   credit_card: "Crédito",
   debit_card: "Débito",
+  card_debit: "Débito",
+  card_credit: "Crédito",
+  card_on_delivery: "Cartão",
 };
 
 type TimelineEvent = {
@@ -90,7 +93,7 @@ export function SessionDetailsDialog({ open, onOpenChange, sessionId, openingAmo
           .eq("session_id", sessionId!),
         supabase
           .from("orders")
-          .select("id, order_number, total, payment_method, created_at")
+          .select("id, order_number, total, payment_method, payment_splits, created_at")
           .eq("cash_session_id", sessionId!),
       ]);
 
@@ -128,7 +131,10 @@ export function SessionDetailsDialog({ open, onOpenChange, sessionId, openingAmo
 
       // Orders (entradas automáticas por finalização de pedido)
       for (const o of orders) {
-        const pm = PAYMENT_LABEL[o.payment_method] ?? o.payment_method ?? "—";
+        const splits = Array.isArray((o as any).payment_splits) ? ((o as any).payment_splits as { method: string; amount: number }[]) : null;
+        const pm = splits && splits.length > 0
+          ? splits.map((sp) => `${PAYMENT_LABEL[sp.method] ?? sp.method} ${Number(sp.amount).toFixed(2).replace(".", ",")}`).join(" + ")
+          : (PAYMENT_LABEL[o.payment_method] ?? o.payment_method ?? "—");
         events.push({
           at: o.created_at,
           kind: "order",

@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { EditPaymentDialog } from "./EditPaymentDialog";
+import { canEditPayment, SPLIT_METHOD_LABELS, type PaymentSplit } from "@/lib/paymentSplits";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,6 +43,7 @@ interface OrderLike {
   restaurant_id?: string;
   merchant_subsidy?: number | null;
   ifood_subsidy?: number | null;
+  payment_splits?: unknown;
 }
 
 interface ItemLike {
@@ -251,6 +254,9 @@ export function OrderDetailsDialog({
   order, items, onClose, onAdvance, onCancel, onDelete, onPrint, onIfoodConfirmDelivery,
   pending, canChangeStatus, canEditOrders, canCancelFinalized = false, canViewFeeBreakdown = true,
 }: Props) {
+  const qc = useQueryClient();
+  const [payEditOpen, setPayEditOpen] = useState(false);
+  const [payOverride, setPayOverride] = useState<{ id: string; payment_method: string; payment_splits: PaymentSplit[] | null } | null>(null);
   const optionsQuery = useQuery({
     queryKey: ["order-item-options", order?.id],
     enabled: !!order && items.length > 0,
@@ -317,6 +323,9 @@ export function OrderDetailsDialog({
   }, [order, onClose]);
 
   if (!order) return null;
+  const ov = payOverride && payOverride.id === order.id ? payOverride : null;
+  const payMethod = ov ? ov.payment_method : order.payment_method;
+  const paySplits = (ov ? ov.payment_splits : (Array.isArray(order.payment_splits) ? order.payment_splits : null)) as PaymentSplit[] | null;
 
   const optionsLoading = items.length > 0 && optionsQuery.isLoading;
   const historyLoading = historyQuery.isLoading;
@@ -517,8 +526,19 @@ export function OrderDetailsDialog({
               <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Resumo do pagamento</div>
               <div className="flex justify-between">
                 <span>Forma de pagamento:</span>
-                <span className="font-bold">{paymentLabelFor(order.payment_method, order.external_source)}</span>
+                <span className="font-bold">{payMethod === "mixed" ? "Múltiplas formas" : paymentLabelFor(payMethod, order.external_source)}</span>
               </div>
+              {paySplits && paySplits.length > 0 && paySplits.map((sp, i) => (
+                <div key={i} className="flex justify-between pl-3 text-muted-foreground">
+                  <span>{SPLIT_METHOD_LABELS[sp.method] ?? sp.method}</span>
+                  <span className="tabular-nums">{brl(Number(sp.amount))}</span>
+                </div>
+              ))}
+              {canEditOrders && canEditPayment(order) && order.status !== "cancelled" && (
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setPayEditOpen(true)}>
+                  Alterar forma de pagamento
+                </Button>
+              )}
               <div className="flex justify-between"><span>Subtotal:</span><span className="tabular-nums">{brl(order.subtotal)}</span></div>
               {Number(order.delivery_fee) > 0 && (
                 <div className="flex justify-between"><span>Taxa de entrega:</span><span className="tabular-nums">{brl(Number(order.delivery_fee))}</span></div>
@@ -539,13 +559,25 @@ export function OrderDetailsDialog({
                 <span className="font-semibold">Valor:</span>
                 <span className="text-lg font-bold tabular-nums">{brl(order.total)}</span>
               </div>
-              {order.payment_method === "cash" && Number(order.change_for ?? 0) > 0 && (
+              {payMethod === "cash" && Number(order.change_for ?? 0) > 0 && (
                 <div className="text-xs text-muted-foreground pt-1">
                   Troco para {brl(Number(order.change_for))}{" "}
                   <span>(Entregar {brl(Math.max(0, Number(order.change_for) - Number(order.total)))} para o cliente)</span>
                 </div>
               )}
             </section>
+            <EditPaymentDialog
+              open={payEditOpen}
+              onOpenChange={setPayEditOpen}
+              orderId={order.id}
+              total={Number(order.total)}
+              currentMethod={payMethod}
+              currentSplits={paySplits}
+              onSaved={(r) => {
+                setPayOverride({ id: order.id, ...r });
+                qc.invalidateQueries();
+              }}
+            />
           </div>
 
           {/* Detalhamento financeiro iFood */}

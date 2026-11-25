@@ -1,0 +1,1 @@
+ALTER FUNCTION public.update_order_payment(uuid, jsonb) SECURITY INVOKER;

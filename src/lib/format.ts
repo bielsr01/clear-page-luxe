@@ -200,6 +200,9 @@ export const paymentLabel: Record<string, string> = {
   pix: "Pix",
   card_on_delivery: "Cartão na entrega",
   online: "Pago online",
+  card_debit: "Cartão de débito",
+  card_credit: "Cartão de crédito",
+  mixed: "Múltiplas formas",
 };
 
 export function paymentLabelFor(method: string, externalSource?: string | null): string {
