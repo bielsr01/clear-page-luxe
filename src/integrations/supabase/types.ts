@@ -2602,6 +2602,7 @@ export type Database = {
           order_number: number
           order_type: Database["public"]["Enums"]["order_type"]
           payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_splits: Json | null
           public_token: string
           restaurant_id: string
           service_fee: number
@@ -2643,6 +2644,7 @@ export type Database = {
           order_number: number
           order_type?: Database["public"]["Enums"]["order_type"]
           payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_splits?: Json | null
           public_token?: string
           restaurant_id: string
           service_fee?: number
@@ -2684,6 +2686,7 @@ export type Database = {
           order_number?: number
           order_type?: Database["public"]["Enums"]["order_type"]
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_splits?: Json | null
           public_token?: string
           restaurant_id?: string
           service_fee?: number
@@ -3917,6 +3920,10 @@ export type Database = {
         Returns: string
       }
       reopen_cash_session: { Args: { _session_id: string }; Returns: undefined }
+      update_order_payment: {
+        Args: { _order_id: string; _splits: Json }
+        Returns: Json
+      }
       upsert_customer_on_order: {
         Args: {
           _address_cep?: string
