@@ -27,7 +27,7 @@ type Coupon = {
   restaurant_id: string;
   code: string;
   name: string;
-  apply_to: "order" | "items";
+  apply_to: "order" | "items" | "exclude";
   product_ids: string[];
   discount_type: "percent" | "value";
   discount_value: number;
@@ -48,7 +48,8 @@ type Coupon = {
 const emptyForm = () => ({
   code: "",
   name: "",
-  apply_to: "order" as "order" | "items",
+  apply_to: "order" as "order" | "items" | "exclude",
+  product_names: [] as string[],
   discount_type: "percent" as "percent" | "value",
   discount_value: 10,
   starts_at: null as string | null,
@@ -64,6 +65,7 @@ const emptyForm = () => ({
   covers_delivery_fee: false,
   scope: "all" as "all" | "specific", // applies to all restaurants or selected
   target_ids: [] as string[],
+  product_ids_initial: undefined as string[] | undefined,
 });
 
 const toLocalInput = (iso: string | null) => {
@@ -131,6 +133,33 @@ export function AdminCouponsPanel() {
     return m;
   }, [all]);
 
+  const productTargets = editing ? (editing.id ? [editing.restaurant_id!] : editing.scope === "all" ? all.map((r) => r.id) : editing.target_ids) : [];
+  const productTargetsKey = productTargets.slice().sort().join(",");
+  const { data: targetProducts } = useQuery({
+    queryKey: ["admin-coupon-products", productTargetsKey],
+    enabled: open && productTargets.length > 0,
+    queryFn: async () => {
+      const out: { id: string; name: string; restaurant_id: string }[] = [];
+      for (let i = 0; i < productTargets.length; i += 50) {
+        const { data, error } = await sb.from("products").select("id,name,restaurant_id")
+          .in("restaurant_id", productTargets.slice(i, i + 50)).eq("is_active", true).order("name").limit(5000);
+        if (error) throw error;
+        out.push(...(data ?? []));
+      }
+      return out;
+    },
+  });
+  const normName = (n: string) => n.trim().toLowerCase();
+  const productNameOptions = useMemo(() => {
+    const m = new Map<string, { name: string; count: number }>();
+    (targetProducts ?? []).forEach((p) => {
+      const k = normName(p.name);
+      const cur = m.get(k);
+      if (cur) cur.count++; else m.set(k, { name: p.name.trim(), count: 1 });
+    });
+    return Array.from(m.entries()).map(([key, v]) => ({ key, ...v })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [targetProducts]);
+
   const openNew = () => {
     const hasFilter = selected.length > 0 && selected.length < all.length;
     setEditing({ ...emptyForm(), scope: "specific", target_ids: hasFilter ? selected.slice() : [] });
@@ -143,6 +172,8 @@ export function AdminCouponsPanel() {
       code: c.code,
       name: c.name,
       apply_to: c.apply_to,
+      product_names: [],
+      product_ids_initial: c.product_ids ?? [],
       discount_type: c.discount_type,
       discount_value: Number(c.discount_value),
       starts_at: c.starts_at,
@@ -162,6 +193,13 @@ export function AdminCouponsPanel() {
     setOpen(true);
   };
 
+  const editingId = editing?.id;
+  const initialIds = (editing as any)?.product_ids_initial as string[] | undefined;
+  if (editing && editingId && initialIds && targetProducts) {
+    const names = Array.from(new Set(targetProducts.filter((p) => initialIds.includes(p.id)).map((p) => normName(p.name))));
+    setEditing({ ...editing, product_names: names, product_ids_initial: undefined } as any);
+  }
+
   const save = async () => {
     if (!editing) return;
     const e = editing;
@@ -170,12 +208,14 @@ export function AdminCouponsPanel() {
     if (!e.discount_value || Number(e.discount_value) <= 0) return toast.error("Valor inválido");
     if (e.discount_type === "percent" && Number(e.discount_value) > 100) return toast.error("Máx 100%");
     if (!e.service_delivery && !e.service_pickup) return toast.error("Selecione ao menos um serviço");
+    if (e.apply_to !== "order" && e.product_names.length === 0) return toast.error("Selecione ao menos 1 produto");
+    const idsFor = (rid: string) => e.apply_to === "order" ? [] :
+      (targetProducts ?? []).filter((p) => p.restaurant_id === rid && e.product_names.includes(normName(p.name))).map((p) => p.id);
 
     const basePayload = {
       code: e.code.trim().toUpperCase(),
       name: e.name.trim(),
       apply_to: e.apply_to,
-      product_ids: [],
       discount_type: e.discount_type,
       discount_value: Number(e.discount_value),
       starts_at: e.starts_at,
@@ -192,13 +232,13 @@ export function AdminCouponsPanel() {
     };
 
     if (e.id) {
-      const { error } = await sb.from("coupons").update(basePayload).eq("id", e.id);
+      const { error } = await sb.from("coupons").update({ ...basePayload, product_ids: idsFor(e.restaurant_id!) }).eq("id", e.id);
       if (error) return toast.error(error.message);
       toast.success("Cupom atualizado");
     } else {
       const targets = e.scope === "all" ? all.map((r) => r.id) : e.target_ids;
       if (targets.length === 0) return toast.error("Selecione ao menos uma loja");
-      const rows = targets.map((rid) => ({ ...basePayload, restaurant_id: rid }));
+      const rows = targets.map((rid) => ({ ...basePayload, product_ids: idsFor(rid), restaurant_id: rid }));
       const { error } = await sb.from("coupons").insert(rows);
       if (error) {
         if (/duplicate/i.test(error.message)) return toast.error("Já existe cupom com este código em alguma loja");
@@ -298,7 +338,7 @@ export function AdminCouponsPanel() {
                         <TableCell className="font-mono font-semibold">{c.code}</TableCell>
                         <TableCell>{c.name}</TableCell>
                         <TableCell><Badge variant="outline">{nameById.get(c.restaurant_id) ?? "—"}</Badge></TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDiscount(c)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatDiscount(c)}<div className="text-[10px] text-muted-foreground">{c.apply_to === "order" ? "Loja toda" : c.apply_to === "exclude" ? `Exceto ${c.product_ids?.length ?? 0} itens` : `Itens (${c.product_ids?.length ?? 0})`}</div></TableCell>
                         <TableCell className="text-xs whitespace-nowrap">{c.ends_at ? new Date(c.ends_at).toLocaleDateString() : "Sem fim"}</TableCell>
                         <TableCell>{c.is_active ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="secondary">Inativo</Badge>}</TableCell>
                         <TableCell className="text-right">
@@ -379,6 +419,36 @@ export function AdminCouponsPanel() {
               {editing.id && (
                 <div className="text-sm text-muted-foreground">Loja: <strong>{nameById.get(editing.restaurant_id!) ?? "—"}</strong></div>
               )}
+
+              <div className="space-y-2">
+                <Label className="font-semibold">Aplicar desconto a</Label>
+                <RadioGroup value={editing.apply_to} onValueChange={(v: any) => setEditing({ ...editing, apply_to: v })} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {([["order", "Toda a loja"], ["items", "Itens específicos"], ["exclude", "Excluir itens"]] as const).map(([v, l]) => (
+                    <label key={v} className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer text-sm ${editing.apply_to === v ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <RadioGroupItem value={v} /> {l}
+                    </label>
+                  ))}
+                </RadioGroup>
+                {editing.apply_to !== "order" && (
+                  <>
+                    <p className="text-xs text-muted-foreground">{editing.apply_to === "items" ? "Marque os itens que recebem o desconto" : "Marque os itens que NÃO recebem o desconto"}{productTargets.length > 1 ? " (produtos com o mesmo nome em cada loja)" : ""}:</p>
+                    <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5">
+                      {productTargets.length === 0 && <div className="text-xs text-muted-foreground">Selecione as lojas primeiro.</div>}
+                      {productTargets.length > 0 && productNameOptions.length === 0 && <div className="text-xs text-muted-foreground">Nenhum produto ativo.</div>}
+                      {productNameOptions.map((p) => {
+                        const checked = editing.product_names.includes(p.key);
+                        return (
+                          <label key={p.key} className="flex items-center gap-2 cursor-pointer text-sm">
+                            <Checkbox checked={checked} onCheckedChange={(v) => setEditing({ ...editing, product_names: v ? [...editing.product_names, p.key] : editing.product_names.filter((x) => x !== p.key) })} />
+                            <span className="flex-1">{p.name}</span>
+                            {productTargets.length > 1 && <span className="text-[10px] text-muted-foreground">{p.count}/{productTargets.length} lojas</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2"><Label>Código</Label><Input value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })} placeholder="PROMO10" /></div>
