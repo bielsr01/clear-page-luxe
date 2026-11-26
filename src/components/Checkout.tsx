@@ -309,10 +309,11 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
     if (!coupon) return 0;
     if (!Number(coupon.discount_value)) return 0;
     let base = subtotal;
-    if (coupon.apply_to === "items") {
+    if (coupon.apply_to === "items" || coupon.apply_to === "exclude") {
       const ids: string[] = coupon.product_ids ?? [];
+      const inc = coupon.apply_to === "items";
       base = cart.items
-        .filter((i) => ids.includes(i.productId))
+        .filter((i) => ids.includes(i.productId) === inc)
         .reduce((s, i) => s + (i.price + (i.options?.reduce((a, o) => a + (Number(o.extraPrice) || 0), 0) ?? 0)) * i.quantity, 0);
     }
     const v = coupon.discount_type === "percent"
@@ -349,9 +350,10 @@ export function Checkout({ open, onOpenChange, restaurant }: { open: boolean; on
       if (c.usage_limit_total != null && Number(c.uses_count ?? 0) >= Number(c.usage_limit_total)) {
         setCoupon(null); setCouponError("Cupom esgotado"); return;
       }
-      if (c.apply_to === "items") {
+      if (c.apply_to === "items" || c.apply_to === "exclude") {
         const ids: string[] = c.product_ids ?? [];
-        const hasItem = cart.items.some((i) => ids.includes(i.productId));
+        const inc = c.apply_to === "items";
+        const hasItem = cart.items.some((i) => ids.includes(i.productId) === inc);
         if (!hasItem) { setCoupon(null); setCouponError("Adicione um produto elegível para usar este cupom"); return; }
       }
       // Validações por cliente (telefone)

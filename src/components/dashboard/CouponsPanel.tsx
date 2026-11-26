@@ -27,7 +27,7 @@ type Coupon = {
   restaurant_id: string;
   code: string;
   name: string;
-  apply_to: "order" | "items";
+  apply_to: "order" | "items" | "exclude";
   product_ids: string[];
   discount_type: "percent" | "value";
   discount_value: number;
@@ -126,7 +126,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
     if (!e.name?.trim()) return toast.error("Informe o nome da oferta");
     if (!e.discount_value || Number(e.discount_value) <= 0) return toast.error("Valor do desconto inválido");
     if (e.discount_type === "percent" && Number(e.discount_value) > 100) return toast.error("Percentual máximo 100");
-    if (e.apply_to === "items" && (!e.product_ids || e.product_ids.length === 0)) return toast.error("Selecione ao menos 1 produto");
+    if (e.apply_to !== "order" && (!e.product_ids || e.product_ids.length === 0)) return toast.error("Selecione ao menos 1 produto");
     if (!e.service_delivery && !e.service_pickup) return toast.error("Selecione ao menos um serviço");
 
     const payload: any = {
@@ -134,7 +134,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
       code: e.code!.trim().toUpperCase(),
       name: e.name!.trim(),
       apply_to: e.apply_to,
-      product_ids: e.apply_to === "items" ? (e.product_ids ?? []) : [],
+      product_ids: e.apply_to !== "order" ? (e.product_ids ?? []) : [],
       discount_type: e.discount_type,
       discount_value: Number(e.discount_value),
       starts_at: e.starts_at,
@@ -217,7 +217,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
                         <TableCell className="font-mono font-semibold">{c.code}</TableCell>
                         <TableCell>{c.name}</TableCell>
                         <TableCell>{formatDiscount(c)}</TableCell>
-                        <TableCell>{c.apply_to === "order" ? "Pedido todo" : `Itens (${c.product_ids?.length ?? 0})`}</TableCell>
+                        <TableCell>{c.apply_to === "order" ? "Loja toda" : c.apply_to === "exclude" ? `Exceto ${c.product_ids?.length ?? 0} itens` : `Itens (${c.product_ids?.length ?? 0})`}</TableCell>
                         <TableCell className="text-xs">
                           {c.ends_at ? new Date(c.ends_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "Sem fim"}
                         </TableCell>
@@ -249,7 +249,7 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <Badge variant="outline">{formatDiscount(c)}</Badge>
-                      <span className="text-muted-foreground">{c.apply_to === "order" ? "Pedido todo" : `Itens (${c.product_ids?.length ?? 0})`}</span>
+                      <span className="text-muted-foreground">{c.apply_to === "order" ? "Loja toda" : c.apply_to === "exclude" ? `Exceto ${c.product_ids?.length ?? 0} itens` : `Itens (${c.product_ids?.length ?? 0})`}</span>
                       {c.is_active ? <Badge className="bg-success text-success-foreground">Ativo</Badge> : <Badge variant="secondary">Inativo</Badge>}
                     </div>
                     <div className="text-xs text-muted-foreground border-t pt-2">
@@ -271,15 +271,21 @@ export function CouponsPanel({ restaurantId }: { restaurantId: string }) {
               {/* Aplicação */}
               <div className="space-y-2">
                 <Label className="font-semibold">Aplicar desconto a</Label>
-                <RadioGroup value={editing.apply_to} onValueChange={(v: any) => setEditing({ ...editing, apply_to: v })} className="grid grid-cols-2 gap-2">
+                <RadioGroup value={editing.apply_to} onValueChange={(v: any) => setEditing({ ...editing, apply_to: v })} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <label className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer ${editing.apply_to === "order" ? "border-primary bg-primary/5" : "border-border"}`}>
-                    <RadioGroupItem value="order" /> <span className="text-sm">Valor total do pedido</span>
+                    <RadioGroupItem value="order" /> <span className="text-sm">Toda a loja</span>
                   </label>
                   <label className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer ${editing.apply_to === "items" ? "border-primary bg-primary/5" : "border-border"}`}>
                     <RadioGroupItem value="items" /> <span className="text-sm">Itens específicos</span>
                   </label>
+                  <label className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer ${editing.apply_to === "exclude" ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <RadioGroupItem value="exclude" /> <span className="text-sm">Excluir itens</span>
+                  </label>
                 </RadioGroup>
-                {editing.apply_to === "items" && (
+                {editing.apply_to !== "order" && (
+                  <p className="text-xs text-muted-foreground">{editing.apply_to === "items" ? "Marque os itens que recebem o desconto:" : "Marque os itens que NÃO recebem o desconto:"}</p>
+                )}
+                {editing.apply_to !== "order" && (
                   <div className="border rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5">
                     {(products ?? []).length === 0 && <div className="text-xs text-muted-foreground">Nenhum produto ativo.</div>}
                     {(products ?? []).map((p: any) => {

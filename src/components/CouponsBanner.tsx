@@ -17,7 +17,7 @@ type Coupon = {
   ends_at: string | null;
   service_delivery: boolean;
   service_pickup: boolean;
-  apply_to: "order" | "items";
+  apply_to: "order" | "items" | "exclude";
 };
 
 export function CouponsBanner({ restaurantId }: { restaurantId: string }) {
@@ -78,6 +78,7 @@ export function CouponsBanner({ restaurantId }: { restaurantId: string }) {
                   <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
                     {Number(c.min_order_value) > 0 && <div>Pedido mínimo {brl(c.min_order_value)}</div>}
                     {c.apply_to === "items" && <div>Válido para itens selecionados</div>}
+                    {c.apply_to === "exclude" && <div>Alguns itens não participam</div>}
                     {services.length > 0 && <div>{services.join(" · ")}</div>}
                     {c.ends_at && <div>Até {new Date(c.ends_at).toLocaleDateString()}</div>}
                   </div>
