@@ -313,6 +313,18 @@ export function OrderDetailsDialog({
     },
   });
 
+  const orderId = order?.id;
+  const paymentEditable = order ? canEditPayment(order) : false;
+
+  useEffect(() => {
+    setPayEditOpen(false);
+    setPayOverride(null);
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!paymentEditable) setPayEditOpen(false);
+  }, [paymentEditable]);
+
   useEffect(() => {
     if (!order) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -534,13 +546,13 @@ export function OrderDetailsDialog({
                   <span className="tabular-nums">{brl(Number(sp.amount))}</span>
                 </div>
               ))}
-              {(canEditOrders || canChangeStatus) && canEditPayment(order) && order.status !== "cancelled" && !payEditOpen && (
+              {(canEditOrders || canChangeStatus) && paymentEditable && !payEditOpen && (
                 <Button variant="outline" size="sm" className="w-full" onClick={() => setPayEditOpen(true)}>
                   Alterar forma de pagamento
                 </Button>
               )}
               <EditPaymentDialog
-                open={payEditOpen}
+                open={payEditOpen && paymentEditable}
                 onOpenChange={setPayEditOpen}
                 orderId={order.id}
                 total={Number(order.total)}

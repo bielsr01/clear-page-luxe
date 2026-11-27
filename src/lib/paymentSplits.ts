@@ -24,6 +24,10 @@ export function remainingAmount(splits: PaymentSplit[], total: number): number {
   return (cents(total) - splits.reduce((a, s) => a + cents(s.amount), 0)) / 100;
 }
 
-export function canEditPayment(o: { external_source?: string | null; order_type: string }): boolean {
-  return !o.external_source && ["pdv", "delivery", "pickup"].includes(o.order_type);
+const OPEN_ORDER_STATUSES = ["pending", "accepted", "preparing", "out_for_delivery", "awaiting_pickup"];
+
+export function canEditPayment(o: { external_source?: string | null; order_type: string; status: string }): boolean {
+  return !o.external_source
+    && ["pdv", "delivery", "pickup"].includes(o.order_type)
+    && OPEN_ORDER_STATUSES.includes(o.status);
 }

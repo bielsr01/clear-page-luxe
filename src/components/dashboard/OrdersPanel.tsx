@@ -285,6 +285,9 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
 
   const allOrders = data?.orders ?? [];
   const items = data?.items ?? {};
+  const liveDetailsTarget = detailsTarget
+    ? (allOrders.find((o) => o.id === detailsTarget.id) ?? detailsTarget)
+    : null;
   // Pedidos entregues/cancelados somem do painel principal após 12h.
   // Continuam visíveis no Histórico de Pedidos.
   const cutoff = Date.now() - 12 * 60 * 60 * 1000;
@@ -1210,15 +1213,15 @@ export function OrdersPanel({ restaurantId }: { restaurantId: string }) {
       </Dialog>
 
       <OrderDetailsDialog
-        order={detailsTarget}
-        items={detailsTarget ? (items[detailsTarget.id] ?? []) : []}
+        order={liveDetailsTarget}
+        items={liveDetailsTarget ? (items[liveDetailsTarget.id] ?? []) : []}
         onClose={() => setDetailsTarget(null)}
         onAdvance={(o) => advance(o as Order)}
         onCancel={(o) => setCancelTarget(o as Order)}
         onDelete={(o) => setDeleteTarget(o as Order)}
         onPrint={(o) => setPrintTarget(o as Order)}
         onIfoodConfirmDelivery={(o) => { setIfoodCodeTarget(o as Order); setIfoodCodeValue(""); }}
-        pending={detailsTarget ? !!pendingAction[detailsTarget.id] : false}
+        pending={liveDetailsTarget ? !!pendingAction[liveDetailsTarget.id] : false}
         canChangeStatus={canChangeStatus}
         canEditOrders={canEditOrders}
         canCancelFinalized={canCancelFinalized}
